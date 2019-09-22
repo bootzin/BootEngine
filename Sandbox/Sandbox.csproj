@@ -18,6 +18,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="BootEngine">
       <HintPath>..\BootEngine\bin\Debug\x64\netcoreapp2.1\BootEngine.dll</HintPath>
     </Reference>

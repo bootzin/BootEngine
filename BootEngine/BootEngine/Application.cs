@@ -1,4 +1,6 @@
 ﻿using System;
+using Serilog;
+using Serilog.Core.Sinks;
 
 namespace BootEngine
 {
