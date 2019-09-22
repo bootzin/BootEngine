@@ -6,6 +6,7 @@
     <Platforms>AnyCPU;x64</Platforms>
     <ApplicationIcon />
     <StartupObject></StartupObject>
+    <Configurations>Debug;Release;Dist</Configurations>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -14,6 +15,10 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutputPath>bin\Release\x64</OutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
     <OutputPath>bin\Release\x64</OutputPath>
   </PropertyGroup>
 
