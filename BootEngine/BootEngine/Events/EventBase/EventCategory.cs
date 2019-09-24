@@ -1,7 +1,7 @@
 ﻿namespace BootEngine.Events
 {
 	[System.Flags]
-	public enum EventCategory
+	public enum EventCategory : uint
 	{
 		None = 0,
 		Application = 1 << 0,

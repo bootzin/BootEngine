@@ -1,13 +1,12 @@
-﻿using System;
-using Serilog;
-using Serilog.Core.Sinks;
+﻿using Platforms.Windows;
+using System;
 
 namespace BootEngine
 {
-	public partial class Application : IDisposable
+    public class Application : IDisposable
 	{
 		#region Properties
-		private bool disposed = false;
+		private bool disposed;
 		#endregion
 
 		~Application()
@@ -18,7 +17,8 @@ namespace BootEngine
 		#region Public Methods
 		public virtual void Run()
 		{
-			while (true)
+            var w = new WindowsWindow(new Window.WindowProps());
+			while (w.GetNativeWindow().Exists)
 			{
 				//
 			}
@@ -41,9 +41,9 @@ namespace BootEngine
 					// called via myClass.Dispose(). 
 					// OK to use any private object references
 				}
-				// Release unmanaged resources.
-				// Set large fields to null.                
-				disposed = true;
+                // Release unmanaged resources.
+                // Set large fields to null.                
+                disposed = true;
 			}
 		}
 		#endregion
