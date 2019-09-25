@@ -16,14 +16,14 @@ namespace BootEngine.Log
 		{
             CoreLogger = new LoggerConfiguration()
 				.WriteTo.Console(
-					outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}]: {Message:lj}{NewLine}{Exception}",
+					outputTemplate: "[{Timestamp:HH:mm:ss}] BOOTENGINE: [{Level}]: {Message:lj}{NewLine}{Exception}",
 					theme: AnsiConsoleTheme.Literate)
 				.MinimumLevel.Verbose()
 				.CreateLogger();
 
 			ClientLogger = new LoggerConfiguration()
 				.WriteTo.Console(
-					outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}]: {Message:lj}{NewLine}{Exception}",
+					outputTemplate: "[{Timestamp:HH:mm:ss}] APP: [{Level}]: {Message:lj}{NewLine}{Exception}",
 					theme: AnsiConsoleTheme.Literate)
 				.MinimumLevel.Verbose()
 				.CreateLogger();
@@ -66,18 +66,27 @@ namespace BootEngine.Log
 				ClientLogger.Warning(message.ToString());
 		}
 
-		[System.Diagnostics.Conditional("DEBUG")]
-		public static void Info(object message)
-		{
-			if (message is string)
-				ClientLogger.Information(message as string);
-			else
-				ClientLogger.Information(message.ToString());
-		}
-		#endregion
+        [System.Diagnostics.Conditional("DEBUG")]
+        public static void Info(object message)
+        {
+            if (message is string)
+                ClientLogger.Information(message as string);
+            else
+                ClientLogger.Information(message.ToString());
+        }
 
-		#region CoreLogger
-		[System.Diagnostics.Conditional("DEBUG")]
+        [System.Diagnostics.Conditional("DEBUG")]
+        public static void Fatal(object message)
+        {
+            if (message is string)
+                ClientLogger.Fatal(message as string);
+            else
+                ClientLogger.Fatal(message.ToString());
+        }
+        #endregion
+
+        #region CoreLogger
+        [System.Diagnostics.Conditional("DEBUG")]
 		public static void CoreError(object message, Exception ex = null)
 		{
 			if (message is string)
@@ -113,14 +122,23 @@ namespace BootEngine.Log
 				CoreLogger.Warning(message.ToString());
 		}
 
-		[System.Diagnostics.Conditional("DEBUG")]
-		public static void CoreInfo(object message)
-		{
-			if (message is string)
-				CoreLogger.Information(message as string);
-			else
-				CoreLogger.Information(message.ToString());
-		}
-		#endregion
-	}
+        [System.Diagnostics.Conditional("DEBUG")]
+        public static void CoreInfo(object message)
+        {
+            if (message is string)
+                CoreLogger.Information(message as string);
+            else
+                CoreLogger.Information(message.ToString());
+        }
+
+        [System.Diagnostics.Conditional("DEBUG")]
+        public static void CoreFatal(object message)
+        {
+            if (message is string)
+                CoreLogger.Fatal(message as string);
+            else
+                CoreLogger.Fatal(message.ToString());
+        }
+        #endregion
+    }
 }

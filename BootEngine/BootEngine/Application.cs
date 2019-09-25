@@ -1,7 +1,9 @@
 ﻿using BootEngine.Events;
+using BootEngine.Layers;
 using BootEngine.Log;
 using BootEngine.Window;
 using System;
+using System.Linq;
 
 namespace BootEngine
 {
@@ -9,13 +11,15 @@ namespace BootEngine
 	{
 		#region Properties
         protected WindowBase Window { get; set; }
+        protected LayerStack LayerStack { get; }
 
-		private bool disposed;
+        private bool disposed;
         #endregion
 
         protected Application()
         {
             Logger.Init();
+            LayerStack = new LayerStack();
             Window = WindowBase.Create<WindowType>();
             Window.EventCallback = OnEvent;
         }
@@ -30,13 +34,20 @@ namespace BootEngine
 		{
 			while (Window.Exists())
 			{
+                LayerStack.Layers.ForEach(layer => layer.OnUpdate());
                 Window.OnUpdate();
 			}
 		}
 
         public void OnEvent(EventBase @event)
         {
-            Logger.Info(@event);
+            Logger.CoreInfo(@event);
+            for (int index = LayerStack.Layers.Count; index > 0;)
+            {
+                LayerStack.Layers[--index].OnEvent(@event);
+                if (@event.Handled)
+                    break;
+            }
         }
 		#endregion
 
