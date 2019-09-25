@@ -3,7 +3,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <Platforms>AnyCPU;x64</Platforms>
+    <Platforms>x64</Platforms>
     <ApplicationIcon />
     <StartupObject></StartupObject>
     <Configurations>Debug;Release;Dist</Configurations>
@@ -12,14 +12,17 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\x64</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutputPath>bin\Release\x64</OutputPath>
+    <Optimize>true</Optimize>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
-    <OutputPath>bin\Release\x64</OutputPath>
+    <OutputPath>bin\Dist\x64</OutputPath>
+    <Optimize>true</Optimize>
   </PropertyGroup>
 
   <ItemGroup>
@@ -31,6 +34,8 @@
   <ItemGroup>
     <Reference Include="BootEngine">
       <HintPath>..\BootEngine\bin\Debug\x64\netcoreapp2.1\BootEngine.dll</HintPath>
+      <Private>true</Private>
+      <SpecificVersion></SpecificVersion>
     </Reference>
   </ItemGroup>
 

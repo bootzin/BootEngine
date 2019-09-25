@@ -1,13 +1,24 @@
-﻿using Platforms.Windows;
+﻿using BootEngine.Events;
+using BootEngine.Log;
+using BootEngine.Window;
 using System;
 
 namespace BootEngine
 {
-    public class Application : IDisposable
+    public abstract class Application<WindowType> : IDisposable
 	{
 		#region Properties
+        protected WindowBase Window { get; set; }
+
 		private bool disposed;
-		#endregion
+        #endregion
+
+        protected Application()
+        {
+            Logger.Init();
+            Window = WindowBase.Create<WindowType>();
+            Window.EventCallback = OnEvent;
+        }
 
 		~Application()
 		{
@@ -15,14 +26,18 @@ namespace BootEngine
 		}
 
 		#region Public Methods
-		public virtual void Run()
+		public void Run()
 		{
-            var w = new WindowsWindow(new Window.WindowProps());
-			while (w.GetNativeWindow().Exists)
+			while (Window.Exists())
 			{
-				//
+                Window.OnUpdate();
 			}
 		}
+
+        public void OnEvent(EventBase @event)
+        {
+            Logger.Info(@event);
+        }
 		#endregion
 
 		#region IDisposable Methods

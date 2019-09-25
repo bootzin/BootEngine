@@ -14,9 +14,8 @@ namespace BootEngine.Log
 		[System.Diagnostics.Conditional("DEBUG")]
 		public static void Init()
 		{
-			CoreLogger = new LoggerConfiguration()
+            CoreLogger = new LoggerConfiguration()
 				.WriteTo.Console(
-					restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Verbose,
 					outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}]: {Message:lj}{NewLine}{Exception}",
 					theme: AnsiConsoleTheme.Literate)
 				.MinimumLevel.Verbose()
@@ -24,15 +23,14 @@ namespace BootEngine.Log
 
 			ClientLogger = new LoggerConfiguration()
 				.WriteTo.Console(
-					restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Verbose,
 					outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss} [{Level}]: {Message:lj}{NewLine}{Exception}",
 					theme: AnsiConsoleTheme.Literate)
 				.MinimumLevel.Verbose()
 				.CreateLogger();
-		}
+        }
 
-		#region ClientLogger
-		[System.Diagnostics.Conditional("DEBUG")]
+        #region ClientLogger
+        [System.Diagnostics.Conditional("DEBUG")]
 		public static void Error(object message, Exception ex = null)
 		{
 			if (message is string)

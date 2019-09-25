@@ -32,11 +32,6 @@
 		#endregion
 
 		#region EventBase
-		public override string GetName()
-		{
-			return "KeyPresed";
-		}
-
 		public override EventType EventType => EventType.KeyPressed;
 		#endregion
 
@@ -59,11 +54,6 @@
 		#endregion
 
 		#region EventBase
-		public override string GetName()
-		{
-			return "KeyReleased";
-		}
-
 		public override EventType EventType => EventType.KeyReleased;
 		#endregion
 

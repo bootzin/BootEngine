@@ -32,15 +32,13 @@
 	public class MouseScrolledEvent : EventBase
 	{
 		#region Properties
-		public float XOffset { get; }
-		public float YOffset { get; }
+		public float MouseDelta { get; }
 		#endregion
 
 		#region Constructor
-		public MouseScrolledEvent(float xOffset, float yOffset)
+		public MouseScrolledEvent(float mouseDelta)
 		{
-			XOffset = xOffset;
-			YOffset = yOffset;
+            MouseDelta = mouseDelta;
 		}
 		#endregion
 
@@ -53,7 +51,7 @@
 		#region Methods
 		public override string ToString()
 		{
-			return "MouseScrolledEvent: (" + XOffset + ", " + YOffset + ")";
+			return "MouseScrolledEvent: (" + MouseDelta + ")";
 		}
 		#endregion
 	}
