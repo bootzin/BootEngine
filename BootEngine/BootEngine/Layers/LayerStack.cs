@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace BootEngine.Layers
 {
     public class LayerStack
     {
         #region Properties
-        public List<Layer> Layers { get; }
+        public List<LayerBase> Layers { get; }
 
         private uint layerInsertIndex = 0;
         #endregion
@@ -13,29 +14,24 @@ namespace BootEngine.Layers
         #region Constructor
         public LayerStack()
         {
-            Layers = new List<Layer>();
-        }
-
-        ~LayerStack()
-        {
-            Layers.Clear();
+            Layers = new List<LayerBase>();
         }
         #endregion
 
         #region Methods
-        public void PushLayer(Layer layer)
+        public void PushLayer(LayerBase layer)
         {
             Layers.Insert((int)layerInsertIndex++, layer);
             layer.OnAttach();
         }
 
-        public void PushOverlay(Layer overlay)
+        public void PushOverlay(LayerBase overlay)
         {
             Layers.Add(overlay);
             overlay.OnAttach();
         }
 
-        public void PopLayer(Layer layer)
+        public void PopLayer(LayerBase layer)
         {
             if (Layers.LastIndexOf(layer, (int)layerInsertIndex) > -1)
             {
@@ -45,7 +41,7 @@ namespace BootEngine.Layers
             }
         }
 
-        public void PopOverlay(Layer overlay)
+        public void PopOverlay(LayerBase overlay)
         {
             if (Layers.LastIndexOf(overlay) > layerInsertIndex)
             {

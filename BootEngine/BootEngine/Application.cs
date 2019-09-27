@@ -66,6 +66,8 @@ namespace BootEngine
 				{
 					// called via myClass.Dispose(). 
 					// OK to use any private object references
+                    Window.Dispose();
+                    LayerStack.Layers.Clear();
 				}
                 // Release unmanaged resources.
                 // Set large fields to null.                

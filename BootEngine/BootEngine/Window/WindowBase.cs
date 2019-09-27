@@ -29,16 +29,21 @@ namespace BootEngine.Window
         }
     }
 
-    public abstract class WindowBase
+    public abstract class WindowBase : IDisposable
     {
+        #region Properties
         public Action<EventBase> EventCallback { get; set; }
 
-        protected ResourceFactory ResourceFactory { get; set; }
+        public ResourceFactory ResourceFactory { get; set; }
         protected bool VSync { get; set; }
 
-        protected GraphicsDevice graphicsDevice;
+        public GraphicsDevice graphicsDevice;
         protected Sdl2Window window;
 
+        private bool disposed;
+        #endregion
+
+        #region Methods
         public abstract void OnUpdate();
 
         public bool Exists() => window.Exists;
@@ -65,5 +70,34 @@ namespace BootEngine.Window
                 return new WindowsWindow(props ?? new WindowProps());
             return null;
         }
+
+        #region Dispose
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposed)
+            {
+                if (disposing)
+                {
+                    // called via myClass.Dispose(). 
+                    // OK to use any private object references
+                }
+                // Release unmanaged resources.
+                // Set large fields to null.                
+                window = null;
+                ResourceFactory = null;
+                EventCallback = null;
+                graphicsDevice.WaitForIdle();
+                graphicsDevice.Dispose();
+                disposed = true;
+            }
+        }
+        #endregion
+        #endregion
     }
 }

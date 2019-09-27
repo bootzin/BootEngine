@@ -1,15 +1,16 @@
 ﻿using BootEngine.Events;
+using System;
 
 namespace BootEngine.Layers
 {
-    public abstract class Layer
+    public abstract class LayerBase
     {
         #region Properties
         protected string DebugName { get; }
         #endregion
 
         #region Constructor
-        protected Layer(string debugName = "Layer")
+        protected LayerBase(string debugName = "Layer")
         {
             DebugName = debugName;
         }
@@ -19,7 +20,6 @@ namespace BootEngine.Layers
         public virtual void OnAttach() { }
         public virtual void OnDetach() { }
         public virtual void OnUpdate() { }
-        public virtual void OnImGuiRender() { }
         public virtual void OnEvent(EventBase @event) { }
         #endregion
     }
