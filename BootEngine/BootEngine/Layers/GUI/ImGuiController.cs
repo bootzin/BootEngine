@@ -29,7 +29,7 @@ namespace BootEngine.Layers.GUI
         private ResourceSet mainResourceSet;
         private ResourceSet fontTextureResourceSet;
 
-        private IntPtr _fontAtlasID = (IntPtr)1;
+        private readonly IntPtr fontAtlasID = (IntPtr)1;
         private bool _controlDown;
         private bool _shiftDown;
         private bool _altDown;
@@ -244,7 +244,7 @@ namespace BootEngine.Layers.GUI
 			// Build
 			io.Fonts.GetTexDataAsRGBA32(out IntPtr pixels, out int width, out int height, out int bytesPerPixel);
 			// Store our identifier
-			io.Fonts.SetTexID(_fontAtlasID);
+			io.Fonts.SetTexID(fontAtlasID);
 
             fontTexture = gd.ResourceFactory.CreateTexture(TextureDescription.Texture2D(
                 (uint)width,
@@ -493,7 +493,7 @@ namespace BootEngine.Layers.GUI
                     {
                         if (pcmd.TextureId != IntPtr.Zero)
                         {
-                            if (pcmd.TextureId == _fontAtlasID)
+                            if (pcmd.TextureId == fontAtlasID)
                             {
                                 cl.SetGraphicsResourceSet(1, fontTextureResourceSet);
                             }
