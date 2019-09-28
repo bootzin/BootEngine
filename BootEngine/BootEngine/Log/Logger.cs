@@ -1,6 +1,8 @@
 ﻿using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
 using System;
+using System.Diagnostics;
+using Utils.Exceptions;
 
 namespace BootEngine.Log
 {
@@ -11,7 +13,7 @@ namespace BootEngine.Log
 		private static ILogger ClientLogger { get; set; }
 		#endregion
 
-		[System.Diagnostics.Conditional("DEBUG")]
+		[Conditional("DEBUG")]
 		public static void Init()
 		{
             CoreLogger = new LoggerConfiguration()
@@ -29,8 +31,18 @@ namespace BootEngine.Log
 				.CreateLogger();
         }
 
-        #region ClientLogger
-        [System.Diagnostics.Conditional("DEBUG")]
+		#region ClientLogger
+		[Conditional("DEBUG")]
+		public static void Assert(bool assertion, string failedAssertionMessage)
+		{
+			if (!assertion)
+			{
+				Error(failedAssertionMessage);
+				Debugger.Break();
+			}
+		}
+
+		[Conditional("DEBUG")]
 		public static void Error(object message, Exception ex = null)
 		{
 			if (message is string)
@@ -39,7 +51,7 @@ namespace BootEngine.Log
 				ClientLogger.Error(ex, message.ToString());
 		}
 
-		[System.Diagnostics.Conditional("DEBUG")]
+		[Conditional("DEBUG")]
 		public static void Debug(object message)
 		{
 			if (message is string)
@@ -48,7 +60,7 @@ namespace BootEngine.Log
 				ClientLogger.Debug(message.ToString());
 		}
 
-		[System.Diagnostics.Conditional("DEBUG")]
+		[Conditional("DEBUG")]
 		public static void Verbose(object message)
 		{
 			if (message is string)
@@ -57,7 +69,7 @@ namespace BootEngine.Log
 				ClientLogger.Verbose(message.ToString());
 		}
 
-		[System.Diagnostics.Conditional("DEBUG")]
+		[Conditional("DEBUG")]
 		public static void Warn(object message)
 		{
 			if (message is string)
@@ -66,7 +78,7 @@ namespace BootEngine.Log
 				ClientLogger.Warning(message.ToString());
 		}
 
-        [System.Diagnostics.Conditional("DEBUG")]
+        [Conditional("DEBUG")]
         public static void Info(object message)
         {
             if (message is string)
@@ -75,7 +87,7 @@ namespace BootEngine.Log
                 ClientLogger.Information(message.ToString());
         }
 
-        [System.Diagnostics.Conditional("DEBUG")]
+        [Conditional("DEBUG")]
         public static void Fatal(object message)
         {
             if (message is string)
@@ -83,10 +95,20 @@ namespace BootEngine.Log
             else
                 ClientLogger.Fatal(message.ToString());
         }
-        #endregion
+		#endregion
 
-        #region CoreLogger
-        [System.Diagnostics.Conditional("DEBUG")]
+		#region CoreLogger
+		[Conditional("DEBUG")]
+		public static void CoreAssert(bool assertion, string failedAssertionMessage)
+		{
+			if (!assertion)
+			{
+				CoreError(failedAssertionMessage);
+				Debugger.Break();
+			}
+		}
+
+		[Conditional("DEBUG")]
 		public static void CoreError(object message, Exception ex = null)
 		{
 			if (message is string)
@@ -95,7 +117,7 @@ namespace BootEngine.Log
 				CoreLogger.Error(ex, message.ToString());
 		}
 
-		[System.Diagnostics.Conditional("DEBUG")]
+		[Conditional("DEBUG")]
 		public static void CoreDebug(object message)
 		{
 			if (message is string)
@@ -104,7 +126,7 @@ namespace BootEngine.Log
 				CoreLogger.Debug(message.ToString());
 		}
 
-		[System.Diagnostics.Conditional("DEBUG")]
+		[Conditional("DEBUG")]
 		public static void CoreVerbose(object message)
 		{
 			if (message is string)
@@ -113,7 +135,7 @@ namespace BootEngine.Log
 				CoreLogger.Verbose(message.ToString());
 		}
 
-		[System.Diagnostics.Conditional("DEBUG")]
+		[Conditional("DEBUG")]
 		public static void CoreWarn(object message)
 		{
 			if (message is string)
@@ -122,7 +144,7 @@ namespace BootEngine.Log
 				CoreLogger.Warning(message.ToString());
 		}
 
-        [System.Diagnostics.Conditional("DEBUG")]
+        [Conditional("DEBUG")]
         public static void CoreInfo(object message)
         {
             if (message is string)
@@ -131,7 +153,7 @@ namespace BootEngine.Log
                 CoreLogger.Information(message.ToString());
         }
 
-        [System.Diagnostics.Conditional("DEBUG")]
+        [Conditional("DEBUG")]
         public static void CoreFatal(object message)
         {
             if (message is string)

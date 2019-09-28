@@ -37,7 +37,7 @@ namespace BootEngine.Window
         public ResourceFactory ResourceFactory { get; set; }
         protected bool VSync { get; set; }
 
-        public GraphicsDevice graphicsDevice;
+        protected GraphicsDevice graphicsDevice;
         protected Sdl2Window window;
 
         private bool disposed;
@@ -52,6 +52,11 @@ namespace BootEngine.Window
         {
             return window;
         }
+
+		public GraphicsDevice GetGraphicsDevice()
+		{
+			return graphicsDevice;
+		}
 
         public virtual void SetVSync(bool enabled)
         {

@@ -1,5 +1,6 @@
 ﻿using BootEngine.Events;
 using System;
+using Veldrid;
 
 namespace BootEngine.Layers
 {
@@ -21,6 +22,7 @@ namespace BootEngine.Layers
         public virtual void OnDetach() { }
         public virtual void OnUpdate() { }
         public virtual void OnEvent(EventBase @event) { }
+		public virtual void OnGuiRender() { }
         #endregion
     }
 }

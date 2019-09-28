@@ -6,52 +6,53 @@ using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using Utils.Exceptions;
 using Veldrid;
 
 namespace BootEngine.Layers.GUI
 {
-    public class ImGuiController : IDisposable
+    public sealed class ImGuiController : IDisposable
     {
-        private GraphicsDevice graphicsDevice;
-        private bool frameBegun;
+		#region Properties
+		private GraphicsDevice graphicsDevice;
+		private bool frameBegun;
 
-        // Veldrid objects
-        private DeviceBuffer vertexBuffer;
-        private DeviceBuffer indexBuffer;
-        private DeviceBuffer projMatrixBuffer;
-        private Texture fontTexture;
-        private TextureView fontTextureView;
-        private Shader vertexShader;
-        private Shader fragmentShader;
-        private ResourceLayout layout;
-        private ResourceLayout textureLayout;
-        private Pipeline pipeline;
-        private ResourceSet mainResourceSet;
-        private ResourceSet fontTextureResourceSet;
+		// Veldrid objects
+		private DeviceBuffer vertexBuffer;
+		private DeviceBuffer indexBuffer;
+		private DeviceBuffer projMatrixBuffer;
+		private Texture fontTexture;
+		private TextureView fontTextureView;
+		private Shader vertexShader;
+		private Shader fragmentShader;
+		private ResourceLayout layout;
+		private ResourceLayout textureLayout;
+		private Pipeline pipeline;
+		private ResourceSet mainResourceSet;
+		private ResourceSet fontTextureResourceSet;
 
-        private readonly IntPtr fontAtlasID = (IntPtr)1;
-        private bool _controlDown;
-        private bool _shiftDown;
-        private bool _altDown;
-        private bool _winKeyDown;
+		private readonly IntPtr fontAtlasID = (IntPtr)1;
+		private bool _controlDown;
+		private bool _shiftDown;
+		private bool _altDown;
+		private bool _winKeyDown;
 
-        private int windowWidth;
-        private int windowHeight;
-        private Vector2 _scaleFactor = Vector2.One;
+		private int windowWidth;
+		private int windowHeight;
+		private Vector2 scaleFactor = Vector2.One;
 
-        // Image trackers
-        private readonly Dictionary<TextureView, ResourceSetInfo> _setsByView
-            = new Dictionary<TextureView, ResourceSetInfo>();
-        private readonly Dictionary<Texture, TextureView> _autoViewsByTexture
-            = new Dictionary<Texture, TextureView>();
-        private readonly Dictionary<IntPtr, ResourceSetInfo> _viewsById = new Dictionary<IntPtr, ResourceSetInfo>();
-        private readonly List<IDisposable> _ownedResources = new List<IDisposable>();
-        private int _lastAssignedID = 100;
+		// Image trackers
+		private readonly Dictionary<TextureView, ResourceSetInfo> setsByView = new Dictionary<TextureView, ResourceSetInfo>();
+		private readonly Dictionary<Texture, TextureView> autoViewsByTexture = new Dictionary<Texture, TextureView>();
+		private readonly Dictionary<IntPtr, ResourceSetInfo> viewsById = new Dictionary<IntPtr, ResourceSetInfo>();
+		private readonly List<IDisposable> ownedResources = new List<IDisposable>();
+		private int lastAssignedID = 100;
+		#endregion
 
-        /// <summary>
-        /// Constructs a new ImGuiController.
-        /// </summary>
-        public ImGuiController(GraphicsDevice gd, OutputDescription outputDescription, int width, int height)
+		/// <summary>
+		/// Constructs a new ImGuiController.
+		/// </summary>
+		public ImGuiController(GraphicsDevice gd, OutputDescription outputDescription, int width, int height)
         {
             windowWidth = width;
             windowHeight = height;
@@ -62,21 +63,13 @@ namespace BootEngine.Layers.GUI
             CreateDeviceResources(gd, outputDescription);
             SetKeyMappings();
 
-            SetPerFrameImGuiData(1f / 60f);
-
-            ImGui.NewFrame();
-            frameBegun = true;
+            SetPerFrameImGuiData(1f / 60);
         }
 
         public void WindowResized(int width, int height)
         {
             windowWidth = width;
             windowHeight = height;
-        }
-
-        public void DestroyDeviceObjects()
-        {
-            Dispose();
         }
 
         public void CreateDeviceResources(GraphicsDevice gd, OutputDescription outputDescription)
@@ -91,8 +84,8 @@ namespace BootEngine.Layers.GUI
             projMatrixBuffer = gd.ResourceFactory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
             projMatrixBuffer.Name = "ImGui.NET Projection Buffer";
 
-            byte[] vertexShaderBytes = LoadEmbeddedShaderCode(gd.ResourceFactory, "imgui-vertex", ShaderStages.Vertex);
-            byte[] fragmentShaderBytes = LoadEmbeddedShaderCode(gd.ResourceFactory, "imgui-frag", ShaderStages.Fragment);
+            byte[] vertexShaderBytes = LoadEmbeddedShaderCode(gd.ResourceFactory, "imgui-vertex");
+            byte[] fragmentShaderBytes = LoadEmbeddedShaderCode(gd.ResourceFactory, "imgui-frag");
             vertexShader = gd.ResourceFactory.CreateShader(new ShaderDescription(ShaderStages.Vertex, vertexShaderBytes, "VS"));
             fragmentShader = gd.ResourceFactory.CreateShader(new ShaderDescription(ShaderStages.Fragment, fragmentShaderBytes, "FS"));
 
@@ -133,14 +126,14 @@ namespace BootEngine.Layers.GUI
         /// </summary>
         public IntPtr GetOrCreateImGuiBinding(ResourceFactory factory, TextureView textureView)
         {
-            if (!_setsByView.TryGetValue(textureView, out ResourceSetInfo rsi))
+            if (!setsByView.TryGetValue(textureView, out ResourceSetInfo rsi))
             {
                 ResourceSet resourceSet = factory.CreateResourceSet(new ResourceSetDescription(textureLayout, textureView));
                 rsi = new ResourceSetInfo(GetNextImGuiBindingID(), resourceSet);
 
-                _setsByView.Add(textureView, rsi);
-                _viewsById.Add(rsi.ImGuiBinding, rsi);
-                _ownedResources.Add(resourceSet);
+                setsByView.Add(textureView, rsi);
+                viewsById.Add(rsi.ImGuiBinding, rsi);
+                ownedResources.Add(resourceSet);
             }
 
             return rsi.ImGuiBinding;
@@ -148,8 +141,7 @@ namespace BootEngine.Layers.GUI
 
         private IntPtr GetNextImGuiBindingID()
         {
-            int newID = _lastAssignedID++;
-            return (IntPtr)newID;
+            return (IntPtr)(++lastAssignedID);
         }
 
         /// <summary>
@@ -158,11 +150,11 @@ namespace BootEngine.Layers.GUI
         /// </summary>
         public IntPtr GetOrCreateImGuiBinding(ResourceFactory factory, Texture texture)
         {
-            if (!_autoViewsByTexture.TryGetValue(texture, out TextureView textureView))
+            if (!autoViewsByTexture.TryGetValue(texture, out TextureView textureView))
             {
                 textureView = factory.CreateTextureView(texture);
-                _autoViewsByTexture.Add(texture, textureView);
-                _ownedResources.Add(textureView);
+                autoViewsByTexture.Add(texture, textureView);
+                ownedResources.Add(textureView);
             }
 
             return GetOrCreateImGuiBinding(factory, textureView);
@@ -173,7 +165,7 @@ namespace BootEngine.Layers.GUI
         /// </summary>
         public ResourceSet GetImageResourceSet(IntPtr imGuiBinding)
         {
-            if (!_viewsById.TryGetValue(imGuiBinding, out ResourceSetInfo tvi))
+            if (!viewsById.TryGetValue(imGuiBinding, out ResourceSetInfo tvi))
             {
                 throw new InvalidOperationException("No registered ImGui binding with id " + imGuiBinding.ToString());
             }
@@ -183,19 +175,19 @@ namespace BootEngine.Layers.GUI
 
         public void ClearCachedImageResources()
         {
-            foreach (IDisposable resource in _ownedResources)
+            foreach (IDisposable resource in ownedResources)
             {
                 resource.Dispose();
             }
 
-            _ownedResources.Clear();
-            _setsByView.Clear();
-            _viewsById.Clear();
-            _autoViewsByTexture.Clear();
-            _lastAssignedID = 100;
+            ownedResources.Clear();
+            setsByView.Clear();
+            viewsById.Clear();
+            autoViewsByTexture.Clear();
+            lastAssignedID = 100;
         }
 
-        private byte[] LoadEmbeddedShaderCode(ResourceFactory factory, string name, ShaderStages stage)
+        private byte[] LoadEmbeddedShaderCode(ResourceFactory factory, string name)
         {
             switch (factory.BackendType)
             {
@@ -220,7 +212,7 @@ namespace BootEngine.Layers.GUI
                         return GetEmbeddedResourceBytes(resourceName);
                     }
                 default:
-                    throw new NotImplementedException();
+                    throw new BootEngineException($"{factory.BackendType} backend embedded resources not implemented");
             }
         }
 
@@ -292,17 +284,15 @@ namespace BootEngine.Layers.GUI
         /// </summary>
         public void Update(float deltaSeconds, InputSnapshot snapshot)
         {
-            if (frameBegun)
-            {
-                ImGui.Render();
-            }
-
             SetPerFrameImGuiData(deltaSeconds);
             UpdateImGuiInput(snapshot);
-
-            frameBegun = true;
-            ImGui.NewFrame();
         }
+
+		public void BeginFrame()
+		{
+			frameBegun = true;
+			ImGui.NewFrame();
+		}
 
         /// <summary>
         /// Sets per-frame data based on the associated window.
@@ -312,17 +302,16 @@ namespace BootEngine.Layers.GUI
         {
             ImGuiIOPtr io = ImGui.GetIO();
             io.DisplaySize = new Vector2(
-                windowWidth / _scaleFactor.X,
-                windowHeight / _scaleFactor.Y);
-            io.DisplayFramebufferScale = _scaleFactor;
+                windowWidth / scaleFactor.X,
+                windowHeight / scaleFactor.Y);
+            io.DisplayFramebufferScale = scaleFactor;
             io.DeltaTime = deltaSeconds; // DeltaTime is in seconds.
         }
 
+		//Not checked
         private void UpdateImGuiInput(InputSnapshot snapshot)
         {
             ImGuiIOPtr io = ImGui.GetIO();
-
-            Vector2 mousePosition = snapshot.MousePosition;
 
             // Determine if any of the mouse buttons were pressed during this snapshot period, even if they are no longer held.
             bool leftPressed = false;
@@ -350,7 +339,7 @@ namespace BootEngine.Layers.GUI
             io.MouseDown[0] = leftPressed || snapshot.IsMouseDown(MouseButton.Left);
             io.MouseDown[1] = rightPressed || snapshot.IsMouseDown(MouseButton.Right);
             io.MouseDown[2] = middlePressed || snapshot.IsMouseDown(MouseButton.Middle);
-            io.MousePos = mousePosition;
+            io.MousePos = snapshot.MousePosition;
             io.MouseWheel = snapshot.WheelDelta;
 
             IReadOnlyList<char> keyCharPresses = snapshot.KeyCharPresses;
@@ -391,6 +380,7 @@ namespace BootEngine.Layers.GUI
 
         private static void SetKeyMappings()
         {
+            // TODO: should eventually use boot engine key system
             ImGuiIOPtr io = ImGui.GetIO();
             io.KeyMap[(int)ImGuiKey.Tab] = (int)Key.Tab;
             io.KeyMap[(int)ImGuiKey.LeftArrow] = (int)Key.Left;
@@ -415,15 +405,15 @@ namespace BootEngine.Layers.GUI
 
         private void RenderImDrawData(ImDrawDataPtr draw_data, GraphicsDevice gd, CommandList cl)
         {
-            uint vertexOffsetInVertices = 0;
-            uint indexOffsetInElements = 0;
-
             if (draw_data.CmdListsCount == 0)
             {
                 return;
             }
 
-            uint totalVBSize = (uint)(draw_data.TotalVtxCount * Unsafe.SizeOf<ImDrawVert>());
+            uint vertexOffsetInVertices = 0;
+            uint indexOffsetInElements = 0;
+
+			uint totalVBSize = (uint)(draw_data.TotalVtxCount * Unsafe.SizeOf<ImDrawVert>());
             if (totalVBSize > vertexBuffer.SizeInBytes)
             {
                 gd.DisposeWhenIdle(vertexBuffer);
@@ -487,8 +477,8 @@ namespace BootEngine.Layers.GUI
                     ImDrawCmdPtr pcmd = cmd_list.CmdBuffer[cmd_i];
                     if (pcmd.UserCallback != IntPtr.Zero)
                     {
-                        throw new NotImplementedException();
-                    }
+						throw new BootEngineException("ImGUI command user callback not implemented.");
+					}
                     else
                     {
                         if (pcmd.TextureId != IntPtr.Zero)
@@ -535,8 +525,9 @@ namespace BootEngine.Layers.GUI
             textureLayout.Dispose();
             pipeline.Dispose();
             mainResourceSet.Dispose();
+			fontTextureResourceSet.Dispose();
 
-            foreach (IDisposable resource in _ownedResources)
+            foreach (IDisposable resource in ownedResources)
             {
                 resource.Dispose();
             }

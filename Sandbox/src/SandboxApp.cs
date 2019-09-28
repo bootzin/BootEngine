@@ -1,12 +1,10 @@
 ﻿using BootEngine;
 using BootEngine.Events;
 using BootEngine.Layers;
-using BootEngine.Layers.GUI;
-using BootEngine.Log;
 
 namespace Sandbox
 {
-    internal class TestLayer : LayerBase
+	internal class TestLayer : LayerBase
     {
         public TestLayer() : base("TestLayer") { }
 
@@ -26,8 +24,6 @@ namespace Sandbox
 		public static void Main(string[] args)
 		{
 			var app = new SandboxApp();
-            app.LayerStack.PushLayer(new TestLayer());
-            app.LayerStack.PushOverlay(new GuiLayer(app.Window.graphicsDevice, app.Window.ResourceFactory.CreateCommandList()));
 			app.Run();
 			app.Dispose();
 		}

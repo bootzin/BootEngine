@@ -1,5 +1,6 @@
 ﻿using BootEngine.Events;
 using BootEngine.Layers;
+using BootEngine.Layers.GUI;
 using BootEngine.Log;
 using BootEngine.Window;
 using System;
@@ -10,18 +11,26 @@ namespace BootEngine
     public abstract class Application<WindowType> : IDisposable
 	{
 		#region Properties
-        protected WindowBase Window { get; set; }
+		public static Application<WindowType> App { get; private set; }
+
+		public WindowBase Window { get; set; }
         protected LayerStack LayerStack { get; }
 
-        private bool disposed;
+		private ImGuiLayer<WindowType> ImGuiLayer { get; }
+
+		private bool disposed;
         #endregion
 
         protected Application()
         {
             Logger.Init();
+			Logger.Assert(App == null, "App already initialized");
+			App = this;
             LayerStack = new LayerStack();
             Window = WindowBase.Create<WindowType>();
             Window.EventCallback = OnEvent;
+			ImGuiLayer = new ImGuiLayer<WindowType>();
+			LayerStack.PushOverlay(ImGuiLayer);
         }
 
 		~Application()
@@ -35,7 +44,12 @@ namespace BootEngine
 			while (Window.Exists())
 			{
                 LayerStack.Layers.ForEach(layer => layer.OnUpdate());
-                Window.OnUpdate();
+
+				ImGuiLayer.Begin();
+				LayerStack.Layers.ForEach(layer => layer.OnGuiRender());
+				ImGuiLayer.End();
+
+				Window.OnUpdate();
 			}
 		}
 
