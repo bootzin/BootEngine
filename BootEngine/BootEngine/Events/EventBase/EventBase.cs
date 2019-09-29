@@ -15,10 +15,7 @@
 		public virtual EventType EventType { get { return 0; } }
 		public abstract EventCategory CategoryFlags { get; }
 
-		public virtual bool Handled {
-			get { return false; }
-			set { Handled = value; }
-		}
+		public bool Handled { get; set; }
 		#endregion
 
 		#region Methods

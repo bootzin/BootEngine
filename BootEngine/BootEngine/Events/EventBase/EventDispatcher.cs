@@ -2,25 +2,25 @@
 
 namespace BootEngine.Events
 {
-	public class EventDispatcher<T> where T : EventBase
+	public class EventDispatcher
 	{
 		#region Properties
-		public T Event { get; }
+		public EventBase Event { get; }
 		#endregion
 
 		#region Constructor
-		public EventDispatcher(T eventBase)
+		public EventDispatcher(EventBase eventBase)
 		{
 			Event = eventBase;
 		}
 		#endregion
 
 		#region Methods
-		public bool Dispatch(Func<T, bool> func)
+		public bool Dispatch<T>(Func<T, bool> func) where T : EventBase
 		{
-			if (Event.EventType is T)
+			if (Event is T)
 			{
-				Event.Handled = func(Event);
+				Event.Handled = func(Event as T);
 				return true;
 			}
 			return false;

@@ -34,10 +34,7 @@ namespace BootEngine.Layers.GUI
 
 			controller = new ImGuiController(gd, gd.MainSwapchain.Framebuffer.OutputDescription, nativeWindow.Width, nativeWindow.Height);
 
-			window.GetNativeWindow().Resized += () =>
-			{
-				controller.WindowResized(nativeWindow.Width, nativeWindow.Height);
-			};
+			window.GetNativeWindow().Resized += () => controller.WindowResized(nativeWindow.Width, nativeWindow.Height);
 		}
 
 		public override void OnDetach()
@@ -50,7 +47,7 @@ namespace BootEngine.Layers.GUI
 
 		public override void OnUpdate()
 		{
-
+			controller.Update(1f / 60);
 		}
 
 		public void Begin()
@@ -66,12 +63,12 @@ namespace BootEngine.Layers.GUI
 			controller.Render(gd, cl);
 			cl.End();
 			gd.SubmitCommands(cl);
-			gd.SwapBuffers(gd.MainSwapchain);
+			gd.SwapBuffers();
 		}
 
 		public override void OnEvent(EventBase @event)
 		{
-
+			new EventDispatcher(@event).Dispatch<KeyPressedEvent>((_) => true);
 		}
 
 		public override void OnGuiRender()

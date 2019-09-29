@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using Utils.Exceptions;
 using Veldrid;
+using BootEngine.Input;
 
 namespace BootEngine.Layers.GUI
 {
@@ -32,10 +33,6 @@ namespace BootEngine.Layers.GUI
 		private ResourceSet fontTextureResourceSet;
 
 		private readonly IntPtr fontAtlasID = (IntPtr)1;
-		private bool _controlDown;
-		private bool _shiftDown;
-		private bool _altDown;
-		private bool _winKeyDown;
 
 		private int windowWidth;
 		private int windowHeight;
@@ -61,7 +58,7 @@ namespace BootEngine.Layers.GUI
             ImGui.GetIO().Fonts.AddFontDefault();
 
             CreateDeviceResources(gd, outputDescription);
-            SetKeyMappings();
+            SetImGuiKeyMappings();
 
             SetPerFrameImGuiData(1f / 60);
         }
@@ -282,10 +279,10 @@ namespace BootEngine.Layers.GUI
         /// <summary>
         /// Updates ImGui input and IO configuration state.
         /// </summary>
-        public void Update(float deltaSeconds, InputSnapshot snapshot)
+        public void Update(float deltaSeconds)
         {
             SetPerFrameImGuiData(deltaSeconds);
-            UpdateImGuiInput(snapshot);
+            UpdateImGuiInput(InputManager.Snapshot);
         }
 
 		public void BeginFrame()
@@ -308,9 +305,11 @@ namespace BootEngine.Layers.GUI
             io.DeltaTime = deltaSeconds; // DeltaTime is in seconds.
         }
 
-		//Not checked
         private void UpdateImGuiInput(InputSnapshot snapshot)
         {
+			if (snapshot == null)
+				return;
+
             ImGuiIOPtr io = ImGui.GetIO();
 
             // Determine if any of the mouse buttons were pressed during this snapshot period, even if they are no longer held.
@@ -342,43 +341,31 @@ namespace BootEngine.Layers.GUI
             io.MousePos = snapshot.MousePosition;
             io.MouseWheel = snapshot.WheelDelta;
 
-            IReadOnlyList<char> keyCharPresses = snapshot.KeyCharPresses;
-            for (int i = 0; i < keyCharPresses.Count; i++)
-            {
-                char c = keyCharPresses[i];
-                io.AddInputCharacter(c);
-            }
+			#region Keyboard
+			#region TypedKeys
+			IReadOnlyList<char> keyCharPresses = snapshot.KeyCharPresses;
+			for (int i = 0; i < keyCharPresses.Count; i++)
+			{
+				char c = keyCharPresses[i];
+				io.AddInputCharacter(c);
+			}
+			#endregion
 
-            IReadOnlyList<KeyEvent> keyEvents = snapshot.KeyEvents;
-            for (int i = 0; i < keyEvents.Count; i++)
-            {
-                KeyEvent keyEvent = keyEvents[i];
-                io.KeysDown[(int)keyEvent.Key] = keyEvent.Down;
-                if (keyEvent.Key == Key.ControlLeft)
-                {
-                    _controlDown = keyEvent.Down;
-                }
-                if (keyEvent.Key == Key.ShiftLeft)
-                {
-                    _shiftDown = keyEvent.Down;
-                }
-                if (keyEvent.Key == Key.AltLeft)
-                {
-                    _altDown = keyEvent.Down;
-                }
-                if (keyEvent.Key == Key.WinLeft)
-                {
-                    _winKeyDown = keyEvent.Down;
-                }
-            }
+			IReadOnlyList<KeyEvent> keyEvents = snapshot.KeyEvents;
+			for (int i = 0; i < keyEvents.Count; i++)
+			{
+				KeyEvent keyEvent = keyEvents[i];
+				io.KeysDown[(int)keyEvent.Key] = keyEvent.Down;
+			}
 
-            io.KeyCtrl = _controlDown;
-            io.KeyAlt = _altDown;
-            io.KeyShift = _shiftDown;
-            io.KeySuper = _winKeyDown;
-        }
+			io.KeyCtrl = io.KeysDown[(int)Key.ControlLeft] || io.KeysDown[(int)Key.ControlRight];
+			io.KeyAlt = io.KeysDown[(int)Key.AltLeft] || io.KeysDown[(int)Key.AltRight];
+			io.KeyShift = io.KeysDown[(int)Key.ShiftLeft] || io.KeysDown[(int)Key.ShiftRight];
+			io.KeySuper = io.KeysDown[(int)Key.WinLeft] || io.KeysDown[(int)Key.WinRight];
+			#endregion
+		}
 
-        private static void SetKeyMappings()
+		private static void SetImGuiKeyMappings()
         {
             // TODO: should eventually use boot engine key system
             ImGuiIOPtr io = ImGui.GetIO();

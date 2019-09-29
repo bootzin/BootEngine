@@ -89,17 +89,17 @@ namespace BootEngine.Window
             {
                 if (disposing)
                 {
-                    // called via myClass.Dispose(). 
-                    // OK to use any private object references
-                }
+					// called via myClass.Dispose(). 
+					// OK to use any private object references
+					graphicsDevice.WaitForIdle();
+					window = null;
+					ResourceFactory = null;
+					EventCallback = null;
+					graphicsDevice.Dispose();
+				}
                 // Release unmanaged resources.
                 // Set large fields to null.                
-                window = null;
-                ResourceFactory = null;
-                EventCallback = null;
-                graphicsDevice.WaitForIdle();
-                graphicsDevice.Dispose();
-                disposed = true;
+				disposed = true;
             }
         }
         #endregion

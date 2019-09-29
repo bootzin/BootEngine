@@ -15,7 +15,7 @@ namespace Sandbox
 
         public override void OnEvent(EventBase @event)
         {
-            //Logger.Warn(@event);
+            BootEngine.Log.Logger.Warn(@event);
         }
     }
 
@@ -24,6 +24,7 @@ namespace Sandbox
 		public static void Main(string[] args)
 		{
 			var app = new SandboxApp();
+			app.LayerStack.PushLayer(new TestLayer());
 			app.Run();
 			app.Dispose();
 		}

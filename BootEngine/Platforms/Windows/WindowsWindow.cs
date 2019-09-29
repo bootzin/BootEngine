@@ -1,4 +1,5 @@
 ﻿using BootEngine.Events;
+using BootEngine.Input;
 using BootEngine.Window;
 using Veldrid;
 
@@ -22,14 +23,15 @@ namespace Platforms.Windows
         #region Public
         public override void OnUpdate()
         {
-            window.PumpEvents();
-            graphicsDevice.SwapBuffers();
+            InputManager.Snapshot = window.PumpEvents();
         }
         #endregion
 
         #region Private
         private void Initialize(WindowProps props)
         {
+			InputManager.CreateInstance<WindowsInput>();
+
             VSync = props.VSync;
 
             GraphicsDeviceOptions options = new GraphicsDeviceOptions()
