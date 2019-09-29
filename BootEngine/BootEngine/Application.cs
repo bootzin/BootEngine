@@ -13,11 +13,10 @@ namespace BootEngine
 		#region Properties
 		public static Application<WindowType> App { get; private set; }
 
-		public WindowBase Window { get; set; }
+		public WindowBase Window { get; }
         protected LayerStack LayerStack { get; }
 
 		private ImGuiLayer<WindowType> ImGuiLayer { get; }
-
 		private bool disposed;
         #endregion
 
@@ -78,13 +77,9 @@ namespace BootEngine
 			{
 				if (disposing)
 				{
-					// called via myClass.Dispose(). 
-					// OK to use any private object references
                     Window.Dispose();
                     LayerStack.Layers.Clear();
 				}
-                // Release unmanaged resources.
-                // Set large fields to null.                
                 disposed = true;
 			}
 		}

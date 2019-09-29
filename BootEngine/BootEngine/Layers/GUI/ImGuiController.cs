@@ -1,18 +1,17 @@
-﻿using ImGuiNET;
+﻿using BootEngine.Input;
+using ImGuiNET;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using System.Text;
 using Utils.Exceptions;
 using Veldrid;
-using BootEngine.Input;
 
 namespace BootEngine.Layers.GUI
 {
-    public sealed class ImGuiController : IDisposable
+	public sealed class ImGuiController : IDisposable
     {
 		#region Properties
 		private GraphicsDevice graphicsDevice;

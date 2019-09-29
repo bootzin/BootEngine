@@ -10,12 +10,12 @@ namespace Sandbox
 
         public override void OnUpdate()
         {
-            //Logger.Info("TestLayer Update");
+			//
         }
 
         public override void OnEvent(EventBase @event)
         {
-            BootEngine.Log.Logger.Warn(@event);
+			//
         }
     }
 
