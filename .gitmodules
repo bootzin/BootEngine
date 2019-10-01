@@ -1,3 +1,0 @@
-[submodule "BootEngine/deps/ImGui.NET"]
-	path = BootEngine/deps/ImGui.NET
-	url = https://github.com/bootzin/ImGui.NET
