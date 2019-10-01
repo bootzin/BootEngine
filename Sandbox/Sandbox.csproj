@@ -2,9 +2,12 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
     <Platforms>x64</Platforms>
     <ApplicationIcon />
+    <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</IsWindows>
+    <IsOSX Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'true'">true</IsOSX>
+    <IsLinux Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">true</IsLinux>
     <StartupObject></StartupObject>
     <Configurations>Debug;Release;Dist</Configurations>
   </PropertyGroup>
@@ -26,7 +29,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ImGui.NET" Version="1.72.0" />
     <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
     <PackageReference Include="Veldrid" Version="4.7.0" />
@@ -35,10 +37,30 @@
 
   <ItemGroup>
     <Reference Include="BootEngine">
-      <HintPath>..\BootEngine\bin\Debug\x64\netcoreapp2.1\BootEngine.dll</HintPath>
-      <Private>true</Private>
-      <SpecificVersion></SpecificVersion>
+      <HintPath>..\BootEngine\bin\Debug\x64\netcoreapp3.0\BootEngine.dll</HintPath>
     </Reference>
+    <Reference Include="ImGui.NET">
+      <HintPath>..\BootEngine\deps\ImGui.NET\ImGui.NET.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ContentWithTargetPath  Include="..\BootEngine\deps\ImGui.NET\cimgui\linux-x64\cimgui.so" Condition="'$(IsLinux)'=='true'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>cimgui.so</TargetPath>
+    </ContentWithTargetPath >
+    <ContentWithTargetPath  Include="..\BootEngine\deps\ImGui.NET\cimgui\osx-x64\cimgui.dylib" Condition="'$(IsOSX)'=='true'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>cimgui.dylib</TargetPath>
+    </ContentWithTargetPath >
+    <ContentWithTargetPath  Include="..\BootEngine\deps\ImGui.NET\cimgui\win-x64\cimgui.dll" Condition="'$(IsWindows)'=='true' And '$(Platform)'=='x64'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>cimgui.dll</TargetPath>
+    </ContentWithTargetPath >
+    <ContentWithTargetPath  Include="..\BootEngine\deps\ImGui.NET\cimgui\win-x86\cimgui.dll" Condition="'$(IsWindows)'=='true' And '$(Platform)'!='x64'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>cimgui.dll</TargetPath>
+    </ContentWithTargetPath >
   </ItemGroup>
 
 </Project>
