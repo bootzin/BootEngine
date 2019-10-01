@@ -358,10 +358,10 @@ namespace BootEngine.Layers.GUI
                 io.KeysDown[(int)keyEvent.Key] = keyEvent.Down;
             }
 
-            io.KeyCtrl = io.KeysDown[(int)Key.ControlLeft] || io.KeysDown[(int)Key.ControlRight];
-            io.KeyAlt = io.KeysDown[(int)Key.AltLeft] || io.KeysDown[(int)Key.AltRight];
-            io.KeyShift = io.KeysDown[(int)Key.ShiftLeft] || io.KeysDown[(int)Key.ShiftRight];
-            io.KeySuper = io.KeysDown[(int)Key.WinLeft] || io.KeysDown[(int)Key.WinRight];
+            io.KeyCtrl = io.KeysDown[(int)KeyCodes.ControlLeft] || io.KeysDown[(int)KeyCodes.ControlRight];
+            io.KeyAlt = io.KeysDown[(int)KeyCodes.AltLeft] || io.KeysDown[(int)KeyCodes.AltRight];
+            io.KeyShift = io.KeysDown[(int)KeyCodes.ShiftLeft] || io.KeysDown[(int)KeyCodes.ShiftRight];
+            io.KeySuper = io.KeysDown[(int)KeyCodes.SuperLeft] || io.KeysDown[(int)KeyCodes.SuperRight];
             #endregion
         }
 
@@ -377,10 +377,13 @@ namespace BootEngine.Layers.GUI
             io.KeyMap[(int)ImGuiKey.PageDown] = (int)KeyCodes.PageDown;
             io.KeyMap[(int)ImGuiKey.Home] = (int)KeyCodes.Home;
             io.KeyMap[(int)ImGuiKey.End] = (int)KeyCodes.End;
+            io.KeyMap[(int)ImGuiKey.Insert] = (int)KeyCodes.Insert;
             io.KeyMap[(int)ImGuiKey.Delete] = (int)KeyCodes.Delete;
             io.KeyMap[(int)ImGuiKey.Backspace] = (int)KeyCodes.BackSpace;
+            io.KeyMap[(int)ImGuiKey.Space] = (int)KeyCodes.Space;
             io.KeyMap[(int)ImGuiKey.Enter] = (int)KeyCodes.Enter;
             io.KeyMap[(int)ImGuiKey.Escape] = (int)KeyCodes.Escape;
+            io.KeyMap[(int)ImGuiKey.KeyPadEnter] = (int)KeyCodes.KeypadEnter;
             io.KeyMap[(int)ImGuiKey.A] = (int)KeyCodes.A;
             io.KeyMap[(int)ImGuiKey.C] = (int)KeyCodes.C;
             io.KeyMap[(int)ImGuiKey.V] = (int)KeyCodes.V;
