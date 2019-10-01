@@ -77,13 +77,10 @@ namespace BootEngine.Window
         #region CreateGraphicsDevice
         public static GraphicsDevice CreateGraphicsDevice(Sdl2Window window)
             => CreateGraphicsDevice(window, new GraphicsDeviceOptions(), GetPlatformDefaultBackend());
-
         public static GraphicsDevice CreateGraphicsDevice(Sdl2Window window, GraphicsDeviceOptions options)
             => CreateGraphicsDevice(window, options, GetPlatformDefaultBackend());
-
         public static GraphicsDevice CreateGraphicsDevice(Sdl2Window window, GraphicsBackend preferredBackend)
             => CreateGraphicsDevice(window, new GraphicsDeviceOptions(), preferredBackend);
-
         public static GraphicsDevice CreateGraphicsDevice(
             Sdl2Window window,
             GraphicsDeviceOptions options,
@@ -131,7 +128,6 @@ namespace BootEngine.Window
 #if !EXCLUDE_METAL_BACKEND
         private static unsafe GraphicsDevice CreateMetalGraphicsDevice(GraphicsDeviceOptions options, Sdl2Window window)
             => CreateMetalGraphicsDevice(options, window, false);
-
         private static unsafe GraphicsDevice CreateMetalGraphicsDevice(
             GraphicsDeviceOptions options,
             Sdl2Window window,
@@ -154,7 +150,6 @@ namespace BootEngine.Window
 #if !EXCLUDE_VULKAN_BACKEND
         public static unsafe GraphicsDevice CreateVulkanGraphicsDevice(GraphicsDeviceOptions options, Sdl2Window window)
             => CreateVulkanGraphicsDevice(options, window, false);
-
         public static unsafe GraphicsDevice CreateVulkanGraphicsDevice(
             GraphicsDeviceOptions options,
             Sdl2Window window,
@@ -258,6 +253,7 @@ namespace BootEngine.Window
             Sdl2Native.SDL_GL_SetAttribute(SDL_GLAttribute.ContextFlags, (int)contextFlags);
 
             SetMaxGLVersion(backend == GraphicsBackend.OpenGLES);
+
 
             int depthBits = 0;
             int stencilBits = 0;
