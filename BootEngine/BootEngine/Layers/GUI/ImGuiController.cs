@@ -6,49 +6,50 @@ using System.IO;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using Utils;
 using Utils.Exceptions;
 using Veldrid;
 
 namespace BootEngine.Layers.GUI
 {
-	public sealed class ImGuiController : IDisposable
+    public sealed class ImGuiController : IDisposable
     {
-		#region Properties
-		private GraphicsDevice graphicsDevice;
-		private bool frameBegun;
+        #region Properties
+        private GraphicsDevice graphicsDevice;
+        private bool frameBegun;
 
-		// Veldrid objects
-		private DeviceBuffer vertexBuffer;
-		private DeviceBuffer indexBuffer;
-		private DeviceBuffer projMatrixBuffer;
-		private Texture fontTexture;
-		private TextureView fontTextureView;
-		private Shader vertexShader;
-		private Shader fragmentShader;
-		private ResourceLayout layout;
-		private ResourceLayout textureLayout;
-		private Pipeline pipeline;
-		private ResourceSet mainResourceSet;
-		private ResourceSet fontTextureResourceSet;
+        // Veldrid objects
+        private DeviceBuffer vertexBuffer;
+        private DeviceBuffer indexBuffer;
+        private DeviceBuffer projMatrixBuffer;
+        private Texture fontTexture;
+        private TextureView fontTextureView;
+        private Shader vertexShader;
+        private Shader fragmentShader;
+        private ResourceLayout layout;
+        private ResourceLayout textureLayout;
+        private Pipeline pipeline;
+        private ResourceSet mainResourceSet;
+        private ResourceSet fontTextureResourceSet;
 
-		private readonly IntPtr fontAtlasID = (IntPtr)1;
+        private readonly IntPtr fontAtlasID = (IntPtr)1;
 
-		private int windowWidth;
-		private int windowHeight;
-		private Vector2 scaleFactor = Vector2.One;
+        private int windowWidth;
+        private int windowHeight;
+        private Vector2 scaleFactor = Vector2.One;
 
-		// Image trackers
-		private readonly Dictionary<TextureView, ResourceSetInfo> setsByView = new Dictionary<TextureView, ResourceSetInfo>();
-		private readonly Dictionary<Texture, TextureView> autoViewsByTexture = new Dictionary<Texture, TextureView>();
-		private readonly Dictionary<IntPtr, ResourceSetInfo> viewsById = new Dictionary<IntPtr, ResourceSetInfo>();
-		private readonly List<IDisposable> ownedResources = new List<IDisposable>();
-		private int lastAssignedID = 100;
-		#endregion
+        // Image trackers
+        private readonly Dictionary<TextureView, ResourceSetInfo> setsByView = new Dictionary<TextureView, ResourceSetInfo>();
+        private readonly Dictionary<Texture, TextureView> autoViewsByTexture = new Dictionary<Texture, TextureView>();
+        private readonly Dictionary<IntPtr, ResourceSetInfo> viewsById = new Dictionary<IntPtr, ResourceSetInfo>();
+        private readonly List<IDisposable> ownedResources = new List<IDisposable>();
+        private int lastAssignedID = 100;
+        #endregion
 
-		/// <summary>
-		/// Constructs a new ImGuiController.
-		/// </summary>
-		public ImGuiController(GraphicsDevice gd, OutputDescription outputDescription, int width, int height)
+        /// <summary>
+        /// Constructs a new ImGuiController.
+        /// </summary>
+        public ImGuiController(GraphicsDevice gd, OutputDescription outputDescription, int width, int height)
         {
             windowWidth = width;
             windowHeight = height;
@@ -229,10 +230,10 @@ namespace BootEngine.Layers.GUI
         public void RecreateFontDeviceTexture(GraphicsDevice gd)
         {
             ImGuiIOPtr io = ImGui.GetIO();
-			// Build
-			io.Fonts.GetTexDataAsRGBA32(out IntPtr pixels, out int width, out int height, out int bytesPerPixel);
-			// Store our identifier
-			io.Fonts.SetTexID(fontAtlasID);
+            // Build
+            io.Fonts.GetTexDataAsRGBA32(out IntPtr pixels, out int width, out int height, out int bytesPerPixel);
+            // Store our identifier
+            io.Fonts.SetTexID(fontAtlasID);
 
             fontTexture = gd.ResourceFactory.CreateTexture(TextureDescription.Texture2D(
                 (uint)width,
@@ -284,11 +285,11 @@ namespace BootEngine.Layers.GUI
             UpdateImGuiInput(InputManager.Snapshot);
         }
 
-		public void BeginFrame()
-		{
-			frameBegun = true;
-			ImGui.NewFrame();
-		}
+        public void BeginFrame()
+        {
+            frameBegun = true;
+            ImGui.NewFrame();
+        }
 
         /// <summary>
         /// Sets per-frame data based on the associated window.
@@ -306,8 +307,8 @@ namespace BootEngine.Layers.GUI
 
         private void UpdateImGuiInput(InputSnapshot snapshot)
         {
-			if (snapshot == null)
-				return;
+            if (snapshot == null)
+                return;
 
             ImGuiIOPtr io = ImGui.GetIO();
 
@@ -340,53 +341,52 @@ namespace BootEngine.Layers.GUI
             io.MousePos = snapshot.MousePosition;
             io.MouseWheel = snapshot.WheelDelta;
 
-			#region Keyboard
-			#region TypedKeys
-			IReadOnlyList<char> keyCharPresses = snapshot.KeyCharPresses;
-			for (int i = 0; i < keyCharPresses.Count; i++)
-			{
-				char c = keyCharPresses[i];
-				io.AddInputCharacter(c);
-			}
-			#endregion
+            #region Keyboard
+            #region TypedKeys
+            IReadOnlyList<char> keyCharPresses = snapshot.KeyCharPresses;
+            for (int i = 0; i < keyCharPresses.Count; i++)
+            {
+                char c = keyCharPresses[i];
+                io.AddInputCharacter(c);
+            }
+            #endregion
 
-			IReadOnlyList<KeyEvent> keyEvents = snapshot.KeyEvents;
-			for (int i = 0; i < keyEvents.Count; i++)
-			{
-				KeyEvent keyEvent = keyEvents[i];
-				io.KeysDown[(int)keyEvent.Key] = keyEvent.Down;
-			}
+            IReadOnlyList<KeyEvent> keyEvents = snapshot.KeyEvents;
+            for (int i = 0; i < keyEvents.Count; i++)
+            {
+                KeyEvent keyEvent = keyEvents[i];
+                io.KeysDown[(int)keyEvent.Key] = keyEvent.Down;
+            }
 
-			io.KeyCtrl = io.KeysDown[(int)Key.ControlLeft] || io.KeysDown[(int)Key.ControlRight];
-			io.KeyAlt = io.KeysDown[(int)Key.AltLeft] || io.KeysDown[(int)Key.AltRight];
-			io.KeyShift = io.KeysDown[(int)Key.ShiftLeft] || io.KeysDown[(int)Key.ShiftRight];
-			io.KeySuper = io.KeysDown[(int)Key.WinLeft] || io.KeysDown[(int)Key.WinRight];
-			#endregion
-		}
+            io.KeyCtrl = io.KeysDown[(int)Key.ControlLeft] || io.KeysDown[(int)Key.ControlRight];
+            io.KeyAlt = io.KeysDown[(int)Key.AltLeft] || io.KeysDown[(int)Key.AltRight];
+            io.KeyShift = io.KeysDown[(int)Key.ShiftLeft] || io.KeysDown[(int)Key.ShiftRight];
+            io.KeySuper = io.KeysDown[(int)Key.WinLeft] || io.KeysDown[(int)Key.WinRight];
+            #endregion
+        }
 
-		private static void SetImGuiKeyMappings()
+        private static void SetImGuiKeyMappings()
         {
-            // TODO: should eventually use boot engine key system
             ImGuiIOPtr io = ImGui.GetIO();
-            io.KeyMap[(int)ImGuiKey.Tab] = (int)Key.Tab;
-            io.KeyMap[(int)ImGuiKey.LeftArrow] = (int)Key.Left;
-            io.KeyMap[(int)ImGuiKey.RightArrow] = (int)Key.Right;
-            io.KeyMap[(int)ImGuiKey.UpArrow] = (int)Key.Up;
-            io.KeyMap[(int)ImGuiKey.DownArrow] = (int)Key.Down;
-            io.KeyMap[(int)ImGuiKey.PageUp] = (int)Key.PageUp;
-            io.KeyMap[(int)ImGuiKey.PageDown] = (int)Key.PageDown;
-            io.KeyMap[(int)ImGuiKey.Home] = (int)Key.Home;
-            io.KeyMap[(int)ImGuiKey.End] = (int)Key.End;
-            io.KeyMap[(int)ImGuiKey.Delete] = (int)Key.Delete;
-            io.KeyMap[(int)ImGuiKey.Backspace] = (int)Key.BackSpace;
-            io.KeyMap[(int)ImGuiKey.Enter] = (int)Key.Enter;
-            io.KeyMap[(int)ImGuiKey.Escape] = (int)Key.Escape;
-            io.KeyMap[(int)ImGuiKey.A] = (int)Key.A;
-            io.KeyMap[(int)ImGuiKey.C] = (int)Key.C;
-            io.KeyMap[(int)ImGuiKey.V] = (int)Key.V;
-            io.KeyMap[(int)ImGuiKey.X] = (int)Key.X;
-            io.KeyMap[(int)ImGuiKey.Y] = (int)Key.Y;
-            io.KeyMap[(int)ImGuiKey.Z] = (int)Key.Z;
+            io.KeyMap[(int)ImGuiKey.Tab] = (int)KeyCodes.Tab;
+            io.KeyMap[(int)ImGuiKey.LeftArrow] = (int)KeyCodes.Left;
+            io.KeyMap[(int)ImGuiKey.RightArrow] = (int)KeyCodes.Right;
+            io.KeyMap[(int)ImGuiKey.UpArrow] = (int)KeyCodes.Up;
+            io.KeyMap[(int)ImGuiKey.DownArrow] = (int)KeyCodes.Down;
+            io.KeyMap[(int)ImGuiKey.PageUp] = (int)KeyCodes.PageUp;
+            io.KeyMap[(int)ImGuiKey.PageDown] = (int)KeyCodes.PageDown;
+            io.KeyMap[(int)ImGuiKey.Home] = (int)KeyCodes.Home;
+            io.KeyMap[(int)ImGuiKey.End] = (int)KeyCodes.End;
+            io.KeyMap[(int)ImGuiKey.Delete] = (int)KeyCodes.Delete;
+            io.KeyMap[(int)ImGuiKey.Backspace] = (int)KeyCodes.BackSpace;
+            io.KeyMap[(int)ImGuiKey.Enter] = (int)KeyCodes.Enter;
+            io.KeyMap[(int)ImGuiKey.Escape] = (int)KeyCodes.Escape;
+            io.KeyMap[(int)ImGuiKey.A] = (int)KeyCodes.A;
+            io.KeyMap[(int)ImGuiKey.C] = (int)KeyCodes.C;
+            io.KeyMap[(int)ImGuiKey.V] = (int)KeyCodes.V;
+            io.KeyMap[(int)ImGuiKey.X] = (int)KeyCodes.X;
+            io.KeyMap[(int)ImGuiKey.Y] = (int)KeyCodes.Y;
+            io.KeyMap[(int)ImGuiKey.Z] = (int)KeyCodes.Z;
         }
 
         private void RenderImDrawData(ImDrawDataPtr draw_data, GraphicsDevice gd, CommandList cl)
@@ -399,7 +399,7 @@ namespace BootEngine.Layers.GUI
             uint vertexOffsetInVertices = 0;
             uint indexOffsetInElements = 0;
 
-			uint totalVBSize = (uint)(draw_data.TotalVtxCount * Unsafe.SizeOf<ImDrawVert>());
+            uint totalVBSize = (uint)(draw_data.TotalVtxCount * Unsafe.SizeOf<ImDrawVert>());
             if (totalVBSize > vertexBuffer.SizeInBytes)
             {
                 gd.DisposeWhenIdle(vertexBuffer);
@@ -463,8 +463,8 @@ namespace BootEngine.Layers.GUI
                     ImDrawCmdPtr pcmd = cmd_list.CmdBuffer[cmd_i];
                     if (pcmd.UserCallback != IntPtr.Zero)
                     {
-						throw new BootEngineException("ImGUI command user callback not implemented.");
-					}
+                        throw new BootEngineException("ImGUI command user callback not implemented.");
+                    }
                     else
                     {
                         if (pcmd.TextureId != IntPtr.Zero)
@@ -511,7 +511,7 @@ namespace BootEngine.Layers.GUI
             textureLayout.Dispose();
             pipeline.Dispose();
             mainResourceSet.Dispose();
-			fontTextureResourceSet.Dispose();
+            fontTextureResourceSet.Dispose();
 
             foreach (IDisposable resource in ownedResources)
             {
