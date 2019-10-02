@@ -55,9 +55,10 @@ namespace BootEngine.Layers.GUI
             windowHeight = height;
 
             ImGui.SetCurrentContext(ImGui.CreateContext());
+			ImGui.StyleColorsDark();
             ImGui.GetIO().Fonts.AddFontDefault();
 
-            CreateDeviceResources(gd, outputDescription);
+			CreateDeviceResources(gd, outputDescription);
             SetImGuiKeyMappings();
 
             SetPerFrameImGuiData(1f / 60);
