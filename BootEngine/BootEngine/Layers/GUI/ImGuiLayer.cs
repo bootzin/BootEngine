@@ -28,13 +28,13 @@ namespace BootEngine.Layers.GUI
 			ImGui.SetCurrentContext(ImGui.CreateContext());
 			ImGui.StyleColorsDark();
 
+			controller = new ImGuiController(gd, gd.MainSwapchain.Framebuffer.OutputDescription, nativeWindow.Width, nativeWindow.Height);
+
 			var io = ImGui.GetIO();
 			io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;
 			io.ConfigFlags |= ImGuiConfigFlags.DockingEnable | ImGuiConfigFlags.ViewportsEnable;
 			io.BackendFlags |= ImGuiBackendFlags.HasMouseCursors | ImGuiBackendFlags.HasSetMousePos;
 			io.BackendFlags |= ImGuiBackendFlags.RendererHasViewports;
-
-			controller = new ImGuiController(gd, gd.MainSwapchain.Framebuffer.OutputDescription, nativeWindow.Width, nativeWindow.Height);
 
 			ImGuiViewportPtr viewPort = ImGui.GetMainViewport();
 			viewPort.PlatformHandle = nativeWindow.SdlWindowHandle;
