@@ -29,8 +29,10 @@ namespace BootEngine.Layers.GUI
 			ImGui.StyleColorsDark();
 
 			var io = ImGui.GetIO();
-			io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard | ImGuiConfigFlags.DockingEnable | ImGuiConfigFlags.ViewportsEnable;
-			io.BackendFlags |= ImGuiBackendFlags.HasMouseCursors | ImGuiBackendFlags.HasSetMousePos | ImGuiBackendFlags.RendererHasViewports;
+			io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;
+			io.ConfigFlags |= ImGuiConfigFlags.DockingEnable | ImGuiConfigFlags.ViewportsEnable;
+			io.BackendFlags |= ImGuiBackendFlags.HasMouseCursors | ImGuiBackendFlags.HasSetMousePos;
+			io.BackendFlags |= ImGuiBackendFlags.RendererHasViewports;
 
 			controller = new ImGuiController(gd, gd.MainSwapchain.Framebuffer.OutputDescription, nativeWindow.Width, nativeWindow.Height);
 

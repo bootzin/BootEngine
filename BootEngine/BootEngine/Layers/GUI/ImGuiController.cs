@@ -369,28 +369,28 @@ namespace BootEngine.Layers.GUI
         {
 			//TODO fix the useless +4 being added, check for Modifiers that are not working
             ImGuiIOPtr io = ImGui.GetIO();
-            io.KeyMap[(int)ImGuiKey.Tab] = (int)KeyCodes.Tab + 4;
-            io.KeyMap[(int)ImGuiKey.LeftArrow] = (int)KeyCodes.Left + 4;
-            io.KeyMap[(int)ImGuiKey.RightArrow] = (int)KeyCodes.Right + 4;
-            io.KeyMap[(int)ImGuiKey.UpArrow] = (int)KeyCodes.Up + 4;
-            io.KeyMap[(int)ImGuiKey.DownArrow] = (int)KeyCodes.Down + 4;
-            io.KeyMap[(int)ImGuiKey.PageUp] = (int)KeyCodes.PageUp + 4;
-            io.KeyMap[(int)ImGuiKey.PageDown] = (int)KeyCodes.PageDown + 4;
-            io.KeyMap[(int)ImGuiKey.Home] = (int)KeyCodes.Home + 4;
-            io.KeyMap[(int)ImGuiKey.End] = (int)KeyCodes.End + 4;
-            io.KeyMap[(int)ImGuiKey.Insert] = (int)KeyCodes.Insert + 4;
-            io.KeyMap[(int)ImGuiKey.Delete] = (int)KeyCodes.Delete + 4;
-            io.KeyMap[(int)ImGuiKey.Backspace] = (int)KeyCodes.BackSpace + 4;
-            io.KeyMap[(int)ImGuiKey.Space] = (int)KeyCodes.Space + 4;
-            io.KeyMap[(int)ImGuiKey.Enter] = (int)KeyCodes.Enter + 4;
-            io.KeyMap[(int)ImGuiKey.Escape] = (int)KeyCodes.Escape + 4;
-            io.KeyMap[(int)ImGuiKey.KeyPadEnter] = (int)KeyCodes.KeypadEnter + 4;
-            io.KeyMap[(int)ImGuiKey.A] = (int)KeyCodes.A + 4;
-            io.KeyMap[(int)ImGuiKey.C] = (int)KeyCodes.C + 4;
-            io.KeyMap[(int)ImGuiKey.V] = (int)KeyCodes.V + 4;
-            io.KeyMap[(int)ImGuiKey.X] = (int)KeyCodes.X + 4;
-            io.KeyMap[(int)ImGuiKey.Y] = (int)KeyCodes.Y + 4;
-            io.KeyMap[(int)ImGuiKey.Z] = (int)KeyCodes.Z + 4;
+            io.KeyMap[(int)ImGuiKey.Tab] = (int)KeyCodes.Tab;
+            io.KeyMap[(int)ImGuiKey.LeftArrow] = (int)KeyCodes.Left;
+            io.KeyMap[(int)ImGuiKey.RightArrow] = (int)KeyCodes.Right;
+            io.KeyMap[(int)ImGuiKey.UpArrow] = (int)KeyCodes.Up;
+            io.KeyMap[(int)ImGuiKey.DownArrow] = (int)KeyCodes.Down;
+            io.KeyMap[(int)ImGuiKey.PageUp] = (int)KeyCodes.PageUp;
+            io.KeyMap[(int)ImGuiKey.PageDown] = (int)KeyCodes.PageDown;
+            io.KeyMap[(int)ImGuiKey.Home] = (int)KeyCodes.Home;
+            io.KeyMap[(int)ImGuiKey.End] = (int)KeyCodes.End;
+            io.KeyMap[(int)ImGuiKey.Insert] = (int)KeyCodes.Insert;
+            io.KeyMap[(int)ImGuiKey.Delete] = (int)KeyCodes.Delete;
+            io.KeyMap[(int)ImGuiKey.Backspace] = (int)KeyCodes.BackSpace;
+            io.KeyMap[(int)ImGuiKey.Space] = (int)KeyCodes.Space;
+            io.KeyMap[(int)ImGuiKey.Enter] = (int)KeyCodes.Enter;
+            io.KeyMap[(int)ImGuiKey.Escape] = (int)KeyCodes.Escape;
+            io.KeyMap[(int)ImGuiKey.KeyPadEnter] = (int)KeyCodes.KeypadEnter;
+            io.KeyMap[(int)ImGuiKey.A] = (int)KeyCodes.A;
+            io.KeyMap[(int)ImGuiKey.C] = (int)KeyCodes.C;
+            io.KeyMap[(int)ImGuiKey.V] = (int)KeyCodes.V;
+            io.KeyMap[(int)ImGuiKey.X] = (int)KeyCodes.X;
+            io.KeyMap[(int)ImGuiKey.Y] = (int)KeyCodes.Y;
+            io.KeyMap[(int)ImGuiKey.Z] = (int)KeyCodes.Z;
         }
 
         private void RenderImDrawData(ImDrawDataPtr draw_data, GraphicsDevice gd, CommandList cl)
