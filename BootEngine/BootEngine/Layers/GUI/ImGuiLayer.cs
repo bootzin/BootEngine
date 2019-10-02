@@ -30,9 +30,13 @@ namespace BootEngine.Layers.GUI
 
 			var io = ImGui.GetIO();
 			io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard | ImGuiConfigFlags.DockingEnable | ImGuiConfigFlags.ViewportsEnable;
-			io.BackendFlags |= ImGuiBackendFlags.HasMouseCursors | ImGuiBackendFlags.HasSetMousePos;
+			io.BackendFlags |= ImGuiBackendFlags.HasMouseCursors | ImGuiBackendFlags.HasSetMousePos | ImGuiBackendFlags.RendererHasViewports;
 
 			controller = new ImGuiController(gd, gd.MainSwapchain.Framebuffer.OutputDescription, nativeWindow.Width, nativeWindow.Height);
+
+			ImGuiViewportPtr viewPort = ImGui.GetMainViewport();
+			viewPort.PlatformHandle = nativeWindow.SdlWindowHandle;
+			viewPort.PlatformHandleRaw = nativeWindow.Handle;
 
 			window.GetNativeWindow().Resized += () => controller.WindowResized(nativeWindow.Width, nativeWindow.Height);
 		}
@@ -61,6 +65,12 @@ namespace BootEngine.Layers.GUI
 		public void End()
 		{
 			controller.Render(gd, cl);
+
+			var ctx = ImGui.GetCurrentContext();
+			ImGui.UpdatePlatformWindows();
+			ImGui.RenderPlatformWindowsDefault();
+			ImGui.SetCurrentContext(ctx);
+
 			cl.End();
 			gd.SubmitCommands(cl);
 			gd.SwapBuffers();
