@@ -535,7 +535,7 @@ namespace BootEngine.Layers.GUI
 			io.ConfigFlags |= ImGuiConfigFlags.DockingEnable | ImGuiConfigFlags.ViewportsEnable;
 			io.BackendFlags |= ImGuiBackendFlags.HasMouseCursors | ImGuiBackendFlags.HasSetMousePos;
 			io.BackendFlags |= ImGuiBackendFlags.RendererHasViewports;
-			io.BackendFlags |= ImGuiBackendFlags.PlatformHasViewports | ImGuiBackendFlags.HasMouseHoveredViewport;
+			//io.BackendFlags |= ImGuiBackendFlags.PlatformHasViewports | ImGuiBackendFlags.HasMouseHoveredViewport;
 
 			ImGuiStylePtr style = ImGui.GetStyle();
 			if ((io.ConfigFlags & ImGuiConfigFlags.ViewportsEnable) != 0)
@@ -549,13 +549,12 @@ namespace BootEngine.Layers.GUI
 			viewPort.PlatformHandleRaw = nativeWindow.Handle;
 
 			ImGuiPlatformIOPtr plIo = ImGui.GetPlatformIO();
-			unsafe
-			{
-				plIo.Platform_DestroyWindow = Marshal.GetFunctionPointerForDelegate<Action<SDL_Window>>(Sdl2Native.SDL_DestroyWindow);
-			}
+			plIo.Platform_DestroyWindow = Marshal.GetFunctionPointerForDelegate<T>(new T((w) => Sdl2Native.SDL_DestroyWindow(w)));
 		}
 
-        private struct ResourceSetInfo
+		private delegate void T(SDL_Window w);
+
+		private struct ResourceSetInfo
         {
             public readonly IntPtr ImGuiBinding;
             public readonly ResourceSet ResourceSet;
