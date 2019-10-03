@@ -4,7 +4,9 @@
     <OutputType>Library</OutputType>
     <TargetFramework>netcoreapp3.0</TargetFramework>
     <ApplicationIcon />
-    <StartupObject />
+    <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</IsWindows>
+    <IsOSX Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'true'">true</IsOSX>
+    <IsLinux Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">true</IsLinux>
     <LangVersion>default</LangVersion>
     <Platforms>AnyCPU;x64</Platforms>
     <Configurations>Debug;Release;Dist</Configurations>
@@ -83,22 +85,22 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ContentWithTargetPath  Include="_deps\ImGui.NET\cimgui\linux-x64\cimgui.so" Condition="'$(IsLinux)'=='true'">
+    <ContentWithTargetPath Include="_deps\ImGui.NET\cimgui\linux-x64\cimgui.so" Condition="'$(IsLinux)'=='true'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>cimgui.so</TargetPath>
-    </ContentWithTargetPath >
-    <ContentWithTargetPath  Include="_deps\ImGui.NET\cimgui\osx-x64\cimgui.dylib" Condition="'$(IsOSX)'=='true'">
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="_deps\ImGui.NET\cimgui\osx-x64\cimgui.dylib" Condition="'$(IsOSX)'=='true'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>cimgui.dylib</TargetPath>
-    </ContentWithTargetPath >
-    <ContentWithTargetPath  Include="_deps\ImGui.NET\cimgui\win-x64\cimgui.dll" Condition="'$(IsWindows)'=='true' And '$(Platform)'=='x64'">
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="_deps\ImGui.NET\cimgui\win-x64\cimgui.dll" Condition="'$(IsWindows)'=='true' And '$(Platform)'=='x64'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>cimgui.dll</TargetPath>
-    </ContentWithTargetPath >
-    <ContentWithTargetPath  Include="_deps\ImGui.NET\cimgui\win-x86\cimgui.dll" Condition="'$(IsWindows)'=='true' And '$(Platform)'!='x64'">
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="_deps\ImGui.NET\cimgui\win-x86\cimgui.dll" Condition="'$(IsWindows)'=='true' And '$(Platform)'!='x64'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>cimgui.dll</TargetPath>
-    </ContentWithTargetPath >
+    </ContentWithTargetPath>
   </ItemGroup>
 
 </Project>

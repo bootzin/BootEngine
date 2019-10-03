@@ -25,17 +25,7 @@ namespace BootEngine.Layers.GUI
 			gd = window.GetGraphicsDevice();
 			cl = window.ResourceFactory.CreateCommandList();
 
-			controller = new ImGuiController(gd, gd.MainSwapchain.Framebuffer.OutputDescription, nativeWindow.Width, nativeWindow.Height);
-
-			ImGuiViewportPtr viewPort = ImGui.GetMainViewport();
-			viewPort.PlatformHandle = nativeWindow.SdlWindowHandle;
-			viewPort.PlatformHandleRaw = nativeWindow.Handle;
-
-			var io = ImGui.GetIO();
-			io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;
-			io.ConfigFlags |= ImGuiConfigFlags.DockingEnable | ImGuiConfigFlags.ViewportsEnable;
-			io.BackendFlags |= ImGuiBackendFlags.HasMouseCursors | ImGuiBackendFlags.HasSetMousePos;
-			io.BackendFlags |= ImGuiBackendFlags.RendererHasViewports;
+			controller = new ImGuiController(gd, gd.MainSwapchain.Framebuffer.OutputDescription, nativeWindow);
 
 			window.GetNativeWindow().Resized += () => controller.WindowResized(nativeWindow.Width, nativeWindow.Height);
 		}
@@ -43,8 +33,8 @@ namespace BootEngine.Layers.GUI
 		public override void OnDetach()
 		{
 			controller.Dispose();
-			gd.Dispose();
 			cl.Dispose();
+			gd.Dispose();
 			ImGui.DestroyContext();
 		}
 

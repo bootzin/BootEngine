@@ -6,9 +6,11 @@ using System.IO;
 using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Utils;
 using Utils.Exceptions;
 using Veldrid;
+using Veldrid.Sdl2;
 
 namespace BootEngine.Layers.GUI
 {
@@ -49,14 +51,15 @@ namespace BootEngine.Layers.GUI
         /// <summary>
         /// Constructs a new ImGuiController.
         /// </summary>
-        public ImGuiController(GraphicsDevice gd, OutputDescription outputDescription, int width, int height)
+        public ImGuiController(GraphicsDevice gd, OutputDescription outputDescription, Sdl2Window nativeWindow)
         {
-            windowWidth = width;
-            windowHeight = height;
+            windowWidth = nativeWindow.Width;
+            windowHeight = nativeWindow.Height;
 
             ImGui.SetCurrentContext(ImGui.CreateContext());
 			ImGui.StyleColorsDark();
-            ImGui.GetIO().Fonts.AddFontDefault();
+
+			SetUpImGuiIo(nativeWindow);
 
 			CreateDeviceResources(gd, outputDescription);
             SetImGuiKeyMappings();
@@ -523,6 +526,34 @@ namespace BootEngine.Layers.GUI
                 resource.Dispose();
             }
         }
+
+		private void SetUpImGuiIo(Sdl2Window nativeWindow)
+		{
+			ImGuiIOPtr io = ImGui.GetIO();
+			io.Fonts.AddFontDefault();
+			io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;
+			io.ConfigFlags |= ImGuiConfigFlags.DockingEnable | ImGuiConfigFlags.ViewportsEnable;
+			io.BackendFlags |= ImGuiBackendFlags.HasMouseCursors | ImGuiBackendFlags.HasSetMousePos;
+			io.BackendFlags |= ImGuiBackendFlags.RendererHasViewports;
+			io.BackendFlags |= ImGuiBackendFlags.PlatformHasViewports | ImGuiBackendFlags.HasMouseHoveredViewport;
+
+			ImGuiStylePtr style = ImGui.GetStyle();
+			if ((io.ConfigFlags & ImGuiConfigFlags.ViewportsEnable) != 0)
+			{
+				style.WindowRounding = 0.0f;
+				style.Colors[(int)ImGuiCol.WindowBg].W = 1.0f;
+			}
+
+			ImGuiViewportPtr viewPort = ImGui.GetMainViewport();
+			viewPort.PlatformHandle = nativeWindow.SdlWindowHandle;
+			viewPort.PlatformHandleRaw = nativeWindow.Handle;
+
+			ImGuiPlatformIOPtr plIo = ImGui.GetPlatformIO();
+			unsafe
+			{
+				plIo.Platform_DestroyWindow = Marshal.GetFunctionPointerForDelegate<Action<SDL_Window>>(Sdl2Native.SDL_DestroyWindow);
+			}
+		}
 
         private struct ResourceSetInfo
         {
