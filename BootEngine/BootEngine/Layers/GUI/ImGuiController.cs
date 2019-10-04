@@ -1,4 +1,5 @@
 ﻿using BootEngine.Input;
+using BootEngine.Window;
 using ImGuiNET;
 using System;
 using System.Collections.Generic;
@@ -11,6 +12,7 @@ using Utils;
 using Utils.Exceptions;
 using Veldrid;
 using Veldrid.Sdl2;
+using Veldrid.Vk;
 
 namespace BootEngine.Layers.GUI
 {
@@ -40,28 +42,76 @@ namespace BootEngine.Layers.GUI
         private int windowHeight;
         private Vector2 scaleFactor = Vector2.One;
 
-        // Image trackers
-        private readonly Dictionary<TextureView, ResourceSetInfo> setsByView = new Dictionary<TextureView, ResourceSetInfo>();
+		#region Delegates
+		private delegate void ViewportDelegate(ImGuiViewportPtr viewport);
+		private delegate Vector2 ViewportVec2Delegate(ImGuiViewportPtr viewport);
+		private delegate bool ViewportBoolDelegate(ImGuiViewportPtr viewport);
+		private delegate void ArgVec2Delegate(ImGuiViewportPtr viewport, Vector2 arg0);
+		private delegate void ArgStringDelegate(ImGuiViewportPtr viewport, string arg0);
+		private delegate void ArgFloatDelegate(ImGuiViewportPtr viewport, float arg0);
+		#endregion
+
+		// Image trackers
+		private readonly Dictionary<TextureView, ResourceSetInfo> setsByView = new Dictionary<TextureView, ResourceSetInfo>();
         private readonly Dictionary<Texture, TextureView> autoViewsByTexture = new Dictionary<Texture, TextureView>();
         private readonly Dictionary<IntPtr, ResourceSetInfo> viewsById = new Dictionary<IntPtr, ResourceSetInfo>();
         private readonly List<IDisposable> ownedResources = new List<IDisposable>();
         private int lastAssignedID = 100;
-        #endregion
 
-        /// <summary>
-        /// Constructs a new ImGuiController.
-        /// </summary>
-        public ImGuiController(GraphicsDevice gd, OutputDescription outputDescription, Sdl2Window nativeWindow)
+		//Windows
+		private readonly long WS_EX_APPWINDOW = 0x00040000L;
+		private readonly long WS_EX_TOOLWINDOW = 0x00000080L;
+		private const int GWL_EXSTYLE = -20;
+		private const int SW_SHOWNA = 8;
+		private const int SM_CMONITORS = 80;
+
+		[DllImport("user32.dll")]
+		static extern int GetSystemMetrics(int smIndex);
+		[DllImport("user32.dll", EntryPoint = "GetWindowLong")]
+		private static extern IntPtr GetWindowLongPtr32(IntPtr hWnd, int nIndex);
+		[DllImport("user32.dll", EntryPoint = "GetWindowLongPtr")]
+		private static extern IntPtr GetWindowLongPtr64(IntPtr hWnd, int nIndex);
+		[DllImport("user32.dll", EntryPoint = "SetWindowLong")]
+		private static extern int SetWindowLong32(IntPtr hWnd, int nIndex, int dwNewLong);
+		[DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
+		private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+		[DllImport("user32.dll")]
+		static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+		// This static method is required because Win32 does not support
+		// GetWindowLongPtr directly
+		public static IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex)
+		{
+			if (IntPtr.Size == 8)
+				return GetWindowLongPtr64(hWnd, nIndex);
+			else
+				return GetWindowLongPtr32(hWnd, nIndex);
+		}
+		// This static method is required because legacy OSes do not support
+		// SetWindowLongPtr
+		public static IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong)
+		{
+			if (IntPtr.Size == 8)
+				return SetWindowLongPtr64(hWnd, nIndex, dwNewLong);
+			else
+				return new IntPtr(SetWindowLong32(hWnd, nIndex, dwNewLong.ToInt32()));
+		}
+		#endregion
+
+		/// <summary>
+		/// Constructs a new ImGuiController.
+		/// </summary>
+		public ImGuiController(GraphicsDevice gd, OutputDescription outputDescription, Sdl2Window sdlWindow)
         {
-            windowWidth = nativeWindow.Width;
-            windowHeight = nativeWindow.Height;
+            windowWidth = sdlWindow.Width;
+            windowHeight = sdlWindow.Height;
 
             ImGui.SetCurrentContext(ImGui.CreateContext());
 			ImGui.StyleColorsDark();
 
-			SetUpImGuiIo(nativeWindow);
-
 			CreateDeviceResources(gd, outputDescription);
+
+			SetupImGuiIo(sdlWindow);
             SetImGuiKeyMappings();
 
             SetPerFrameImGuiData(1f / 60);
@@ -527,43 +577,311 @@ namespace BootEngine.Layers.GUI
             }
         }
 
-		private void SetUpImGuiIo(Sdl2Window nativeWindow)
+		private void SetupImGuiIo(Sdl2Window sdlWindow)
 		{
 			ImGuiIOPtr io = ImGui.GetIO();
 			io.Fonts.AddFontDefault();
-			io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard;
-			io.ConfigFlags |= ImGuiConfigFlags.DockingEnable | ImGuiConfigFlags.ViewportsEnable;
+			io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard | ImGuiConfigFlags.DockingEnable;
+			io.ConfigFlags |= ImGuiConfigFlags.ViewportsEnable;
 			io.BackendFlags |= ImGuiBackendFlags.HasMouseCursors | ImGuiBackendFlags.HasSetMousePos;
-			io.BackendFlags |= ImGuiBackendFlags.RendererHasViewports;
-			//io.BackendFlags |= ImGuiBackendFlags.PlatformHasViewports | ImGuiBackendFlags.HasMouseHoveredViewport;
+			//io.BackendFlags |= ImGuiBackendFlags.RendererHasViewports;
+			io.BackendFlags |= ImGuiBackendFlags.PlatformHasViewports | ImGuiBackendFlags.HasMouseHoveredViewport;
 
-			ImGuiStylePtr style = ImGui.GetStyle();
 			if ((io.ConfigFlags & ImGuiConfigFlags.ViewportsEnable) != 0)
 			{
-				style.WindowRounding = 0.0f;
-				style.Colors[(int)ImGuiCol.WindowBg].W = 1.0f;
+				if (graphicsDevice.BackendType == GraphicsBackend.OpenGL || graphicsDevice.BackendType == GraphicsBackend.OpenGLES)
+					SetupPlatformIo(sdlWindow, Sdl2Native.SDL_GL_CreateContext(sdlWindow.SdlWindowHandle));
+				else
+					SetupPlatformIo(sdlWindow, IntPtr.Zero);
 			}
-
-			ImGuiViewportPtr viewPort = ImGui.GetMainViewport();
-			viewPort.PlatformHandle = nativeWindow.SdlWindowHandle;
-			viewPort.PlatformHandleRaw = nativeWindow.Handle;
-
-			ImGuiPlatformIOPtr plIo = ImGui.GetPlatformIO();
-			plIo.Platform_DestroyWindow = Marshal.GetFunctionPointerForDelegate<T>(new T((w) => Sdl2Native.SDL_DestroyWindow(w)));
 		}
 
-		private delegate void T(SDL_Window w);
+		private unsafe void SetupPlatformIo(Sdl2Window sdlWindow, IntPtr sdlGlContext)
+		{
+			ImGuiStylePtr style = ImGui.GetStyle();
+			style.WindowRounding = 0.0f;
+			style.Colors[(int)ImGuiCol.WindowBg].W = 1.0f;
+
+			ImGuiPlatformIOPtr plIo = ImGui.GetPlatformIO();
+			plIo.Platform_CreateWindow = Marshal.GetFunctionPointerForDelegate<ViewportDelegate>(PlatformCreateWindow);
+			plIo.Platform_DestroyWindow = Marshal.GetFunctionPointerForDelegate<ViewportDelegate>(PlatformDestroyWindow);
+			plIo.Platform_ShowWindow = Marshal.GetFunctionPointerForDelegate<ViewportDelegate>(PlatformShowWindow);
+			plIo.Platform_GetWindowPos = Marshal.GetFunctionPointerForDelegate<ViewportVec2Delegate>(PlatformGetWindowPosition);
+			plIo.Platform_SetWindowPos = Marshal.GetFunctionPointerForDelegate<ArgVec2Delegate>(PlatformSetWindowPosition);
+			plIo.Platform_GetWindowSize = Marshal.GetFunctionPointerForDelegate<ViewportVec2Delegate>(PlatformGetWindowSize);
+			plIo.Platform_SetWindowSize = Marshal.GetFunctionPointerForDelegate<ArgVec2Delegate>(PlatformSetWindowSize);
+			plIo.Platform_SetWindowTitle = Marshal.GetFunctionPointerForDelegate<ArgStringDelegate>(PlatformSetWindowTitle);
+			plIo.Platform_SetWindowAlpha = Marshal.GetFunctionPointerForDelegate<ArgFloatDelegate>(PlatformSetWindowAlpha);
+			plIo.Platform_GetWindowFocus = Marshal.GetFunctionPointerForDelegate<ViewportBoolDelegate>(PlatformGetWindowFocus);
+			plIo.Platform_GetWindowMinimized = Marshal.GetFunctionPointerForDelegate<ViewportBoolDelegate>(PlatformGetWindowMinimized);
+			plIo.Platform_RenderWindow = Marshal.GetFunctionPointerForDelegate<ViewportDelegate>(PlatformRenderWindow);
+			plIo.Platform_SwapBuffers = Marshal.GetFunctionPointerForDelegate<ViewportDelegate>(PlatformSwapBuffers);
+			plIo.Platform_CreateVkSurface = Marshal.GetFunctionPointerForDelegate<ViewportBoolDelegate>(PlatformCreateVkSurface);
+
+			//not yet implemented
+			plIo.Platform_SetWindowFocus = Marshal.GetFunctionPointerForDelegate<ViewportDelegate>(PlatformSetWindowFocus);
+
+			UpdateMonitors(plIo);
+
+			ImGuiViewportPtr mainViewport = ImGui.GetMainViewport();
+			ViewportDataPtr data = new ViewportDataPtr((IntPtr)mainViewport.NativePtr);
+			data.SdlWindowHandle = sdlWindow.SdlWindowHandle;
+			data.WindowID = Sdl2Native.SDL_GetWindowID(sdlWindow.SdlWindowHandle);
+			data.WindowOwned = false;
+			data.GlContext = sdlGlContext;
+			mainViewport.PlatformUserData = (IntPtr)data.NativePtr;
+			mainViewport.PlatformHandle = sdlWindow.SdlWindowHandle;
+			mainViewport.PlatformHandleRaw = sdlWindow.Handle;
+		}
+
+		private unsafe void UpdateMonitors(ImGuiPlatformIOPtr plIo)
+		{
+			//TODO: rework stuff around new sdl lib
+			int displayCount = SDL2.SDL.SDL_GetNumVideoDisplays();
+			for (int n = 0; n < displayCount; n++)
+			{
+				ImGuiPlatformMonitorPtr monitor = ImGuiNative.ImGuiPlatformMonitor_ImGuiPlatformMonitor();
+				SDL2.SDL.SDL_GetDisplayBounds(n, out SDL2.SDL.SDL_Rect r);
+				monitor.MainPos = new Vector2(r.x, r.y);
+				monitor.MainSize = new Vector2(r.w, r.h);
+				SDL2.SDL.SDL_GetDisplayUsableBounds(n, out r);
+				monitor.WorkPos = new Vector2(r.x, r.y);
+				monitor.WorkSize = new Vector2(r.w, r.h);
+				if (SDL2.SDL.SDL_GetDisplayDPI(n, out float dpi, out float _, out float _) != 0)
+				{
+					monitor.DpiScale = dpi / 96.0f;
+				}
+				var t = new HandleRef(plIo.Monitors, new IntPtr(0x99));
+				var tt = new ImPtrVector<ImGuiPlatformMonitorPtr>(2, 2, new IntPtr(0x88), 1);
+				var z = new List<ImGuiPlatformMonitorPtr>();
+				z.Add(plIo.Monitors[0]);
+				var ttt = Unsafe.AsRef(t.Handle);
+				Unsafe.Write((void*)ttt, tt);
+				//mon = monitor;
+			}
+		}
+
+		private unsafe bool PlatformCreateVkSurface(ImGuiViewportPtr viewport)
+		{
+			ViewportDataPtr data = viewport.PlatformUserData;
+			SDL_SysWMinfo sysWmInfo;
+			Sdl2Native.SDL_GetVersion(&sysWmInfo.version);
+			Sdl2Native.SDL_GetWMWindowInfo(data.SdlWindowHandle, &sysWmInfo);
+			return GetSurfaceSource(sysWmInfo).CreateSurface(new Vulkan.VkInstance(data.SdlWindowHandle)) != Vulkan.VkSurfaceKHR.Null;
+		}
+
+		private static unsafe VkSurfaceSource GetSurfaceSource(SDL_SysWMinfo sysWmInfo)
+		{
+			switch (sysWmInfo.subsystem)
+			{
+				case SysWMType.Windows:
+					Win32WindowInfo w32Info = Unsafe.Read<Win32WindowInfo>(&sysWmInfo.info);
+					return VkSurfaceSource.CreateWin32(w32Info.hinstance, w32Info.Sdl2Window);
+				case SysWMType.X11:
+					X11WindowInfo x11Info = Unsafe.Read<X11WindowInfo>(&sysWmInfo.info);
+					return VkSurfaceSource.CreateXlib(
+						(Vulkan.Xlib.Display*)x11Info.display,
+						new Vulkan.Xlib.Window() { Value = x11Info.Sdl2Window });
+				default:
+					throw new PlatformNotSupportedException("Cannot create a Vulkan surface for " + sysWmInfo.subsystem + ".");
+			}
+		}
+
+		private void PlatformSwapBuffers(ImGuiViewportPtr viewport)
+		{
+			ViewportDataPtr data = viewport.PlatformUserData;
+			if (data.GlContext != IntPtr.Zero)
+			{
+				Sdl2Native.SDL_GL_MakeCurrent(data.SdlWindowHandle, data.GlContext);
+				Sdl2Native.SDL_GL_SwapWindow(data.SdlWindowHandle);
+			}
+		}
+
+		private void PlatformRenderWindow(ImGuiViewportPtr viewport)
+		{
+			ViewportDataPtr data = viewport.PlatformUserData;
+			if (data.GlContext != IntPtr.Zero)
+				Sdl2Native.SDL_GL_MakeCurrent(data.SdlWindowHandle, data.GlContext);
+		}
+
+		private bool PlatformGetWindowMinimized(ImGuiViewportPtr viewport)
+		{
+			ViewportDataPtr data = viewport.PlatformUserData;
+			return (Sdl2Native.SDL_GetWindowFlags(data.SdlWindowHandle) & SDL_WindowFlags.Minimized) != 0;
+		}
+
+		private bool PlatformGetWindowFocus(ImGuiViewportPtr viewport)
+		{
+			ViewportDataPtr data = viewport.PlatformUserData;
+			return (Sdl2Native.SDL_GetWindowFlags(data.SdlWindowHandle) & SDL_WindowFlags.InputFocus) != 0;
+		}
+
+		private void PlatformSetWindowFocus(ImGuiViewportPtr viewport)
+		{
+			//figure out how to do this later
+		}
+
+		private void PlatformSetWindowAlpha(ImGuiViewportPtr viewport, float alpha)
+		{
+			ViewportDataPtr data = viewport.PlatformUserData;
+			Sdl2Native.SDL_SetWindowOpacity(data.SdlWindowHandle, alpha);
+		}
+
+		private void PlatformSetWindowTitle(ImGuiViewportPtr viewport, string title)
+		{
+			ViewportDataPtr data = viewport.PlatformUserData;
+			Sdl2Native.SDL_SetWindowTitle(data.SdlWindowHandle, title);
+		}
+
+		private void PlatformSetWindowPosition(ImGuiViewportPtr viewport, Vector2 pos)
+		{
+			ViewportDataPtr data = viewport.PlatformUserData;
+			Sdl2Native.SDL_SetWindowPosition(data.SdlWindowHandle, (int)pos.X, (int)pos.Y);
+		}
+
+		private void PlatformSetWindowSize(ImGuiViewportPtr viewport, Vector2 size)
+		{
+			ViewportDataPtr data = viewport.PlatformUserData;
+			Sdl2Native.SDL_SetWindowPosition(data.SdlWindowHandle, (int)size.X, (int)size.Y);
+		}
+
+		private unsafe Vector2 PlatformGetWindowSize(ImGuiViewportPtr viewport)
+		{
+			ViewportDataPtr data = viewport.PlatformUserData;
+			int w, h;
+			Sdl2Native.SDL_GetWindowSize(data.SdlWindowHandle, &w, &h);
+			return new Vector2(w, h);
+		}
+
+		private unsafe Vector2 PlatformGetWindowPosition(ImGuiViewportPtr viewport)
+		{
+			ViewportDataPtr data = viewport.PlatformUserData;
+			int x, y;
+			Sdl2Native.SDL_GetWindowPosition(data.SdlWindowHandle, &x, &y);
+			return new Vector2(x, y);
+		}
+
+		private unsafe void PlatformCreateWindow(ImGuiViewportPtr viewport)
+		{
+			ViewportDataPtr data = new ViewportDataPtr(new IntPtr(viewport.NativePtr));
+			viewport.PlatformUserData = new HandleRef(data, (IntPtr)data.NativePtr).Handle;
+
+			var t = Unsafe.AsRef<ViewportDataPtr>(viewport.PlatformUserData);
+
+			ImGuiViewportPtr mainViewport = ImGui.GetMainViewport();
+			ViewportDataPtr mainViewportData = mainViewport.PlatformUserData;
+
+			bool useOpenGl = mainViewportData.GlContext != IntPtr.Zero;
+			IntPtr glContextBackup = IntPtr.Zero;
+			if (useOpenGl)
+			{
+				glContextBackup = Sdl2Native.SDL_GL_GetCurrentContext();
+				Sdl2Native.SDL_GL_SetAttribute(SDL_GLAttribute.ShareWithCurrentContext, 1);
+				Sdl2Native.SDL_GL_MakeCurrent(mainViewportData.SdlWindowHandle, mainViewportData.GlContext);
+			}
+
+			SDL_WindowFlags sdlFlags = (Sdl2Native.SDL_GetWindowFlags(data.SdlWindowHandle) & SDL_WindowFlags.AllowHighDpi) | SDL_WindowFlags.Hidden;
+			sdlFlags |= (viewport.Flags & ImGuiViewportFlags.NoDecoration) != 0 ? SDL_WindowFlags.Borderless : SDL_WindowFlags.Resizable;
+			if (useOpenGl)
+				sdlFlags |= SDL_WindowFlags.OpenGL;
+			if ((viewport.Flags & ImGuiViewportFlags.TopMost) != 0)
+				sdlFlags |= SDL_WindowFlags.AlwaysOnTop;
+
+			data.SdlWindowHandle = new Sdl2Window("Viewport", (int)viewport.Pos.X, (int)viewport.Pos.Y,
+				(int)viewport.Size.X, (int)viewport.Size.Y, sdlFlags, false).SdlWindowHandle;
+			data.WindowOwned = true;
+			if (useOpenGl)
+			{
+				data.GlContext = Sdl2Native.SDL_GL_CreateContext(data.SdlWindowHandle);
+				Sdl2Native.SDL_GL_SetSwapInterval(0);
+				if (glContextBackup != IntPtr.Zero)
+					Sdl2Native.SDL_GL_MakeCurrent(data.SdlWindowHandle, glContextBackup);
+			}
+
+			viewport.PlatformHandle = data.SdlWindowHandle;
+
+			SDL_SysWMinfo sysWmInfo;
+			Sdl2Native.SDL_GetVersion(&sysWmInfo.version);
+			Sdl2Native.SDL_GetWMWindowInfo(data.SdlWindowHandle, &sysWmInfo);
+			if (sysWmInfo.subsystem == SysWMType.Windows)
+				viewport.PlatformHandleRaw = Unsafe.Read<Win32WindowInfo>(&sysWmInfo.info).hinstance;
+		}
+
+		private unsafe void PlatformDestroyWindow(ImGuiViewportPtr viewport)
+		{
+			ViewportDataPtr data = viewport.PlatformUserData;
+			if ((IntPtr)data.NativePtr != IntPtr.Zero)
+			{
+				if (data.GlContext != IntPtr.Zero && data.WindowOwned)
+					Sdl2Native.SDL_GL_DeleteContext(data.GlContext);
+				if (data.SdlWindowHandle != IntPtr.Zero && data.WindowOwned)
+					Sdl2Native.SDL_DestroyWindow(data.SdlWindowHandle);
+				data.GlContext = IntPtr.Zero;
+				data.SdlWindowHandle = IntPtr.Zero;
+				ImGui.MemFree((IntPtr)data.NativePtr);
+			}
+			viewport.PlatformUserData = IntPtr.Zero;
+			viewport.PlatformHandle = IntPtr.Zero;
+		}
+
+		private unsafe void PlatformShowWindow(ImGuiViewportPtr viewport)
+		{
+			ViewportDataPtr data = viewport.PlatformUserData;
+			IntPtr hWnd = viewport.PlatformHandleRaw;
+			if ((viewport.Flags & ImGuiViewportFlags.NoTaskBarIcon) != 0)
+			{
+				long exStyle = (long)GetWindowLongPtr(hWnd, GWL_EXSTYLE);
+				exStyle &= ~WS_EX_APPWINDOW;
+				exStyle |= WS_EX_TOOLWINDOW;
+				SetWindowLongPtr(hWnd, GWL_EXSTYLE, new IntPtr(exStyle));
+			}
+
+			if ((viewport.Flags & ImGuiViewportFlags.NoFocusOnAppearing) != 0)
+			{
+				ShowWindow(hWnd, SW_SHOWNA);
+				return;
+			}
+
+			Sdl2Native.SDL_ShowWindow(data.SdlWindowHandle);
+		}
+
+	#region Structs
+	private unsafe struct ViewportData
+		{
+#pragma warning disable S3459 // Unassigned members should be removed
+			public SDL_Window SdlWindowHandle;
+			public IntPtr GlContext;
+			public uint WindowID;
+			public bool WindowOwned;
+#pragma warning restore S3459 // Unassigned members should be removed
+		}
+
+		private unsafe struct ViewportDataPtr
+		{
+			public ViewportData* NativePtr { get; }
+			public ViewportDataPtr(ViewportData* nativePtr) => NativePtr = nativePtr;
+			public ViewportDataPtr(IntPtr nativePtr) => NativePtr = (ViewportData*)nativePtr;
+			public ref SDL_Window SdlWindowHandle => ref Unsafe.AsRef<SDL_Window>(&NativePtr->SdlWindowHandle);
+			public ref IntPtr GlContext => ref Unsafe.AsRef<IntPtr>(&NativePtr->GlContext);
+			public ref UInt32 WindowID => ref Unsafe.AsRef<UInt32>(&NativePtr->WindowID);
+			public ref bool WindowOwned => ref Unsafe.AsRef<bool>(&NativePtr->WindowOwned);
+
+			public static implicit operator ViewportDataPtr(IntPtr nativePtr) => new ViewportDataPtr(nativePtr);
+			public static implicit operator ViewportDataPtr(ViewportData* nativePtr) => new ViewportDataPtr(nativePtr);
+			public static implicit operator ViewportData*(ViewportDataPtr wrappedPtr) => wrappedPtr.NativePtr;
+		}
 
 		private struct ResourceSetInfo
-        {
-            public readonly IntPtr ImGuiBinding;
-            public readonly ResourceSet ResourceSet;
+		{
+			public readonly IntPtr ImGuiBinding;
+			public readonly ResourceSet ResourceSet;
 
-            public ResourceSetInfo(IntPtr imGuiBinding, ResourceSet resourceSet)
-            {
-                ImGuiBinding = imGuiBinding;
-                ResourceSet = resourceSet;
-            }
-        }
-    }
+			public ResourceSetInfo(IntPtr imGuiBinding, ResourceSet resourceSet)
+			{
+				ImGuiBinding = imGuiBinding;
+				ResourceSet = resourceSet;
+			}
+		}
+		#endregion
+	}
 }

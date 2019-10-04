@@ -29,6 +29,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="SDL2-CS-Rolling" Version="2018.11.1" />
     <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
     <PackageReference Include="Veldrid" Version="4.7.0" />
@@ -45,22 +46,22 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ContentWithTargetPath  Include="..\BootEngine\_deps\ImGui.NET\cimgui\linux-x64\cimgui.so" Condition="'$(IsLinux)'=='true'">
+    <ContentWithTargetPath Include="..\BootEngine\_deps\ImGui.NET\cimgui\linux-x64\cimgui.so" Condition="'$(IsLinux)'=='true'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>cimgui.so</TargetPath>
-    </ContentWithTargetPath >
-    <ContentWithTargetPath  Include="..\BootEngine\_deps\ImGui.NET\cimgui\osx-x64\cimgui.dylib" Condition="'$(IsOSX)'=='true'">
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="..\BootEngine\_deps\ImGui.NET\cimgui\osx-x64\cimgui.dylib" Condition="'$(IsOSX)'=='true'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>cimgui.dylib</TargetPath>
-    </ContentWithTargetPath >
-    <ContentWithTargetPath  Include="..\BootEngine\_deps\ImGui.NET\cimgui\win-x64\cimgui.dll" Condition="'$(IsWindows)'=='true' And '$(Platform)'=='x64'">
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="..\BootEngine\_deps\ImGui.NET\cimgui\win-x64\cimgui.dll" Condition="'$(IsWindows)'=='true' And '$(Platform)'=='x64'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>cimgui.dll</TargetPath>
-    </ContentWithTargetPath >
-    <ContentWithTargetPath  Include="..\BootEngine\_deps\ImGui.NET\cimgui\win-x86\cimgui.dll" Condition="'$(IsWindows)'=='true' And '$(Platform)'!='x64'">
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="..\BootEngine\_deps\ImGui.NET\cimgui\win-x86\cimgui.dll" Condition="'$(IsWindows)'=='true' And '$(Platform)'!='x64'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>cimgui.dll</TargetPath>
-    </ContentWithTargetPath >
+    </ContentWithTargetPath>
   </ItemGroup>
 
 </Project>

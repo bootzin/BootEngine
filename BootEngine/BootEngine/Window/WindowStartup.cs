@@ -167,26 +167,7 @@ namespace BootEngine.Window
                 options.SwapchainDepthFormat,
                 options.SyncToVerticalBlank,
                 colorSrgb);
-            GraphicsDevice gd = GraphicsDevice.CreateVulkan(options, scDesc);
-
-            return gd;
-        }
-
-        private static unsafe Veldrid.Vk.VkSurfaceSource GetSurfaceSource(SDL_SysWMinfo sysWmInfo)
-        {
-            switch (sysWmInfo.subsystem)
-            {
-                case SysWMType.Windows:
-                    Win32WindowInfo w32Info = Unsafe.Read<Win32WindowInfo>(&sysWmInfo.info);
-                    return Veldrid.Vk.VkSurfaceSource.CreateWin32(w32Info.hinstance, w32Info.Sdl2Window);
-                case SysWMType.X11:
-                    X11WindowInfo x11Info = Unsafe.Read<X11WindowInfo>(&sysWmInfo.info);
-                    return Veldrid.Vk.VkSurfaceSource.CreateXlib(
-                        (Vulkan.Xlib.Display*)x11Info.display,
-                        new Vulkan.Xlib.Window() { Value = x11Info.Sdl2Window });
-                default:
-                    throw new PlatformNotSupportedException("Cannot create a Vulkan surface for " + sysWmInfo.subsystem + ".");
-            }
+            return GraphicsDevice.CreateVulkan(options, scDesc);
         }
 #endif
         #endregion

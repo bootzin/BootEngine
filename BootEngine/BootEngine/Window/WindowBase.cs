@@ -48,7 +48,7 @@ namespace BootEngine.Window
 
         public bool Exists() => window.Exists;
 
-        public virtual Sdl2Window GetNativeWindow()
+        public virtual Sdl2Window GetSdlWindow()
         {
             return window;
         }

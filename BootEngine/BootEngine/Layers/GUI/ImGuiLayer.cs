@@ -20,14 +20,14 @@ namespace BootEngine.Layers.GUI
 		public override void OnAttach()
 		{
 			var window = Application<WindowType>.App.Window;
-			var nativeWindow = window.GetNativeWindow();
+			var sdlWindow = window.GetSdlWindow();
 
 			gd = window.GetGraphicsDevice();
 			cl = window.ResourceFactory.CreateCommandList();
 
-			controller = new ImGuiController(gd, gd.MainSwapchain.Framebuffer.OutputDescription, nativeWindow);
+			controller = new ImGuiController(gd, gd.MainSwapchain.Framebuffer.OutputDescription, sdlWindow);
 
-			window.GetNativeWindow().Resized += () => controller.WindowResized(nativeWindow.Width, nativeWindow.Height);
+			sdlWindow.Resized += () => controller.WindowResized(sdlWindow.Width, sdlWindow.Height);
 		}
 
 		public override void OnDetach()
