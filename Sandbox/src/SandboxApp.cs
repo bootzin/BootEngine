@@ -24,7 +24,7 @@ namespace Sandbox
 		public static void Main(string[] args)
 		{
 			var app = new SandboxApp();
-			app.LayerStack.PushLayer(new TestLayer());
+			//app.LayerStack.PushLayer(new TestLayer());
 			app.Run();
 			app.Dispose();
 		}

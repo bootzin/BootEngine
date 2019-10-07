@@ -45,24 +45,24 @@ namespace BootEngine.Layers.GUI
 
 		public void Begin()
 		{
+			var ctx = ImGui.GetCurrentContext();
+			ImGui.SetCurrentContext(ctx);
 			controller.BeginFrame();
 			cl.Begin();
-			cl.SetFramebuffer(gd.MainSwapchain.Framebuffer);
-			cl.ClearColorTarget(0, new RgbaFloat(0.45f, 0.55f, 0.6f, 1f));
 		}
 
 		public void End()
 		{
-			controller.Render(gd, cl);
-
 			var ctx = ImGui.GetCurrentContext();
-			ImGui.UpdatePlatformWindows();
-			ImGui.RenderPlatformWindowsDefault();
+			cl.SetFramebuffer(gd.MainSwapchain.Framebuffer);
+			cl.ClearColorTarget(0, new RgbaFloat(0.45f, 0.55f, 0.6f, 1f));
+			controller.Render(gd, cl);
 			ImGui.SetCurrentContext(ctx);
 
 			cl.End();
 			gd.SubmitCommands(cl);
 			gd.SwapBuffers();
+			controller.SwapExtraWindowsBuffers(gd);
 		}
 
 		public override void OnEvent(EventBase @event)

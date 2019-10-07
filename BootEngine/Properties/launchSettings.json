@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "BootEngine": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}
