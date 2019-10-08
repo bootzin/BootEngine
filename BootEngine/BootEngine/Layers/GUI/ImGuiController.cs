@@ -45,10 +45,16 @@ namespace BootEngine.Layers.GUI
 
 		#region Delegates
 		private delegate void ViewportDelegate(ImGuiViewportPtr viewport);
+		private delegate void ViewportDelegate2(ImGuiViewportPtr viewport);
+		private delegate void ViewportDelegate3(ImGuiViewportPtr viewport);
 		private delegate Vector2* ViewportVec2PtrDelegate(ImGuiViewportPtr viewport);
 		private delegate Vector2 ViewportVec2Delegate(ImGuiViewportPtr viewport);
+		private delegate IntPtr ViewportImVec2Delegate(ImGuiViewportPtr viewport);
+		private delegate IntPtr ViewportImVec2Delegate2(ImGuiViewportPtr viewport);
 		private delegate bool ViewportBoolDelegate(ImGuiViewportPtr viewport);
+		private delegate byte ViewportByteDelegate(ImGuiViewportPtr viewport);
 		private delegate void ArgVec2Delegate(ImGuiViewportPtr viewport, Vector2 arg0);
+		private delegate void ArgVec2Delegate2(ImGuiViewportPtr viewport, Vector2 arg0);
 		private delegate void ArgStringDelegate(ImGuiViewportPtr viewport, string arg0);
 		private delegate void ArgFloatDelegate(ImGuiViewportPtr viewport, float arg0);
 
@@ -72,42 +78,42 @@ namespace BootEngine.Layers.GUI
         private int lastAssignedID = 100;
 
 		//Windows
-		private readonly long WS_EX_APPWINDOW = 0x00040000L;
-		private readonly long WS_EX_TOOLWINDOW = 0x00000080L;
-		private const int GWL_EXSTYLE = -20;
-		private const int SW_SHOWNA = 8;
+		//private readonly long WS_EX_APPWINDOW = 0x00040000L;
+		//private readonly long WS_EX_TOOLWINDOW = 0x00000080L;
+		//private const int GWL_EXSTYLE = -20;
+		//private const int SW_SHOWNA = 8;
 
-		[DllImport("user32.dll")]
-		static extern int GetSystemMetrics(int smIndex);
-		[DllImport("user32.dll", EntryPoint = "GetWindowLong")]
-		private static extern IntPtr GetWindowLongPtr32(IntPtr hWnd, int nIndex);
-		[DllImport("user32.dll", EntryPoint = "GetWindowLongPtr")]
-		private static extern IntPtr GetWindowLongPtr64(IntPtr hWnd, int nIndex);
-		[DllImport("user32.dll", EntryPoint = "SetWindowLong")]
-		private static extern int SetWindowLong32(IntPtr hWnd, int nIndex, int dwNewLong);
-		[DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
-		private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
-		[DllImport("user32.dll")]
-		static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+		//[DllImport("user32.dll")]
+		//static extern int GetSystemMetrics(int smIndex);
+		//[DllImport("user32.dll", EntryPoint = "GetWindowLong")]
+		//private static extern IntPtr GetWindowLongPtr32(IntPtr hWnd, int nIndex);
+		//[DllImport("user32.dll", EntryPoint = "GetWindowLongPtr")]
+		//private static extern IntPtr GetWindowLongPtr64(IntPtr hWnd, int nIndex);
+		//[DllImport("user32.dll", EntryPoint = "SetWindowLong")]
+		//private static extern int SetWindowLong32(IntPtr hWnd, int nIndex, int dwNewLong);
+		//[DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
+		//private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+		//[DllImport("user32.dll")]
+		//static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
 		// This static method is required because Win32 does not support
 		// GetWindowLongPtr directly
-		public static IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex)
-		{
-			if (IntPtr.Size == 8)
-				return GetWindowLongPtr64(hWnd, nIndex);
-			else
-				return GetWindowLongPtr32(hWnd, nIndex);
-		}
-		// This static method is required because legacy OSes do not support
-		// SetWindowLongPtr
-		public static IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong)
-		{
-			if (IntPtr.Size == 8)
-				return SetWindowLongPtr64(hWnd, nIndex, dwNewLong);
-			else
-				return new IntPtr(SetWindowLong32(hWnd, nIndex, dwNewLong.ToInt32()));
-		}
+		//public static IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex)
+		//{
+		//	if (IntPtr.Size == 8)
+		//		return GetWindowLongPtr64(hWnd, nIndex);
+		//	else
+		//		return GetWindowLongPtr32(hWnd, nIndex);
+		//}
+		//// This static method is required because legacy OSes do not support
+		//// SetWindowLongPtr
+		//public static IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong)
+		//{
+		//	if (IntPtr.Size == 8)
+		//		return SetWindowLongPtr64(hWnd, nIndex, dwNewLong);
+		//	else
+		//		return new IntPtr(SetWindowLong32(hWnd, nIndex, dwNewLong.ToInt32()));
+		//}
 		#endregion
 
 		/// <summary>
@@ -632,7 +638,7 @@ namespace BootEngine.Layers.GUI
 			unsafe
 			{
 				var mainViewport = ImGui.GetMainViewport();
-				mainViewport.PlatformHandle = sdlWindow.Handle;
+				mainViewport.PlatformHandle = sdlWindow.SdlWindowHandle;
 				//SDL_SysWMinfo sysWmInfo;
 				//Sdl2Native.SDL_GetVersion(&sysWmInfo.version);
 				//Sdl2Native.SDL_GetWMWindowInfo(sdlWindow.SdlWindowHandle, &sysWmInfo);
@@ -657,30 +663,38 @@ namespace BootEngine.Layers.GUI
 
 			ImGuiPlatformIOPtr plIo = ImGui.GetPlatformIO();
 			plIo.Platform_CreateWindow = Marshal.GetFunctionPointerForDelegate<ViewportDelegate>(PlatformCreateWindow);
-			plIo.Platform_DestroyWindow = Marshal.GetFunctionPointerForDelegate<ViewportDelegate>(PlatformDestroyWindow);
-			plIo.Platform_ShowWindow = Marshal.GetFunctionPointerForDelegate<ViewportDelegate>(PlatformShowWindow);
-			plIo.Platform_GetWindowPos = Marshal.GetFunctionPointerForDelegate<ViewportVec2PtrDelegate>(PlatformGetWindowPosition);
+			plIo.Platform_DestroyWindow = Marshal.GetFunctionPointerForDelegate<ViewportDelegate2>(PlatformDestroyWindow);
+			plIo.Platform_ShowWindow = Marshal.GetFunctionPointerForDelegate<ViewportDelegate3>(PlatformShowWindow);
+			plIo.Platform_GetWindowPos = Marshal.GetFunctionPointerForDelegate<ViewportImVec2Delegate>(PlatformGetWindowPosition);
 			plIo.Platform_SetWindowPos = Marshal.GetFunctionPointerForDelegate<ArgVec2Delegate>(PlatformSetWindowPosition);
-			plIo.Platform_GetWindowSize = Marshal.GetFunctionPointerForDelegate<ViewportVec2PtrDelegate>(PlatformGetWindowSize);
-			plIo.Platform_SetWindowSize = Marshal.GetFunctionPointerForDelegate<ArgVec2Delegate>(PlatformSetWindowSize);
-			plIo.Platform_GetWindowFocus = Marshal.GetFunctionPointerForDelegate<ViewportBoolDelegate>(PlatformGetWindowFocus);
-			plIo.Platform_SetWindowFocus = Marshal.GetFunctionPointerForDelegate<ViewportDelegate>(PlatformSetWindowFocus);
-			plIo.Platform_GetWindowMinimized = Marshal.GetFunctionPointerForDelegate<ViewportBoolDelegate>(PlatformGetWindowMinimized);
+			plIo.Platform_GetWindowSize = Marshal.GetFunctionPointerForDelegate<ViewportImVec2Delegate2>(PlatformGetWindowSize);
+			plIo.Platform_SetWindowSize = Marshal.GetFunctionPointerForDelegate<ArgVec2Delegate2>(PlatformSetWindowSize);
+			//plIo.Platform_GetWindowFocus = Marshal.GetFunctionPointerForDelegate<ViewportBoolDelegate>(PlatformGetWindowFocus);
+			//plIo.Platform_SetWindowFocus = Marshal.GetFunctionPointerForDelegate<ViewportDelegate>(PlatformSetWindowFocus);
+			//plIo.Platform_GetWindowMinimized = Marshal.GetFunctionPointerForDelegate<ViewportByteDelegate>(PlatformGetWindowMinimized);
 			plIo.Platform_SetWindowTitle = Marshal.GetFunctionPointerForDelegate<ArgStringDelegate>(PlatformSetWindowTitle);
-			plIo.Platform_SetWindowAlpha = Marshal.GetFunctionPointerForDelegate<ArgFloatDelegate>(PlatformSetWindowAlpha);
-			plIo.Platform_CreateVkSurface = Marshal.GetFunctionPointerForDelegate<ViewportBoolDelegate>(PlatformCreateVkSurface);
+			//plIo.Platform_SetWindowAlpha = Marshal.GetFunctionPointerForDelegate<ArgFloatDelegate>(PlatformSetWindowAlpha);
+			//plIo.Platform_CreateVkSurface = Marshal.GetFunctionPointerForDelegate<ViewportBoolDelegate>(PlatformCreateVkSurface);
 
 			UpdateMonitors(plIo);
 
 			ImGuiViewportPtr mainViewport = ImGui.GetMainViewport();
-			ViewportDataPtr data = new ViewportDataPtr(Marshal.AllocHGlobal(Unsafe.SizeOf<ViewportDataPtr>()));
+			ViewportDataPtr data = ImGui.MemAlloc((uint)Unsafe.SizeOf<ViewportDataPtr>());
 			data.SdlWindowHandle = sdlWindow.SdlWindowHandle;
 			data.WindowID = Sdl2Native.SDL_GetWindowID(sdlWindow.SdlWindowHandle);
 			data.WindowOwned = false;
 			data.GlContext = sdlGlContext;
 			data.Swapchain = (IntPtr)GCHandle.Alloc(graphicsDevice.MainSwapchain);
 			mainViewport.NativePtr->PlatformUserData = data.NativePtr;
-			mainViewport.PlatformHandle = sdlWindow.Handle;
+			mainViewport.PlatformHandle = sdlWindow.SdlWindowHandle;
+
+			SDL_SysWMinfo sysWmInfo;
+			Sdl2Native.SDL_GetVersion(&sysWmInfo.version);
+			if (Sdl2Native.SDL_GetWMWindowInfo(sdlWindow.SdlWindowHandle, &sysWmInfo) > 0)
+			{
+				Win32WindowInfo w32Info = Unsafe.Read<Win32WindowInfo>(&sysWmInfo.info);
+				mainViewport.PlatformHandleRaw = w32Info.hinstance;
+			}
 		}
 
 		private unsafe void UpdateMonitors(ImGuiPlatformIOPtr plIo)
@@ -736,10 +750,10 @@ namespace BootEngine.Layers.GUI
 			}
 		}
 
-		private bool PlatformGetWindowMinimized(ImGuiViewportPtr viewport)
+		private byte PlatformGetWindowMinimized(ImGuiViewportPtr viewport)
 		{
 			ViewportDataPtr data = viewport.PlatformUserData;
-			return (Sdl2Native.SDL_GetWindowFlags(data.SdlWindowHandle) & SDL_WindowFlags.Minimized) != 0;
+			return (Sdl2Native.SDL_GetWindowFlags(data.SdlWindowHandle) & SDL_WindowFlags.Minimized) != 0 ? (byte)1 : (byte)0;
 		}
 
 		private bool PlatformGetWindowFocus(ImGuiViewportPtr viewport)
@@ -783,23 +797,28 @@ namespace BootEngine.Layers.GUI
 			Sdl2Native.SDL_SetWindowSize(data.SdlWindowHandle, (int)size.X, (int)size.Y);
 		}
 
-		private unsafe Vector2* PlatformGetWindowSize(ImGuiViewportPtr viewport)
+		private unsafe IntPtr PlatformGetWindowSize(ImGuiViewportPtr viewport)
 		{
 			//TODO: Check if I need to return a pointer here
 			ViewportDataPtr data = viewport.PlatformUserData;
 			int w, h;
 			Sdl2Native.SDL_GetWindowSize(data.SdlWindowHandle, &w, &h);
-			var size = new Vector2(h, w);
-			return (Vector2*)GCHandle.ToIntPtr(GCHandle.Alloc(size)).ToPointer();
+			var size = Marshal.AllocHGlobal(Unsafe.SizeOf<Vector2>()); 
+			var t = new ImVector(1, 1, size);
+			t.Ref<Vector2>(0) = new Vector2(w, h);
+			return t.Data;// (Vector2*)GCHandle.ToIntPtr(GCHandle.Alloc(size)).ToPointer();
 		}
 
-		private unsafe Vector2* PlatformGetWindowPosition(ImGuiViewportPtr viewport)
+		private unsafe IntPtr PlatformGetWindowPosition(ImGuiViewportPtr viewport)
 		{
 			ViewportDataPtr data = viewport.PlatformUserData;
 			int x, y;
 			Sdl2Native.SDL_GetWindowPosition(data.SdlWindowHandle, &x, &y);
-			var pos = new Vector2(x, y);
-			return (Vector2*)GCHandle.ToIntPtr(GCHandle.Alloc(pos)).ToPointer();
+			var pos = Marshal.AllocHGlobal(Unsafe.SizeOf<Vector2>());
+			//var pos = new Vector2(x, y);
+			var t = new ImVector(1, 1, pos);
+			t.Ref<Vector2>(0) = new Vector2(x, y);
+			return t.Data;// (Vector2*)GCHandle.ToIntPtr(GCHandle.Alloc(pos)).ToPointer();
 		}
 
 		private unsafe void PlatformCreateWindow(ImGuiViewportPtr viewport)
