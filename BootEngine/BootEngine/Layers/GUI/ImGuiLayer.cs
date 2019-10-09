@@ -1,5 +1,7 @@
 ﻿using BootEngine.Events;
 using ImGuiNET;
+using System;
+using System.Runtime.InteropServices;
 using Veldrid;
 
 namespace BootEngine.Layers.GUI
@@ -53,11 +55,9 @@ namespace BootEngine.Layers.GUI
 
 		public void End()
 		{
-			var ctx = ImGui.GetCurrentContext();
 			cl.SetFramebuffer(gd.MainSwapchain.Framebuffer);
 			cl.ClearColorTarget(0, new RgbaFloat(0.45f, 0.55f, 0.6f, 1f));
 			controller.Render(gd, cl);
-			ImGui.SetCurrentContext(ctx);
 
 			cl.End();
 			gd.SubmitCommands(cl);

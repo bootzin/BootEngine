@@ -42,21 +42,32 @@ namespace BootEngine.Layers.GUI
 		private int windowWidth;
 		private int windowHeight;
 		private Vector2 scaleFactor = Vector2.One;
+		public readonly List<GCHandle> viewportDataList = new List<GCHandle>();
 
 		#region Delegates
-		private delegate void ViewportDelegate(ImGuiViewportPtr viewport);
-		private delegate void ViewportDelegate2(ImGuiViewportPtr viewport);
-		private delegate void ViewportDelegate3(ImGuiViewportPtr viewport);
-		private delegate Vector2* ViewportVec2PtrDelegate(ImGuiViewportPtr viewport);
-		private delegate Vector2 ViewportVec2Delegate(ImGuiViewportPtr viewport);
-		private delegate IntPtr ViewportImVec2Delegate(ImGuiViewportPtr viewport);
-		private delegate IntPtr ViewportImVec2Delegate2(ImGuiViewportPtr viewport);
+		private delegate void Platform_CreateWindow(ImGuiViewportPtr viewport);
+		private delegate void Platform_DestroyWindow(ImGuiViewportPtr viewport);
+		private delegate void Platform_ShowWindow(ImGuiViewportPtr viewport);
+		private delegate IntPtr Platform_GetWindowPosition(ImGuiViewportPtr viewport);
+		private delegate IntPtr Platform_GetWindowSize(ImGuiViewportPtr viewport);
+		private delegate void Platform_SetWindowPosition(ImGuiViewportPtr viewport, Vector2 arg0);
+		private delegate void Platform_SetWindowSize(ImGuiViewportPtr viewport, Vector2 arg0);
+		private delegate void Platform_SetWindowTitle(ImGuiViewportPtr viewport, string arg0);
 		private delegate bool ViewportBoolDelegate(ImGuiViewportPtr viewport);
 		private delegate byte ViewportByteDelegate(ImGuiViewportPtr viewport);
-		private delegate void ArgVec2Delegate(ImGuiViewportPtr viewport, Vector2 arg0);
-		private delegate void ArgVec2Delegate2(ImGuiViewportPtr viewport, Vector2 arg0);
-		private delegate void ArgStringDelegate(ImGuiViewportPtr viewport, string arg0);
 		private delegate void ArgFloatDelegate(ImGuiViewportPtr viewport, float arg0);
+		private delegate Vector2* ViewportVec2PtrDelegate(ImGuiViewportPtr viewport);
+		private delegate Vector2 ViewportVec2Delegate(ImGuiViewportPtr viewport);
+
+		private Platform_CreateWindow createWindow;
+		private Platform_DestroyWindow destroyWindow;
+		private Platform_ShowWindow showWindow;
+		private Platform_GetWindowPosition getWindowPosition;
+		private Platform_SetWindowPosition setWindowPosition;
+		private Platform_GetWindowSize getWindowSize;
+		private Platform_SetWindowSize setWindowSize;
+		private Platform_SetWindowTitle setWindowTitle;
+
 
 		#region SDL
 		private delegate int SDL_GetNumVideoDisplays_t();
@@ -630,10 +641,10 @@ namespace BootEngine.Layers.GUI
             }
 			io.Fonts.AddFontDefault();
 			io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard | ImGuiConfigFlags.DockingEnable;
-			io.ConfigFlags |= ImGuiConfigFlags.ViewportsEnable;
+			//io.ConfigFlags |= ImGuiConfigFlags.ViewportsEnable;
 			io.BackendFlags |= ImGuiBackendFlags.HasMouseCursors | ImGuiBackendFlags.HasSetMousePos;
-			io.BackendFlags |= ImGuiBackendFlags.RendererHasViewports;
-			io.BackendFlags |= ImGuiBackendFlags.PlatformHasViewports | ImGuiBackendFlags.HasMouseHoveredViewport;
+			//io.BackendFlags |= ImGuiBackendFlags.RendererHasViewports;
+			//io.BackendFlags |= ImGuiBackendFlags.PlatformHasViewports | ImGuiBackendFlags.HasMouseHoveredViewport;
 
 			unsafe
 			{
@@ -661,32 +672,75 @@ namespace BootEngine.Layers.GUI
 			style.WindowRounding = 0.0f;
 			style.Colors[(int)ImGuiCol.WindowBg].W = 1.0f;
 
+			createWindow = PlatformCreateWindow;
+			destroyWindow = PlatformDestroyWindow;
+			showWindow = PlatformShowWindow;
+			getWindowPosition = PlatformGetWindowPosition;
+			setWindowPosition = PlatformSetWindowPosition;
+			getWindowSize = PlatformGetWindowSize;
+			setWindowSize = PlatformSetWindowSize;
+			setWindowTitle = PlatformSetWindowTitle;
+
 			ImGuiPlatformIOPtr plIo = ImGui.GetPlatformIO();
-			plIo.Platform_CreateWindow = Marshal.GetFunctionPointerForDelegate<ViewportDelegate>(PlatformCreateWindow);
-			plIo.Platform_DestroyWindow = Marshal.GetFunctionPointerForDelegate<ViewportDelegate2>(PlatformDestroyWindow);
-			plIo.Platform_ShowWindow = Marshal.GetFunctionPointerForDelegate<ViewportDelegate3>(PlatformShowWindow);
-			plIo.Platform_GetWindowPos = Marshal.GetFunctionPointerForDelegate<ViewportImVec2Delegate>(PlatformGetWindowPosition);
-			plIo.Platform_SetWindowPos = Marshal.GetFunctionPointerForDelegate<ArgVec2Delegate>(PlatformSetWindowPosition);
-			plIo.Platform_GetWindowSize = Marshal.GetFunctionPointerForDelegate<ViewportImVec2Delegate2>(PlatformGetWindowSize);
-			plIo.Platform_SetWindowSize = Marshal.GetFunctionPointerForDelegate<ArgVec2Delegate2>(PlatformSetWindowSize);
+			plIo.NativePtr->Platform_CreateWindow = Marshal.GetFunctionPointerForDelegate(createWindow);
+			plIo.NativePtr->Platform_DestroyWindow = Marshal.GetFunctionPointerForDelegate(destroyWindow);
+			plIo.NativePtr->Platform_ShowWindow = Marshal.GetFunctionPointerForDelegate(showWindow);
+			plIo.NativePtr->Platform_GetWindowPos = Marshal.GetFunctionPointerForDelegate(getWindowPosition);
+			plIo.NativePtr->Platform_SetWindowPos = Marshal.GetFunctionPointerForDelegate(setWindowPosition);
+			plIo.NativePtr->Platform_GetWindowSize = Marshal.GetFunctionPointerForDelegate(getWindowSize);
+			plIo.NativePtr->Platform_SetWindowSize = Marshal.GetFunctionPointerForDelegate(setWindowSize);
 			//plIo.Platform_GetWindowFocus = Marshal.GetFunctionPointerForDelegate<ViewportBoolDelegate>(PlatformGetWindowFocus);
 			//plIo.Platform_SetWindowFocus = Marshal.GetFunctionPointerForDelegate<ViewportDelegate>(PlatformSetWindowFocus);
 			//plIo.Platform_GetWindowMinimized = Marshal.GetFunctionPointerForDelegate<ViewportByteDelegate>(PlatformGetWindowMinimized);
-			plIo.Platform_SetWindowTitle = Marshal.GetFunctionPointerForDelegate<ArgStringDelegate>(PlatformSetWindowTitle);
+			plIo.NativePtr->Platform_SetWindowTitle = Marshal.GetFunctionPointerForDelegate(setWindowTitle);
 			//plIo.Platform_SetWindowAlpha = Marshal.GetFunctionPointerForDelegate<ArgFloatDelegate>(PlatformSetWindowAlpha);
 			//plIo.Platform_CreateVkSurface = Marshal.GetFunctionPointerForDelegate<ViewportBoolDelegate>(PlatformCreateVkSurface);
 
-			UpdateMonitors(plIo);
+			UpdateMonitors();
 
 			ImGuiViewportPtr mainViewport = ImGui.GetMainViewport();
-			ViewportDataPtr data = ImGui.MemAlloc((uint)Unsafe.SizeOf<ViewportDataPtr>());
+			var dataPtr = GCHandle.Alloc(new ViewportDataPtr(Marshal.AllocHGlobal(Unsafe.SizeOf<ViewportDataPtr>())), GCHandleType.Pinned);
+			ViewportDataPtr data = (ViewportDataPtr)dataPtr.Target;
 			data.SdlWindowHandle = sdlWindow.SdlWindowHandle;
 			data.WindowID = Sdl2Native.SDL_GetWindowID(sdlWindow.SdlWindowHandle);
 			data.WindowOwned = false;
 			data.GlContext = sdlGlContext;
+			if (data.GlContext != sdlGlContext)
+			{
+
+			}
+			if (data.GlContext != sdlGlContext)
+			{
+
+			}
+			graphicsDevice.MainSwapchain.Name = "Main";
+			graphicsDevice.MainSwapchain.Name = "Main";
+			graphicsDevice.MainSwapchain.Name = "Main";
+			graphicsDevice.MainSwapchain.Name = "Main";
+			graphicsDevice.MainSwapchain.Name = "Main";
+			graphicsDevice.MainSwapchain.Name = "Main";
+			graphicsDevice.MainSwapchain.Name = "Main";
+			graphicsDevice.MainSwapchain.Name = "Main";
+			graphicsDevice.MainSwapchain.Name = "Main";
+			graphicsDevice.MainSwapchain.Name = "Main";
+			graphicsDevice.MainSwapchain.Name = "Main";
+			graphicsDevice.MainSwapchain.Name = "Main";
+			graphicsDevice.MainSwapchain.Name = "Main";
+			graphicsDevice.MainSwapchain.Name = "Main";
+			graphicsDevice.MainSwapchain.Name = "Main";
+			graphicsDevice.MainSwapchain.Name = "Main";
+			if (data.GlContext != sdlGlContext)
+			{
+
+			}
 			data.Swapchain = (IntPtr)GCHandle.Alloc(graphicsDevice.MainSwapchain);
-			mainViewport.NativePtr->PlatformUserData = data.NativePtr;
+			GC.Collect();
+			viewportDataList.Add(dataPtr);
+			GC.Collect();
+			mainViewport.PlatformUserData = (IntPtr)dataPtr;
+			GC.Collect();
 			mainViewport.PlatformHandle = sdlWindow.SdlWindowHandle;
+			GC.Collect();
 
 			SDL_SysWMinfo sysWmInfo;
 			Sdl2Native.SDL_GetVersion(&sysWmInfo.version);
@@ -695,10 +749,12 @@ namespace BootEngine.Layers.GUI
 				Win32WindowInfo w32Info = Unsafe.Read<Win32WindowInfo>(&sysWmInfo.info);
 				mainViewport.PlatformHandleRaw = w32Info.hinstance;
 			}
+			GC.Collect();
 		}
 
-		private unsafe void UpdateMonitors(ImGuiPlatformIOPtr plIo)
+		private unsafe void UpdateMonitors()
 		{
+			ImGuiPlatformIOPtr plIo = ImGui.GetPlatformIO();
 			if (p_sdl_GetNumVideoDisplays == null)
 			{
 				p_sdl_GetNumVideoDisplays = Sdl2Native.LoadFunction<SDL_GetNumVideoDisplays_t>("SDL_GetNumVideoDisplays");
@@ -781,26 +837,26 @@ namespace BootEngine.Layers.GUI
 
 		private void PlatformSetWindowTitle(ImGuiViewportPtr viewport, string title)
 		{
-			ViewportDataPtr data = viewport.PlatformUserData;
+			ViewportDataPtr data = (ViewportDataPtr)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
 			Sdl2Native.SDL_SetWindowTitle(data.SdlWindowHandle, title);
 		}
 
 		private void PlatformSetWindowPosition(ImGuiViewportPtr viewport, Vector2 pos)
 		{
-			ViewportDataPtr data = viewport.PlatformUserData;
+			ViewportDataPtr data = (ViewportDataPtr)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
 			Sdl2Native.SDL_SetWindowPosition(data.SdlWindowHandle, (int)pos.X, (int)pos.Y);
 		}
 
 		private void PlatformSetWindowSize(ImGuiViewportPtr viewport, Vector2 size)
 		{
-			ViewportDataPtr data = viewport.PlatformUserData;
+			ViewportDataPtr data = (ViewportDataPtr)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
 			Sdl2Native.SDL_SetWindowSize(data.SdlWindowHandle, (int)size.X, (int)size.Y);
 		}
 
 		private unsafe IntPtr PlatformGetWindowSize(ImGuiViewportPtr viewport)
 		{
 			//TODO: Check if I need to return a pointer here
-			ViewportDataPtr data = viewport.PlatformUserData;
+			ViewportDataPtr data = (ViewportDataPtr)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
 			int w, h;
 			Sdl2Native.SDL_GetWindowSize(data.SdlWindowHandle, &w, &h);
 			var size = Marshal.AllocHGlobal(Unsafe.SizeOf<Vector2>()); 
@@ -811,7 +867,7 @@ namespace BootEngine.Layers.GUI
 
 		private unsafe IntPtr PlatformGetWindowPosition(ImGuiViewportPtr viewport)
 		{
-			ViewportDataPtr data = viewport.PlatformUserData;
+			ViewportDataPtr data = (ViewportDataPtr)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
 			int x, y;
 			Sdl2Native.SDL_GetWindowPosition(data.SdlWindowHandle, &x, &y);
 			var pos = Marshal.AllocHGlobal(Unsafe.SizeOf<Vector2>());
@@ -823,11 +879,13 @@ namespace BootEngine.Layers.GUI
 
 		private unsafe void PlatformCreateWindow(ImGuiViewportPtr viewport)
 		{
-			ViewportDataPtr data = new ViewportDataPtr(Marshal.AllocHGlobal(Unsafe.SizeOf<ViewportDataPtr>()));
-			viewport.NativePtr->PlatformUserData = data.NativePtr;
+			var dataPtr = GCHandle.Alloc(new ViewportDataPtr(Marshal.AllocHGlobal(Unsafe.SizeOf<ViewportDataPtr>())), GCHandleType.Pinned);
+			ViewportDataPtr data = (ViewportDataPtr)dataPtr.Target;
+			//ViewportDataPtr data = new ViewportDataPtr(Marshal.AllocHGlobal(Unsafe.SizeOf<ViewportDataPtr>() * 2));
+			viewport.PlatformUserData = (IntPtr)dataPtr;
 
 			ImGuiViewportPtr mainViewport = ImGui.GetMainViewport();
-			ViewportDataPtr mainViewportData = mainViewport.PlatformUserData;
+			ViewportDataPtr mainViewportData = (ViewportDataPtr)GCHandle.FromIntPtr(mainViewport.PlatformUserData).Target;
 
 			bool useOpenGl = mainViewportData.GlContext != IntPtr.Zero;
 			IntPtr glContextBackup = IntPtr.Zero;
@@ -859,10 +917,11 @@ namespace BootEngine.Layers.GUI
 			SwapchainSource scSrc = WindowStartup.GetSwapchainSource(sdlWindow);
 			SwapchainDescription scDesc = new SwapchainDescription(scSrc, (uint)sdlWindow.Width, (uint)sdlWindow.Height, PixelFormat.R16_UNorm, true, false);
 			Swapchain swapchain = graphicsDevice.ResourceFactory.CreateSwapchain(scDesc);
-
-			data.Swapchain = (IntPtr)GCHandle.Alloc(swapchain);
+			swapchain.Name = "Created Window Swapchain";
 
 			sdlWindow.Resized += () => swapchain.Resize((uint)sdlWindow.Width, (uint)sdlWindow.Height);
+
+			data.Swapchain = (IntPtr)GCHandle.Alloc(swapchain);
 
 			data.SdlWindowHandle = sdlWindow.SdlWindowHandle;
 			data.WindowOwned = true;
@@ -874,20 +933,24 @@ namespace BootEngine.Layers.GUI
 					Sdl2Native.SDL_GL_MakeCurrent(data.SdlWindowHandle, glContextBackup);
 			}
 
+			viewportDataList.Add(dataPtr);
+
 			viewport.PlatformHandle = sdlWindow.Handle;
 
-			//SDL_SysWMinfo sysWmInfo;
-			//Sdl2Native.SDL_GetVersion(&sysWmInfo.version);
-			//Sdl2Native.SDL_GetWMWindowInfo(data.SdlWindowHandle, &sysWmInfo);
-			//if (sysWmInfo.subsystem == SysWMType.Windows)
-			//	viewport.PlatformHandleRaw = Unsafe.Read<Win32WindowInfo>(&sysWmInfo.info).hinstance;
+			SDL_SysWMinfo sysWmInfo;
+			Sdl2Native.SDL_GetVersion(&sysWmInfo.version);
+			Sdl2Native.SDL_GetWMWindowInfo(data.SdlWindowHandle, &sysWmInfo);
+			if (sysWmInfo.subsystem == SysWMType.Windows)
+				viewport.PlatformHandleRaw = Unsafe.Read<Win32WindowInfo>(&sysWmInfo.info).hinstance;
 		}
 
 		private unsafe void PlatformDestroyWindow(ImGuiViewportPtr viewport)
 		{
 			if (viewport.PlatformUserData != IntPtr.Zero)
 			{
-				ViewportDataPtr data = viewport.PlatformUserData;
+				var dataPtr = GCHandle.FromIntPtr(viewport.PlatformUserData);
+				ViewportDataPtr data = (ViewportDataPtr)dataPtr.Target;
+				viewportDataList.Remove(dataPtr);
 				if ((IntPtr)data.NativePtr != IntPtr.Zero)
 				{
 					if (data.GlContext != IntPtr.Zero && data.WindowOwned)
@@ -899,7 +962,7 @@ namespace BootEngine.Layers.GUI
 					var swapPtr = GCHandle.FromIntPtr(data.Swapchain);
 					((Swapchain)swapPtr.Target).Dispose();
 					swapPtr.Free();
-					ImGui.MemFree((IntPtr)data.NativePtr);
+					Marshal.FreeHGlobal((IntPtr)data.NativePtr);
 				}
 				viewport.PlatformUserData = IntPtr.Zero;
 			}
@@ -908,7 +971,7 @@ namespace BootEngine.Layers.GUI
 
 		private unsafe void PlatformShowWindow(ImGuiViewportPtr viewport)
 		{
-			ViewportDataPtr data = viewport.PlatformUserData;
+			ViewportDataPtr data = (ViewportDataPtr)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
 			//TODO: Check this pointer
 			//IntPtr hWnd = viewport.PlatformHandleRaw;
 			//if ((viewport.Flags & ImGuiViewportFlags.NoTaskBarIcon) != 0)
@@ -929,7 +992,7 @@ namespace BootEngine.Layers.GUI
 		}
 
 	#region Structs
-	private unsafe struct ViewportData
+	public unsafe struct ViewportData
 		{
 #pragma warning disable S3459 // Unassigned members should be removed
 			public SDL_Window SdlWindowHandle;
@@ -940,7 +1003,7 @@ namespace BootEngine.Layers.GUI
 #pragma warning restore S3459 // Unassigned members should be removed
 		}
 
-		private unsafe struct ViewportDataPtr
+		public unsafe struct ViewportDataPtr
 		{
 			public ViewportData* NativePtr { get; }
 			public ViewportDataPtr(ViewportData* nativePtr) => NativePtr = nativePtr;

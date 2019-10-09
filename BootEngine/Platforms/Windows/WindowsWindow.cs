@@ -48,7 +48,9 @@ namespace Platforms.Windows
 #if DEBUG
             options.Debug = true;
 #endif
-            WindowStartup.CreateWindowAndGraphicsDevice(props, options, GraphicsBackend.Direct3D11, out window, out graphicsDevice);
+			WindowStartup.CreateWindowAndGraphicsDevice(props, options, GraphicsBackend.Direct3D11, out Veldrid.Sdl2.Sdl2Window w, out GraphicsDevice gd);
+			graphicsDevice = gd;
+			window = w;
 
             ResourceFactory = graphicsDevice.ResourceFactory;
 
