@@ -48,8 +48,8 @@ namespace BootEngine.Layers.GUI
 		private delegate void Platform_CreateWindow(ImGuiViewportPtr viewport);
 		private delegate void Platform_DestroyWindow(ImGuiViewportPtr viewport);
 		private delegate void Platform_ShowWindow(ImGuiViewportPtr viewport);
-		private delegate IntPtr Platform_GetWindowPosition(ImGuiViewportPtr viewport);
-		private delegate IntPtr Platform_GetWindowSize(ImGuiViewportPtr viewport);
+		private delegate void Platform_GetWindowPosition(Vector2 pos, ImGuiViewportPtr viewport);
+		private delegate void Platform_GetWindowSize(Vector2 size, ImGuiViewportPtr viewport);
 		private delegate void Platform_SetWindowPosition(ImGuiViewportPtr viewport, Vector2 arg0);
 		private delegate void Platform_SetWindowSize(ImGuiViewportPtr viewport, Vector2 arg0);
 		private delegate void Platform_SetWindowTitle(ImGuiViewportPtr viewport, string arg0);
@@ -694,9 +694,9 @@ namespace BootEngine.Layers.GUI
 			plIo.NativePtr->Platform_GetWindowSize = Marshal.GetFunctionPointerForDelegate(getWindowSize);
 			plIo.NativePtr->Platform_SetWindowSize = Marshal.GetFunctionPointerForDelegate(setWindowSize);
 			plIo.NativePtr->Platform_SetWindowTitle = Marshal.GetFunctionPointerForDelegate(setWindowTitle);
+			plIo.NativePtr->Platform_GetWindowMinimized = Marshal.GetFunctionPointerForDelegate(getWindowMinimized);
 			//plIo.NativePtr->Platform_GetWindowFocus = Marshal.GetFunctionPointerForDelegate(getWindowFocus);
 			//plIo.NativePtr->Platform_SetWindowFocus = Marshal.GetFunctionPointerForDelegate(setWindowFocus);
-			//plIo.NativePtr->Platform_GetWindowMinimized = Marshal.GetFunctionPointerForDelegate(getWindowMinimized);
 			//plIo.NativePtr->Platform_SetWindowAlpha = Marshal.GetFunctionPointerForDelegate(setWindowAlpha);
 			//plIo.Platform_CreateVkSurface = Marshal.GetFunctionPointerForDelegate<ViewportBoolDelegate>(createVulaknSurface);
 
@@ -817,33 +817,28 @@ namespace BootEngine.Layers.GUI
 			Sdl2Native.SDL_SetWindowSize(window.GetSdlWindow().SdlWindowHandle, (int)size.X, (int)size.Y);
 		}
 
-		private unsafe IntPtr PlatformGetWindowSize(ImGuiViewportPtr viewport)
+		private unsafe void PlatformGetWindowSize(Vector2 size, ImGuiViewportPtr viewport)
 		{
 			//Seems to work, should I fix it the proper way and ask cimgui to change his implementation?
 			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
 			Rectangle bounds = window.GetSdlWindow().Bounds;
-			IntPtr size = Marshal.AllocHGlobal(Unsafe.SizeOf<Vector2>());
-			ImVector tempSizeVector = new ImVector(1, 1, size);
-			tempSizeVector.Ref<Vector2>(0) = new Vector2(bounds.Width, bounds.Height);
-			return tempSizeVector.Data;
+			size.X = bounds.Width;
+			size.Y = bounds.Height;
 		}
 
-		private unsafe IntPtr PlatformGetWindowPosition(ImGuiViewportPtr viewport)
+		private unsafe void PlatformGetWindowPosition(Vector2 pos, ImGuiViewportPtr viewport)
 		{
-			//Seems to work, should I fix it the proper way and ask cimgui to change his implementation?
 			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
 			Rectangle bounds = window.GetSdlWindow().Bounds;
-			IntPtr pos = Marshal.AllocHGlobal(Unsafe.SizeOf<Vector2>());
-			ImVector tempPosVector = new ImVector(1, 1, pos);
-			tempPosVector.Ref<Vector2>(0) = new Vector2(bounds.X, bounds.Y);
-			return tempPosVector.Data;
+			pos.X = bounds.X;
+			pos.Y = bounds.Y;
 		}
 
 		private unsafe void PlatformCreateWindow(ImGuiViewportPtr viewport)
 		{
 			SDL_WindowFlags sdlFlags = (Sdl2Native.SDL_GetWindowFlags(mainWindow.GetSdlWindow().SdlWindowHandle) & SDL_WindowFlags.AllowHighDpi) 
 				| SDL_WindowFlags.Hidden;
-			sdlFlags |= (viewport.Flags & ImGuiViewportFlags.NoDecoration) != 0 ? SDL_WindowFlags.Borderless : SDL_WindowFlags.Resizable;
+			sdlFlags |=  SDL_WindowFlags.Resizable;
 
 			if (graphicsDevice.BackendType == GraphicsBackend.OpenGL || graphicsDevice.BackendType == GraphicsBackend.OpenGLES)
 				sdlFlags |= SDL_WindowFlags.OpenGL;
@@ -860,13 +855,10 @@ namespace BootEngine.Layers.GUI
 			sdlWindow.Moved += (_) => viewport.PlatformRequestMove = true;
 			sdlWindow.Closed += () => viewport.PlatformRequestClose = true;
 
-			SDL_SysWMinfo sysWmInfo;
-			Sdl2Native.SDL_GetVersion(&sysWmInfo.version);
-			Sdl2Native.SDL_GetWMWindowInfo(sdlWindow.SdlWindowHandle, &sysWmInfo);
-
 			WindowBase newWindow = WindowBase.CreateSubWindow(graphicsDevice, sdlWindow, mainWindow.GetType());
 			
 			viewport.PlatformUserData = (IntPtr)newWindow.GcHandle;
+			viewport.PlatformHandle = newWindow.GetSdlWindow().Handle;
 
 			//if (sysWmInfo.subsystem == SysWMType.Windows)
 			//{
