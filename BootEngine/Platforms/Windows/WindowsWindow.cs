@@ -1,13 +1,20 @@
 ﻿using BootEngine.Events;
 using BootEngine.Input;
 using BootEngine.Window;
+using System.Runtime.InteropServices;
 using Veldrid;
+using Veldrid.Sdl2;
 
 namespace Platforms.Windows
 {
-    public class WindowsWindow : WindowBase
+	public class WindowsWindow : WindowBase
     {
         #region Constructor
+		internal WindowsWindow(GraphicsDevice gd, Sdl2Window sdlWindow)
+		{
+			InitializeSubWindow(gd, sdlWindow);
+		}
+
         public WindowsWindow(WindowProps props)
         {
             Initialize(props);
@@ -28,11 +35,29 @@ namespace Platforms.Windows
         #endregion
 
         #region Private
+		private void InitializeSubWindow(GraphicsDevice gd, Sdl2Window sdlWindow)
+		{
+			GcHandle = GCHandle.Alloc(this);
+			graphicsDevice = gd;
+			ResourceFactory = gd.ResourceFactory;
+			VSync = gd.SyncToVerticalBlank;
+			window = sdlWindow;
+			
+			SwapchainSource scSrc = WindowStartup.GetSwapchainSource(sdlWindow);
+			SwapchainDescription scDesc = new SwapchainDescription(scSrc, (uint)sdlWindow.Width, (uint)sdlWindow.Height,
+				gd.SwapchainFramebuffer.OutputDescription.DepthAttachment?.Format, VSync);
+			swapchain = ResourceFactory.CreateSwapchain(scDesc);
+
+			window.Resized += () => swapchain.Resize((uint)window.Width, (uint)window.Height);
+		}
+
         private void Initialize(WindowProps props)
         {
 			InputManager.CreateInstance<WindowsInput>();
 
-            VSync = props.VSync;
+			GcHandle = GCHandle.Alloc(this);
+
+			VSync = props.VSync;
 
             GraphicsDeviceOptions options = new GraphicsDeviceOptions()
             {
@@ -48,15 +73,14 @@ namespace Platforms.Windows
 #if DEBUG
             options.Debug = true;
 #endif
-			WindowStartup.CreateWindowAndGraphicsDevice(props, options, GraphicsBackend.Direct3D11, out Veldrid.Sdl2.Sdl2Window w, out GraphicsDevice gd);
-			graphicsDevice = gd;
-			window = w;
+			WindowStartup.CreateWindowAndGraphicsDevice(props, options, GraphicsBackend.Direct3D11, out window, out graphicsDevice);
 
             ResourceFactory = graphicsDevice.ResourceFactory;
+			swapchain = graphicsDevice.MainSwapchain;
 
-            //Called twice possibly because of 2 events being fired: Resize and SizeChanged (and Maximized)
-            //#TODO treat it here or hope for Veldrid to be updated with this (Maybe clone and alter source code myself)
-            window.Resized += () =>
+			//Called twice possibly because of 2 events being fired: Resize and SizeChanged (and Maximized)
+			//#TODO treat it here or hope for Veldrid to be updated with this (Maybe clone and alter source code myself)
+			window.Resized += () =>
 			{
 				graphicsDevice.ResizeMainWindow((uint)window.Width, (uint)window.Height);
 				EventCallback(new WindowResizeEvent((uint)window.Width, (uint)window.Height));
@@ -76,9 +100,6 @@ namespace Platforms.Windows
         private void Shutdown()
         {
             //Dispose
-            graphicsDevice.SwapchainFramebuffer.Dispose();
-            graphicsDevice.MainSwapchain.Dispose();
-            graphicsDevice.Dispose();
         }
         #endregion
         #endregion

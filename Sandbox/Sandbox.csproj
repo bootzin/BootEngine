@@ -29,7 +29,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="SDL2-CS-Rolling" Version="2018.11.1" />
     <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
     <PackageReference Include="Veldrid" Version="4.7.0" />

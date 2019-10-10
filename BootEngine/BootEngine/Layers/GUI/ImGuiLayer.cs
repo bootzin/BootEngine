@@ -27,7 +27,7 @@ namespace BootEngine.Layers.GUI
 			gd = window.GetGraphicsDevice();
 			cl = window.ResourceFactory.CreateCommandList();
 
-			controller = new ImGuiController(gd, gd.MainSwapchain.Framebuffer.OutputDescription, sdlWindow);
+			controller = new ImGuiController(gd, gd.MainSwapchain.Framebuffer.OutputDescription, window);
 
 			sdlWindow.Resized += () => controller.WindowResized(sdlWindow.Width, sdlWindow.Height);
 		}
@@ -47,8 +47,6 @@ namespace BootEngine.Layers.GUI
 
 		public void Begin()
 		{
-			var ctx = ImGui.GetCurrentContext();
-			ImGui.SetCurrentContext(ctx);
 			controller.BeginFrame();
 			cl.Begin();
 		}

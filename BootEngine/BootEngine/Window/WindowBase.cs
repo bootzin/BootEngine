@@ -1,6 +1,8 @@
 ﻿using BootEngine.Events;
+using ImGuiNET;
 using Platforms.Windows;
 using System;
+using System.Runtime.InteropServices;
 using Veldrid;
 using Veldrid.Sdl2;
 
@@ -35,10 +37,12 @@ namespace BootEngine.Window
         public Action<EventBase> EventCallback { get; set; }
 
         public ResourceFactory ResourceFactory { get; set; }
-        protected bool VSync { get; set; }
+		public GCHandle GcHandle { get; set; }
+		protected bool VSync { get; set; }
 
         protected GraphicsDevice graphicsDevice;
         protected Sdl2Window window;
+		protected Swapchain swapchain;
 
         private bool disposed;
         #endregion
@@ -58,6 +62,11 @@ namespace BootEngine.Window
 			return graphicsDevice;
 		}
 
+		public Swapchain GetSwapchain()
+		{
+			return swapchain;
+		}
+
         public virtual void SetVSync(bool enabled)
         {
             graphicsDevice.SyncToVerticalBlank = enabled;
@@ -69,12 +78,19 @@ namespace BootEngine.Window
             return graphicsDevice.SyncToVerticalBlank;
         }
 
-        public static WindowBase Create<T>(WindowProps props = null)
+        public static WindowBase CreateMainWindow<T>(WindowProps props = null)
         {
             if (typeof(T) == typeof(WindowsWindow))
                 return new WindowsWindow(props ?? new WindowProps());
             return null;
         }
+
+		public static WindowBase CreateSubWindow(GraphicsDevice gd, Sdl2Window sdlWindow, Type windowType)
+		{
+			if (windowType == typeof(WindowsWindow))
+				return new WindowsWindow(gd, sdlWindow);
+			return null;
+		}
 
         #region Dispose
         public void Dispose()
@@ -89,11 +105,12 @@ namespace BootEngine.Window
             {
                 if (disposing)
                 {
-					graphicsDevice.WaitForIdle();
-					window = null;
+					window.Close();
 					ResourceFactory = null;
 					EventCallback = null;
-					graphicsDevice.Dispose();
+					swapchain.Framebuffer.Dispose();
+					swapchain.Dispose();
+					GcHandle.Free();
 				}
 				disposed = true;
             }

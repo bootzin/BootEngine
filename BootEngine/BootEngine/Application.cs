@@ -26,7 +26,7 @@ namespace BootEngine
 			Logger.Assert(App == null, "App already initialized");
 			App = this;
             LayerStack = new LayerStack();
-            Window = WindowBase.Create<WindowType>();
+            Window = WindowBase.CreateMainWindow<WindowType>();
             Window.EventCallback = OnEvent;
 			ImGuiLayer = new ImGuiLayer<WindowType>();
 			LayerStack.PushOverlay(ImGuiLayer);
