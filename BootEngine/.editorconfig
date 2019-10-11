@@ -2,3 +2,6 @@
 
 # IDE0017: Simplify object initialization
 dotnet_style_object_initializer = false:suggestion
+
+# RCS1216: Unnecessary unsafe context.
+dotnet_diagnostic.RCS1216.severity = silent

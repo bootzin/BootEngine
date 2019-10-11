@@ -48,7 +48,7 @@ namespace BootEngine.Window
         #endregion
 
         #region Methods
-        public abstract void OnUpdate();
+        public abstract void OnUpdate(bool updateSnapshot = true);
 
         public bool Exists() => window.Exists;
 

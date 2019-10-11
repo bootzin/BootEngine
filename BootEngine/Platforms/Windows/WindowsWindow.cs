@@ -28,9 +28,11 @@ namespace Platforms.Windows
 
         #region Methods
         #region Public
-        public override void OnUpdate()
+        public override void OnUpdate(bool updateSnapshot = true)
         {
-            InputManager.Snapshot = window.PumpEvents();
+			InputSnapshot snapshot = window.PumpEvents();
+			if (updateSnapshot)
+				InputManager.Snapshot = snapshot;
         }
         #endregion
 
@@ -42,7 +44,7 @@ namespace Platforms.Windows
 			ResourceFactory = gd.ResourceFactory;
 			VSync = gd.SyncToVerticalBlank;
 			window = sdlWindow;
-			
+
 			SwapchainSource scSrc = WindowStartup.GetSwapchainSource(sdlWindow);
 			SwapchainDescription scDesc = new SwapchainDescription(scSrc, (uint)sdlWindow.Width, (uint)sdlWindow.Height,
 				gd.SwapchainFramebuffer.OutputDescription.DepthAttachment?.Format, VSync);

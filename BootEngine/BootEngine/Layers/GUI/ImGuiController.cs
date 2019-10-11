@@ -17,7 +17,7 @@ using Veldrid.Vk;
 
 namespace BootEngine.Layers.GUI
 {
-	public unsafe sealed class ImGuiController : IDisposable
+	public sealed class ImGuiController : IDisposable
 	{
 		#region Properties
 		private GraphicsDevice graphicsDevice;
@@ -78,6 +78,9 @@ namespace BootEngine.Layers.GUI
 		private delegate void SDL_RaiseWindow_t(IntPtr sdl2Window);
 		private static SDL_RaiseWindow_t p_sdl_RaiseWindow;
 
+		private unsafe delegate uint SDL_GetGlobalMouseState_t(int* x, int* y);
+		private static SDL_GetGlobalMouseState_t p_sdl_GetGlobalMouseState;
+
 		private unsafe delegate int SDL_GetDisplayUsableBounds_t(int displayIndex, Rectangle* rect);
 		private static SDL_GetDisplayUsableBounds_t p_sdl_GetDisplayUsableBounds_t;
 		#endregion
@@ -136,7 +139,7 @@ namespace BootEngine.Layers.GUI
         {
 			mainWindow = window;
 			Sdl2Window sdlWindow = window.GetSdlWindow();
-			
+
 			windowWidth = window.GetSdlWindow().Width;
             windowHeight = sdlWindow.Height;
 
@@ -424,40 +427,61 @@ namespace BootEngine.Layers.GUI
 			plIo.MainViewport.Size = new Vector2(mainSdlWindow.Width, mainSdlWindow.Height);
 		}
 
-        private void UpdateImGuiInput(InputSnapshot snapshot)
+        private static void UpdateImGuiInput(InputSnapshot snapshot)
         {
             if (snapshot == null)
                 return;
 
             ImGuiIOPtr io = ImGui.GetIO();
 
-            // Determine if any of the mouse buttons were pressed during this snapshot period, even if they are no longer held.
-            bool leftPressed = false;
-            bool middlePressed = false;
-            bool rightPressed = false;
-            foreach (MouseEvent me in snapshot.MouseEvents)
-            {
-                if (me.Down)
-                {
-                    switch (me.MouseButton)
-                    {
-                        case MouseButton.Left:
-                            leftPressed = true;
-                            break;
-                        case MouseButton.Middle:
-                            middlePressed = true;
-                            break;
-                        case MouseButton.Right:
-                            rightPressed = true;
-                            break;
-                    }
-                }
-            }
+			// Determine if any of the mouse buttons were pressed during this snapshot period, even if they are no longer held.
+			bool leftPressed = false;
+			bool middlePressed = false;
+			bool rightPressed = false;
+			foreach (MouseEvent me in snapshot.MouseEvents)
+			{
+				if (me.Down)
+				{
+					switch (me.MouseButton)
+					{
+						case MouseButton.Left:
+							leftPressed = true;
+							break;
+						case MouseButton.Middle:
+							middlePressed = true;
+							break;
+						case MouseButton.Right:
+							rightPressed = true;
+							break;
+					}
+				}
+			}
 
-            io.MouseDown[0] = leftPressed || snapshot.IsMouseDown(MouseButton.Left);
-            io.MouseDown[1] = rightPressed || snapshot.IsMouseDown(MouseButton.Right);
-            io.MouseDown[2] = middlePressed || snapshot.IsMouseDown(MouseButton.Middle);
-            io.MousePos = snapshot.MousePosition;
+			io.MouseDown[0] = leftPressed || snapshot.IsMouseDown(MouseButton.Left);
+			io.MouseDown[1] = rightPressed || snapshot.IsMouseDown(MouseButton.Right);
+			io.MouseDown[2] = middlePressed || snapshot.IsMouseDown(MouseButton.Middle);
+
+			if ((io.ConfigFlags & ImGuiConfigFlags.ViewportsEnable) != 0)
+			{
+				if (p_sdl_GetGlobalMouseState == null)
+				{
+					p_sdl_GetGlobalMouseState = Sdl2Native.LoadFunction<SDL_GetGlobalMouseState_t>("SDL_GetGlobalMouseState");
+				}
+				int x, y;
+				unsafe
+				{
+					uint buttons = p_sdl_GetGlobalMouseState(&x, &y);
+					io.MouseDown[0] |= (buttons & 0b0001) != 0;
+					io.MouseDown[1] |= (buttons & 0b0010) != 0;
+					io.MouseDown[2] |= (buttons & 0b0100) != 0;
+				}
+				io.MousePos = new Vector2(x, y);
+			}
+			else
+			{
+				io.MousePos = snapshot.MousePosition;
+			}
+
             io.MouseWheel = snapshot.WheelDelta;
 
             #region Keyboard
@@ -481,8 +505,16 @@ namespace BootEngine.Layers.GUI
             io.KeyAlt = io.KeysDown[(int)KeyCodes.AltLeft] || io.KeysDown[(int)KeyCodes.AltRight];
             io.KeyShift = io.KeysDown[(int)KeyCodes.ShiftLeft] || io.KeysDown[(int)KeyCodes.ShiftRight];
             io.KeySuper = io.KeysDown[(int)KeyCodes.SuperLeft] || io.KeysDown[(int)KeyCodes.SuperRight];
-            #endregion
-        }
+			#endregion
+
+			ImVector<ImGuiViewportPtr> viewports = ImGui.GetPlatformIO().Viewports;
+			for (int i = 1; i < viewports.Size; i++)
+			{
+				ImGuiViewportPtr v = viewports[i];
+				WindowBase window = (WindowBase)GCHandle.FromIntPtr(v.PlatformUserData).Target;
+				window.OnUpdate();
+			}
+		}
 
         private static void SetImGuiKeyMappings()
         {
@@ -645,11 +677,11 @@ namespace BootEngine.Layers.GUI
 		{
 			ImGuiIOPtr io = ImGui.GetIO();
 			unsafe
-            {
-                io.NativePtr->BackendPlatformName = (byte*)new FixedAsciiString("Veldrid.SDL2 Backend").DataPtr;
-            }
+			{
+				io.NativePtr->BackendPlatformName = (byte*)new FixedAsciiString("Veldrid.SDL2 Backend").DataPtr;
+			}
 			io.Fonts.AddFontDefault();
-			
+
 			io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard | ImGuiConfigFlags.DockingEnable;
 			io.ConfigFlags |= ImGuiConfigFlags.ViewportsEnable;
 
@@ -715,7 +747,7 @@ namespace BootEngine.Layers.GUI
 			//}
 		}
 
-		private unsafe void UpdateMonitors()
+		private unsafe static void UpdateMonitors()
 		{
 			ImGuiPlatformIOPtr plIo = ImGui.GetPlatformIO();
 			if (p_sdl_GetNumVideoDisplays == null)
@@ -752,7 +784,7 @@ namespace BootEngine.Layers.GUI
 			return GetSurfaceSource(sysWmInfo).CreateSurface(new Vulkan.VkInstance(window.GetSdlWindow().SdlWindowHandle)) != Vulkan.VkSurfaceKHR.Null;
 		}
 
-		private static unsafe VkSurfaceSource GetSurfaceSource(SDL_SysWMinfo sysWmInfo)
+		private unsafe static VkSurfaceSource GetSurfaceSource(SDL_SysWMinfo sysWmInfo)
 		{
 			switch (sysWmInfo.subsystem)
 			{
@@ -781,7 +813,7 @@ namespace BootEngine.Layers.GUI
 			return (Sdl2Native.SDL_GetWindowFlags(window.GetSdlWindow().SdlWindowHandle) & SDL_WindowFlags.InputFocus) != 0;
 		}
 
-		private void PlatformSetWindowFocus(ImGuiViewportPtr viewport)
+		private static void PlatformSetWindowFocus(ImGuiViewportPtr viewport)
 		{
 			if (p_sdl_RaiseWindow == null)
 			{
@@ -817,7 +849,7 @@ namespace BootEngine.Layers.GUI
 			Sdl2Native.SDL_SetWindowSize(window.GetSdlWindow().SdlWindowHandle, (int)size.X, (int)size.Y);
 		}
 
-		private unsafe void PlatformGetWindowSize(Vector2 size, ImGuiViewportPtr viewport)
+		private void PlatformGetWindowSize(Vector2 size, ImGuiViewportPtr viewport)
 		{
 			//Seems to work, should I fix it the proper way and ask cimgui to change his implementation?
 			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
@@ -826,7 +858,7 @@ namespace BootEngine.Layers.GUI
 			size.Y = bounds.Height;
 		}
 
-		private unsafe void PlatformGetWindowPosition(Vector2 pos, ImGuiViewportPtr viewport)
+		private void PlatformGetWindowPosition(Vector2 pos, ImGuiViewportPtr viewport)
 		{
 			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
 			Rectangle bounds = window.GetSdlWindow().Bounds;
@@ -838,7 +870,8 @@ namespace BootEngine.Layers.GUI
 		{
 			SDL_WindowFlags sdlFlags = (Sdl2Native.SDL_GetWindowFlags(mainWindow.GetSdlWindow().SdlWindowHandle) & SDL_WindowFlags.AllowHighDpi) 
 				| SDL_WindowFlags.Hidden;
-			sdlFlags |=  SDL_WindowFlags.Resizable;
+			//sdlFlags |= ((viewport.Flags & ImGuiViewportFlags.NoDecoration) != 0) ? SDL_WindowFlags.Borderless : SDL_WindowFlags.Resizable;
+			sdlFlags |= SDL_WindowFlags.Resizable;
 
 			if (graphicsDevice.BackendType == GraphicsBackend.OpenGL || graphicsDevice.BackendType == GraphicsBackend.OpenGLES)
 				sdlFlags |= SDL_WindowFlags.OpenGL;
@@ -856,7 +889,7 @@ namespace BootEngine.Layers.GUI
 			sdlWindow.Closed += () => viewport.PlatformRequestClose = true;
 
 			WindowBase newWindow = WindowBase.CreateSubWindow(graphicsDevice, sdlWindow, mainWindow.GetType());
-			
+
 			viewport.PlatformUserData = (IntPtr)newWindow.GcHandle;
 			viewport.PlatformHandle = newWindow.GetSdlWindow().Handle;
 
@@ -881,16 +914,13 @@ namespace BootEngine.Layers.GUI
 			//viewport.PlatformHandle = sdlWindow.Handle;
 		}
 
-		private unsafe void PlatformDestroyWindow(ImGuiViewportPtr viewport)
+		private void PlatformDestroyWindow(ImGuiViewportPtr viewport)
 		{
 			if (viewport.PlatformUserData != IntPtr.Zero)
 			{
 				WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
-				if (window != null)
-				{
-					window.Dispose();
-					//Sdl2Native.SDL_GL_DeleteContext(data.GlContext);
-				}
+				window?.Dispose();
+				//Sdl2Native.SDL_GL_DeleteContext(data.GlContext);
 				viewport.PlatformUserData = IntPtr.Zero;
 			}
 			//viewport.PlatformHandle = IntPtr.Zero;
