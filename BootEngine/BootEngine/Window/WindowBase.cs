@@ -106,7 +106,6 @@ namespace BootEngine.Window
                 if (disposing)
                 {
 					window.Close();
-					ResourceFactory = null;
 					EventCallback = null;
 					swapchain.Framebuffer.Dispose();
 					swapchain.Dispose();

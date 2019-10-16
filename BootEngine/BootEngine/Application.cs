@@ -47,8 +47,6 @@ namespace BootEngine
 				ImGuiLayer.Begin();
 				LayerStack.Layers.ForEach(layer => layer.OnGuiRender());
 				ImGuiLayer.End();
-
-				Window.OnUpdate();
 			}
 		}
 
@@ -77,6 +75,8 @@ namespace BootEngine
 			{
 				if (disposing)
 				{
+					Window.ResourceFactory = null;
+					Window.GetGraphicsDevice().Dispose();
                     Window.Dispose();
                     LayerStack.Layers.Clear();
 				}

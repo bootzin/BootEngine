@@ -36,7 +36,6 @@ namespace BootEngine.Layers.GUI
 		private Pipeline pipeline;
 		private ResourceSet mainResourceSet;
 		private ResourceSet fontTextureResourceSet;
-		private Viewport viewport;
 		private readonly WindowBase mainWindow;
 
 		private readonly IntPtr fontAtlasID = (IntPtr)1;
@@ -164,7 +163,6 @@ namespace BootEngine.Layers.GUI
         public void CreateDeviceResources(GraphicsDevice gd, OutputDescription outputDescription)
         {
             graphicsDevice = gd;
-			viewport = new Viewport();
 
 			vertexBuffer = gd.ResourceFactory.CreateBuffer(new BufferDescription(10000, BufferUsage.VertexBuffer | BufferUsage.Dynamic));
             vertexBuffer.Name = "ImGui.NET Vertex Buffer";
@@ -366,7 +364,7 @@ namespace BootEngine.Layers.GUI
             {
                 frameBegun = false;
                 ImGui.Render();
-                RenderImDrawData(ImGui.GetDrawData(), gd, cl);
+				RenderImDrawData(ImGui.GetDrawData(), gd, cl);
 
 				// Update and Render additional Platform Windows
 				if ((ImGui.GetIO().ConfigFlags & ImGuiConfigFlags.ViewportsEnable) != 0)
@@ -376,10 +374,13 @@ namespace BootEngine.Layers.GUI
 					for (int i = 1; i < platformIO.Viewports.Size; i++)
 					{
 						ImGuiViewportPtr vp = platformIO.Viewports[i];
-						WindowBase window = (WindowBase)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
-						cl.SetFramebuffer(window.GetSwapchain().Framebuffer);
-						cl.ClearColorTarget(0, new RgbaFloat(0.45f, 0.55f, 1f, 1f));
-						RenderImDrawData(vp.DrawData, gd, cl);
+						if ((vp.Flags & ImGuiViewportFlags.Minimized) == 0)
+						{
+							WindowBase window = (WindowBase)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
+							cl.SetFramebuffer(window.GetSwapchain().Framebuffer);
+							cl.ClearColorTarget(0, new RgbaFloat(0.45f, 0.55f, 1f, 1f));
+							RenderImDrawData(vp.DrawData, gd, cl);
+						}
 					}
 				}
 			}
@@ -403,7 +404,7 @@ namespace BootEngine.Layers.GUI
 		public void Update(float deltaSeconds)
         {
             SetPerFrameImGuiData(deltaSeconds);
-            UpdateImGuiInput(InputManager.Snapshot);
+            UpdateImGuiInput();
 			UpdateMonitors();
         }
 
@@ -432,10 +433,17 @@ namespace BootEngine.Layers.GUI
 			plIo.MainViewport.Size = new Vector2(mainSdlWindow.Width, mainSdlWindow.Height);
 		}
 
-        private void UpdateImGuiInput(InputSnapshot snapshot)
+        private void UpdateImGuiInput()
         {
-            if (snapshot == null)
-                return;
+			ImVector<ImGuiViewportPtr> viewports = ImGui.GetPlatformIO().Viewports;
+			for (int i = 0; i < viewports.Size; i++)
+			{
+				WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewports[i].PlatformUserData).Target;
+				bool atualizarSnapshot = window.GetSdlWindow().Focused;
+				window.OnUpdate(atualizarSnapshot);
+			}
+
+			InputSnapshot snapshot = InputManager.Snapshot;
 
             ImGuiIOPtr io = ImGui.GetIO();
 
@@ -511,13 +519,6 @@ namespace BootEngine.Layers.GUI
             io.KeyShift = io.KeysDown[(int)KeyCodes.ShiftLeft] || io.KeysDown[(int)KeyCodes.ShiftRight];
             io.KeySuper = io.KeysDown[(int)KeyCodes.SuperLeft] || io.KeysDown[(int)KeyCodes.SuperRight];
 			#endregion
-
-			ImVector<ImGuiViewportPtr> viewports = ImGui.GetPlatformIO().Viewports;
-			for (int i = 1; i < viewports.Size; i++)
-			{
-				WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewports[i].PlatformUserData).Target;
-				window.OnUpdate();
-			}
 		}
 
         private static void SetImGuiKeyMappings()
@@ -549,6 +550,7 @@ namespace BootEngine.Layers.GUI
 
         private void RenderImDrawData(ImDrawDataPtr draw_data, GraphicsDevice gd, CommandList cl)
         {
+
             if (draw_data.CmdListsCount == 0)
             {
                 return;
@@ -591,25 +593,25 @@ namespace BootEngine.Layers.GUI
                 indexOffsetInElements += (uint)cmd_list.IdxBuffer.Size;
             }
 
-			ImGuiIOPtr io = ImGui.GetIO();
 			// Setup orthographic projection matrix into our constant buffer
             Matrix4x4 mvp = Matrix4x4.CreateOrthographicOffCenter(
                 draw_data.DisplayPos.X,
 				draw_data.DisplayPos.X + draw_data.DisplaySize.X,
 				draw_data.DisplayPos.Y + draw_data.DisplaySize.Y,
 				draw_data.DisplayPos.Y,
-                -1.0f,
+                0.0f,
                 1.0f);
 
             graphicsDevice.UpdateBuffer(projMatrixBuffer, 0, ref mvp);
 
-			//cl.SetViewport(0, ref viewport);
-            cl.SetVertexBuffer(0, vertexBuffer);
-            cl.SetIndexBuffer(indexBuffer, IndexFormat.UInt16);
+			cl.SetViewport(0, new Viewport(draw_data.DisplayPos.X, draw_data.DisplayPos.Y, draw_data.DisplaySize.X, draw_data.DisplaySize.Y, 0, 1));
+			cl.SetFullViewports();
             cl.SetPipeline(pipeline);
+			cl.SetVertexBuffer(0, vertexBuffer);
+            cl.SetIndexBuffer(indexBuffer, IndexFormat.UInt16);
             cl.SetGraphicsResourceSet(0, mainResourceSet);
 
-            draw_data.ScaleClipRects(io.DisplayFramebufferScale);
+            draw_data.ScaleClipRects(draw_data.FramebufferScale);
 
             // Render command lists
             int vtx_offset = 0;
@@ -642,7 +644,7 @@ namespace BootEngine.Layers.GUI
 						Vector2 clipScale = draw_data.FramebufferScale;
 
                         cl.SetScissorRect(
-                            0,
+							0,
                             (uint)((pcmd.ClipRect.X - clipOff.X) * clipScale.X),
                             (uint)((pcmd.ClipRect.Y - clipOff.Y) * clipScale.Y),
                             (uint)((pcmd.ClipRect.Z - clipOff.X) * clipScale.X),
@@ -919,7 +921,6 @@ namespace BootEngine.Layers.GUI
 			//	if (glContextBackup != IntPtr.Zero)
 			//		Sdl2Native.SDL_GL_MakeCurrent(data.SdlWindowHandle, glContextBackup);
 			//}
-			//viewport.PlatformHandle = sdlWindow.Handle;
 		}
 
 		private void PlatformDestroyWindow(ImGuiViewportPtr viewport)
