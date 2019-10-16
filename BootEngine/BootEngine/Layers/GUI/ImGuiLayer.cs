@@ -59,8 +59,7 @@ namespace BootEngine.Layers.GUI
 
 			cl.End();
 			gd.SubmitCommands(cl);
-			gd.SwapBuffers();
-			controller.SwapExtraWindowsBuffers(gd);
+			controller.SwapBuffers(gd);
 		}
 
 		public override void OnEvent(EventBase @event)

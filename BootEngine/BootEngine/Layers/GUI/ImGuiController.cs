@@ -36,6 +36,7 @@ namespace BootEngine.Layers.GUI
 		private Pipeline pipeline;
 		private ResourceSet mainResourceSet;
 		private ResourceSet fontTextureResourceSet;
+		private Viewport viewport;
 		private readonly WindowBase mainWindow;
 
 		private readonly IntPtr fontAtlasID = (IntPtr)1;
@@ -163,7 +164,9 @@ namespace BootEngine.Layers.GUI
         public void CreateDeviceResources(GraphicsDevice gd, OutputDescription outputDescription)
         {
             graphicsDevice = gd;
-            vertexBuffer = gd.ResourceFactory.CreateBuffer(new BufferDescription(10000, BufferUsage.VertexBuffer | BufferUsage.Dynamic));
+			viewport = new Viewport();
+
+			vertexBuffer = gd.ResourceFactory.CreateBuffer(new BufferDescription(10000, BufferUsage.VertexBuffer | BufferUsage.Dynamic));
             vertexBuffer.Name = "ImGui.NET Vertex Buffer";
             indexBuffer = gd.ResourceFactory.CreateBuffer(new BufferDescription(2000, BufferUsage.IndexBuffer | BufferUsage.Dynamic));
             indexBuffer.Name = "ImGui.NET Index Buffer";
@@ -375,15 +378,16 @@ namespace BootEngine.Layers.GUI
 						ImGuiViewportPtr vp = platformIO.Viewports[i];
 						WindowBase window = (WindowBase)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
 						cl.SetFramebuffer(window.GetSwapchain().Framebuffer);
-						cl.ClearColorTarget(0, new RgbaFloat(0.45f, 0.55f, 0.6f, 1f));
+						cl.ClearColorTarget(0, new RgbaFloat(0.45f, 0.55f, 1f, 1f));
 						RenderImDrawData(vp.DrawData, gd, cl);
 					}
 				}
 			}
         }
 
-		public void SwapExtraWindowsBuffers(GraphicsDevice gd)
+		public void SwapBuffers(GraphicsDevice gd)
 		{
+			gd.SwapBuffers();
 			ImGuiPlatformIOPtr platformIO = ImGui.GetPlatformIO();
 			for (int i = 1; i < platformIO.Viewports.Size; i++)
 			{
@@ -458,6 +462,7 @@ namespace BootEngine.Layers.GUI
 				}
 			}
 
+			//TODO: Can I remove this for viewports?
 			io.MouseDown[0] = leftPressed || snapshot.IsMouseDown(MouseButton.Left);
 			io.MouseDown[1] = rightPressed || snapshot.IsMouseDown(MouseButton.Right);
 			io.MouseDown[2] = middlePressed || snapshot.IsMouseDown(MouseButton.Middle);
@@ -498,8 +503,7 @@ namespace BootEngine.Layers.GUI
             IReadOnlyList<KeyEvent> keyEvents = snapshot.KeyEvents;
             for (int i = 0; i < keyEvents.Count; i++)
             {
-                KeyEvent keyEvent = keyEvents[i];
-				io.KeysDown[(int)keyEvent.Key] = keyEvent.Down;
+				io.KeysDown[(int)keyEvents[i].Key] = keyEvents[i].Down;
             }
 
             io.KeyCtrl = io.KeysDown[(int)KeyCodes.ControlLeft] || io.KeysDown[(int)KeyCodes.ControlRight];
@@ -511,8 +515,7 @@ namespace BootEngine.Layers.GUI
 			ImVector<ImGuiViewportPtr> viewports = ImGui.GetPlatformIO().Viewports;
 			for (int i = 1; i < viewports.Size; i++)
 			{
-				ImGuiViewportPtr v = viewports[i];
-				WindowBase window = (WindowBase)GCHandle.FromIntPtr(v.PlatformUserData).Target;
+				WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewports[i].PlatformUserData).Target;
 				window.OnUpdate();
 			}
 		}
@@ -588,9 +591,8 @@ namespace BootEngine.Layers.GUI
                 indexOffsetInElements += (uint)cmd_list.IdxBuffer.Size;
             }
 
-			// Setup orthographic projection matrix into our constant buffer
-			//cl.SetViewport(0, new Viewport(0, 0, draw_data.DisplaySize.X * draw_data.FramebufferScale.X, draw_data.DisplaySize.Y * draw_data.FramebufferScale.Y, -1.0f, 1.0f));
 			ImGuiIOPtr io = ImGui.GetIO();
+			// Setup orthographic projection matrix into our constant buffer
             Matrix4x4 mvp = Matrix4x4.CreateOrthographicOffCenter(
                 draw_data.DisplayPos.X,
 				draw_data.DisplayPos.X + draw_data.DisplaySize.X,
@@ -601,6 +603,7 @@ namespace BootEngine.Layers.GUI
 
             graphicsDevice.UpdateBuffer(projMatrixBuffer, 0, ref mvp);
 
+			//cl.SetViewport(0, ref viewport);
             cl.SetVertexBuffer(0, vertexBuffer);
             cl.SetIndexBuffer(indexBuffer, IndexFormat.UInt16);
             cl.SetPipeline(pipeline);
@@ -684,6 +687,7 @@ namespace BootEngine.Layers.GUI
 			unsafe
 			{
 				io.NativePtr->BackendPlatformName = (byte*)new FixedAsciiString("Veldrid.SDL2 Backend").DataPtr;
+				io.NativePtr->ConfigViewportsNoTaskBarIcon = 1;
 			}
 			io.Fonts.AddFontDefault();
 
@@ -691,7 +695,7 @@ namespace BootEngine.Layers.GUI
 			io.ConfigFlags |= ImGuiConfigFlags.ViewportsEnable;
 
 			io.BackendFlags |= ImGuiBackendFlags.HasMouseCursors | ImGuiBackendFlags.HasSetMousePos;
-			io.BackendFlags |= ImGuiBackendFlags.RendererHasViewports;
+			io.BackendFlags |= ImGuiBackendFlags.RendererHasViewports | ImGuiBackendFlags.RendererHasVtxOffset;
 			io.BackendFlags |= ImGuiBackendFlags.PlatformHasViewports;// | ImGuiBackendFlags.HasMouseHoveredViewport;
 
 			if ((io.ConfigFlags & ImGuiConfigFlags.ViewportsEnable) != 0)
@@ -721,9 +725,6 @@ namespace BootEngine.Layers.GUI
 			setWindowFocus = PlatformSetWindowFocus;
 			getWindowMinimized = PlatformGetWindowMinimized;
 			setWindowAlpha = PlatformSetWindowAlpha;
-			//swapBuffers = PlatformSwapBuffers;
-			//renderWindow = PlatformRenderWindow;
-			//updateWindow = PlatformUpdateWindow;
 
 			ImGuiPlatformIOPtr plIo = ImGui.GetPlatformIO();
 			plIo.NativePtr->Platform_CreateWindow = Marshal.GetFunctionPointerForDelegate(createWindow);
@@ -738,9 +739,6 @@ namespace BootEngine.Layers.GUI
 			plIo.NativePtr->Platform_GetWindowFocus = Marshal.GetFunctionPointerForDelegate(getWindowFocus);
 			plIo.NativePtr->Platform_SetWindowFocus = Marshal.GetFunctionPointerForDelegate(setWindowFocus);
 			plIo.NativePtr->Platform_SetWindowAlpha = Marshal.GetFunctionPointerForDelegate(setWindowAlpha);
-			//plIo.NativePtr->Platform_SwapBuffers = Marshal.GetFunctionPointerForDelegate(swapBuffers);
-			//plIo.NativePtr->Platform_RenderWindow = Marshal.GetFunctionPointerForDelegate(renderWindow);
-			//plIo.NativePtr->Platform_UpdateWindow = Marshal.GetFunctionPointerForDelegate(updateWindow);
 			//plIo.Platform_CreateVkSurface = Marshal.GetFunctionPointerForDelegate<ViewportBoolDelegate>(createVulaknSurface);
 
 			UpdateMonitors();
@@ -785,25 +783,6 @@ namespace BootEngine.Layers.GUI
 				monitor.WorkSize = new Vector2(r.Width, r.Height);
 			}
 		}
-
-		//private void PlatformUpdateWindow(ImGuiViewportPtr viewport)
-		//{
-		//	WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
-		//	window.OnUpdate();
-		//}
-
-		//private void PlatformRenderWindow(ImGuiViewportPtr viewport)
-		//{
-		//	WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
-		//	currentCommandList.SetFramebuffer(window.GetSwapchain().Framebuffer);
-		//	RenderImDrawData(viewport.DrawData, graphicsDevice, currentCommandList);
-		//}
-
-		//private void PlatformSwapBuffers(ImGuiViewportPtr viewport)
-		//{
-		//	WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
-		//	graphicsDevice.SwapBuffers(window.GetSwapchain());
-		//}
 
 		private unsafe bool PlatformCreateVkSurface(ImGuiViewportPtr viewport)
 		{
@@ -871,19 +850,17 @@ namespace BootEngine.Layers.GUI
 			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
 			window.GetSdlWindow().X = (int)pos.X;
 			window.GetSdlWindow().Y = (int)pos.Y;
-			//viewport.PlatformRequestMove = true;
 		}
 
 		private void PlatformSetWindowSize(ImGuiViewportPtr viewport, Vector2 size)
 		{
 			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
 			Sdl2Native.SDL_SetWindowSize(window.GetSdlWindow().SdlWindowHandle, (int)size.X, (int)size.Y);
-			//viewport.PlatformRequestResize = true;
 		}
 
 		private void PlatformGetWindowSize(Vector2 size, ImGuiViewportPtr viewport)
 		{
-			//Seems to work, should I fix it the proper way and ask cimgui to change his implementation?
+			//Seems to work
 			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
 			Rectangle bounds = window.GetSdlWindow().Bounds;
 			size.X = bounds.Width;
@@ -908,7 +885,7 @@ namespace BootEngine.Layers.GUI
 				sdlFlags |= SDL_WindowFlags.OpenGL;
 			if ((viewport.Flags & ImGuiViewportFlags.TopMost) != 0)
 				sdlFlags |= SDL_WindowFlags.AlwaysOnTop;
-			//TODO: Testing
+			//Seems to work
 			if ((viewport.Flags & ImGuiViewportFlags.NoTaskBarIcon) != 0)
 				sdlFlags |= SDL_WindowFlags.SkipTaskbar;
 
@@ -970,11 +947,11 @@ namespace BootEngine.Layers.GUI
 			//	SetWindowLongPtr(hWnd, GWL_EXSTYLE, new IntPtr(exStyle));
 			//}
 
-			if ((viewport.Flags & ImGuiViewportFlags.NoFocusOnAppearing) != 0)
-			{
-				ShowWindow(window.GetSdlWindow().Handle, SW_SHOWNA);
-				return;
-			}
+			//if ((viewport.Flags & ImGuiViewportFlags.NoFocusOnAppearing) != 0)
+			//{
+			//	ShowWindow(window.GetSdlWindow().Handle, SW_SHOWNA);
+			//	return;
+			//}
 
 			Sdl2Native.SDL_ShowWindow(window.GetSdlWindow().SdlWindowHandle);
 		}
