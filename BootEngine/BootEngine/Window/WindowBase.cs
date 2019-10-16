@@ -18,7 +18,7 @@ namespace BootEngine.Window
         public bool VSync { get; set; }
         public WindowState WindowInitialState { get; set; }
 
-        public WindowProps(string title = "Boot Engine", uint width = 1280, uint height = 720,
+        public WindowProps(string title = "Boot Engine", uint width = 1280, uint height = 760,
             int x = 0, int y = 0, bool vSync = true, WindowState windowState = WindowState.Normal)
         {
             Height = height;
