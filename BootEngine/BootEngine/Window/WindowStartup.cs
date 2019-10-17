@@ -233,10 +233,10 @@ namespace BootEngine.Window
             }
 
 #pragma warning disable S3265 // Non-flags enums should not be used in bitwise operations
-            SDL_GLContextFlag contextFlags = options.Debug ? SDL_GLContextFlag.Debug | SDL_GLContextFlag.ForwardCompatible : SDL_GLContextFlag.ForwardCompatible;
+			SDL_GLContextFlag contextFlags = options.Debug ? SDL_GLContextFlag.Debug | SDL_GLContextFlag.ForwardCompatible : SDL_GLContextFlag.ForwardCompatible;
 #pragma warning restore S3265 // Non-flags enums should not be used in bitwise operations
 
-            Sdl2Native.SDL_GL_SetAttribute(SDL_GLAttribute.ContextFlags, (int)contextFlags);
+			Sdl2Native.SDL_GL_SetAttribute(SDL_GLAttribute.ContextFlags, (int)contextFlags);
 
             SetMaxGLVersion(backend == GraphicsBackend.OpenGLES);
 

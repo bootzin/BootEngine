@@ -76,7 +76,6 @@ namespace BootEngine.Layers.GUI
 		private Platform_CreateVkSurface createVulkanSurface;
 #pragma warning restore S1450 // Private fields only used as local variables in methods should become local variables
 
-
 		#region SDL
 		private delegate int SDL_GetNumVideoDisplays_t();
 		private static SDL_GetNumVideoDisplays_t p_sdl_GetNumVideoDisplays;
@@ -89,6 +88,38 @@ namespace BootEngine.Layers.GUI
 
 		private unsafe delegate int SDL_GetDisplayUsableBounds_t(int displayIndex, Rectangle* rect);
 		private static SDL_GetDisplayUsableBounds_t p_sdl_GetDisplayUsableBounds_t;
+
+		private static SDL_GetNumVideoDisplays_t Sdl_GetNumVideoDisplays
+		{
+			get
+			{
+				return p_sdl_GetNumVideoDisplays ?? (p_sdl_GetNumVideoDisplays = Sdl2Native.LoadFunction<SDL_GetNumVideoDisplays_t>("SDL_GetNumVideoDisplays"));
+			}
+		}
+
+		private static SDL_RaiseWindow_t Sdl_RaiseWindow
+		{
+			get
+			{
+				return p_sdl_RaiseWindow ?? (p_sdl_RaiseWindow = Sdl2Native.LoadFunction<SDL_RaiseWindow_t>("SDL_RaiseWindow"));
+			}
+		}
+
+		private static SDL_GetGlobalMouseState_t Sdl_GetGlobalMouseState
+		{
+			get
+			{
+				return p_sdl_GetGlobalMouseState ?? (p_sdl_GetGlobalMouseState = Sdl2Native.LoadFunction<SDL_GetGlobalMouseState_t>("SDL_GetGlobalMouseState"));
+			}
+		}
+
+		private static SDL_GetDisplayUsableBounds_t Sdl_GetDisplayUsableBounds
+		{
+			get
+			{
+				return p_sdl_GetDisplayUsableBounds_t ?? (p_sdl_GetDisplayUsableBounds_t = Sdl2Native.LoadFunction<SDL_GetDisplayUsableBounds_t>("SDL_GetDisplayUsableBounds"));
+			}
+		}
 		#endregion
 		#endregion
 
@@ -346,7 +377,6 @@ namespace BootEngine.Layers.GUI
 						{
 							WindowBase window = (WindowBase)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
 							cl.SetFramebuffer(window.GetSwapchain().Framebuffer);
-							cl.ClearColorTarget(0, RgbaFloat.CornflowerBlue);
 							RenderImDrawData(vp.DrawData, gd, cl);
 						}
 					}
@@ -406,18 +436,26 @@ namespace BootEngine.Layers.GUI
 
         private void UpdateImGuiInput()
         {
-			//Pump events for all windows, but only update inputs regarding the focused one
-			ImVector<ImGuiViewportPtr> viewports = ImGui.GetPlatformIO().Viewports;
-			for (int i = 0; i < viewports.Size; i++)
+            ImGuiIOPtr io = ImGui.GetIO();
+
+			if ((io.ConfigFlags & ImGuiConfigFlags.ViewportsEnable) != 0)
 			{
-				WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewports[i].PlatformUserData).Target;
-				bool atualizarSnapshot = window.GetSdlWindow().Focused;
-				window.OnUpdate(atualizarSnapshot);
+				//Pump events for all windows, but only update inputs regarding the focused one
+				ImVector<ImGuiViewportPtr> viewports = ImGui.GetPlatformIO().Viewports;
+				for (int i = 0; i < viewports.Size; i++)
+				{
+					WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewports[i].PlatformUserData).Target;
+					bool atualizarSnapshot = window.GetSdlWindow().Focused;
+					window.OnUpdate(atualizarSnapshot);
+				}
+			}
+			else
+			{
+				mainWindow.OnUpdate();
 			}
 
 			InputSnapshot snapshot = InputManager.Snapshot;
 
-            ImGuiIOPtr io = ImGui.GetIO();
 
 			// Determine if any of the mouse buttons were pressed during this snapshot period, even if they are no longer held.
 			bool leftPressed = false;
@@ -448,14 +486,10 @@ namespace BootEngine.Layers.GUI
 
 			if ((io.ConfigFlags & ImGuiConfigFlags.ViewportsEnable) != 0)
 			{
-				if (p_sdl_GetGlobalMouseState == null)
-				{
-					p_sdl_GetGlobalMouseState = Sdl2Native.LoadFunction<SDL_GetGlobalMouseState_t>("SDL_GetGlobalMouseState");
-				}
 				int x, y;
 				unsafe
 				{
-					uint buttons = p_sdl_GetGlobalMouseState(&x, &y);
+					uint buttons = Sdl_GetGlobalMouseState(&x, &y);
 					io.MouseDown[0] = (buttons & 0b00001) != 0;
 					io.MouseDown[1] = (buttons & 0b00010) != 0;
 					io.MouseDown[2] = (buttons & 0b00100) != 0;
@@ -670,11 +704,15 @@ namespace BootEngine.Layers.GUI
 			io.Fonts.AddFontDefault();
 
 			io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard | ImGuiConfigFlags.DockingEnable;
-			io.ConfigFlags |= ImGuiConfigFlags.ViewportsEnable;
 
 			io.BackendFlags |= ImGuiBackendFlags.HasMouseCursors | ImGuiBackendFlags.HasSetMousePos;
-			io.BackendFlags |= ImGuiBackendFlags.RendererHasViewports | ImGuiBackendFlags.RendererHasVtxOffset;
-			io.BackendFlags |= ImGuiBackendFlags.PlatformHasViewports;// | ImGuiBackendFlags.HasMouseHoveredViewport;
+
+			if (graphicsDevice.BackendType == GraphicsBackend.Direct3D11)
+			{
+				io.ConfigFlags |= ImGuiConfigFlags.ViewportsEnable;
+				io.BackendFlags |= ImGuiBackendFlags.RendererHasViewports | ImGuiBackendFlags.RendererHasVtxOffset;
+				io.BackendFlags |= ImGuiBackendFlags.PlatformHasViewports;// | ImGuiBackendFlags.HasMouseHoveredViewport;
+			}
 
 			if ((io.ConfigFlags & ImGuiConfigFlags.ViewportsEnable) != 0)
 			{
@@ -728,22 +766,14 @@ namespace BootEngine.Layers.GUI
 		private unsafe static void UpdateMonitors()
 		{
 			ImGuiPlatformIOPtr plIo = ImGui.GetPlatformIO();
-			if (p_sdl_GetNumVideoDisplays == null)
-			{
-				p_sdl_GetNumVideoDisplays = Sdl2Native.LoadFunction<SDL_GetNumVideoDisplays_t>("SDL_GetNumVideoDisplays");
-			}
-			if (p_sdl_GetDisplayUsableBounds_t == null)
-			{
-				p_sdl_GetDisplayUsableBounds_t = Sdl2Native.LoadFunction<SDL_GetDisplayUsableBounds_t>("SDL_GetDisplayUsableBounds");
-			}
 			Marshal.FreeHGlobal(plIo.NativePtr->Monitors.Data);
-			int numMonitors = p_sdl_GetNumVideoDisplays();
+			int numMonitors = Sdl_GetNumVideoDisplays();
 			IntPtr data = Marshal.AllocHGlobal(Unsafe.SizeOf<ImGuiPlatformMonitor>() * numMonitors);
 			plIo.NativePtr->Monitors = new ImVector(numMonitors, numMonitors, data);
 			for (int i = 0; i < numMonitors; i++)
 			{
 				Rectangle r;
-				p_sdl_GetDisplayUsableBounds_t(i, &r);
+				Sdl_GetDisplayUsableBounds(i, &r);
 				ImGuiPlatformMonitorPtr monitor = plIo.Monitors[i];
 				monitor.DpiScale = 1f;
 				monitor.MainPos = new Vector2(r.X, r.Y);
@@ -793,13 +823,8 @@ namespace BootEngine.Layers.GUI
 
 		private static void PlatformSetWindowFocus(ImGuiViewportPtr viewport)
 		{
-			if (p_sdl_RaiseWindow == null)
-			{
-				p_sdl_RaiseWindow = Sdl2Native.LoadFunction<SDL_RaiseWindow_t>("SDL_RaiseWindow");
-			}
-
 			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
-			p_sdl_RaiseWindow(window.GetSdlWindow().SdlWindowHandle);
+			Sdl_RaiseWindow(window.GetSdlWindow().SdlWindowHandle);
 		}
 
 		private void PlatformSetWindowAlpha(ImGuiViewportPtr viewport, float alpha)
@@ -846,7 +871,7 @@ namespace BootEngine.Layers.GUI
 
 		private unsafe void PlatformCreateWindow(ImGuiViewportPtr viewport)
 		{
-			SDL_WindowFlags sdlFlags = (Sdl2Native.SDL_GetWindowFlags(mainWindow.GetSdlWindow().SdlWindowHandle) & SDL_WindowFlags.AllowHighDpi) 
+			SDL_WindowFlags sdlFlags = (Sdl2Native.SDL_GetWindowFlags(mainWindow.GetSdlWindow().SdlWindowHandle) & SDL_WindowFlags.AllowHighDpi)
 				| SDL_WindowFlags.Hidden;
 			sdlFlags |= ((viewport.Flags & ImGuiViewportFlags.NoDecoration) != 0) ? SDL_WindowFlags.Borderless : SDL_WindowFlags.Resizable;
 
@@ -869,7 +894,6 @@ namespace BootEngine.Layers.GUI
 
 			viewport.PlatformUserData = (IntPtr)newWindow.GcHandle;
 			viewport.PlatformHandle = newWindow.GetSdlWindow().Handle;
-
 		}
 
 		private void PlatformDestroyWindow(ImGuiViewportPtr viewport)

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Utils.Unsafe
 {
-	public class FixedAsciiString : IDisposable
+	public sealed class FixedAsciiString : IDisposable
 	{
 		public IntPtr DataPtr { get; }
 
