@@ -50,13 +50,16 @@ namespace BootEngine.Layers.GUI
 		private delegate void Platform_ShowWindow(ImGuiViewportPtr viewport);
 		private delegate void Platform_GetWindowPosition(Vector2 pos, ImGuiViewportPtr viewport);
 		private delegate void Platform_GetWindowSize(Vector2 size, ImGuiViewportPtr viewport);
-		private delegate void Platform_SetWindowPosition(ImGuiViewportPtr viewport, Vector2 arg0);
-		private delegate void Platform_SetWindowSize(ImGuiViewportPtr viewport, Vector2 arg0);
-		private delegate void Platform_SetWindowTitle(ImGuiViewportPtr viewport, string arg0);
+		private delegate void Platform_SetWindowPosition(ImGuiViewportPtr viewport, Vector2 pos);
+		private delegate void Platform_SetWindowSize(ImGuiViewportPtr viewport, Vector2 size);
+		private delegate void Platform_SetWindowTitle(ImGuiViewportPtr viewport, string title);
 		private delegate bool Platform_GetWindowFocus(ImGuiViewportPtr viewport);
 		private delegate byte Platform_GetWindowMinimized(ImGuiViewportPtr viewport);
-		private delegate void Platform_SetWindowAlpha(ImGuiViewportPtr viewport, float arg0);
+		private delegate void Platform_SetWindowAlpha(ImGuiViewportPtr viewport, float alpha);
 
+		private delegate bool Platform_CreateVkSurface(ImGuiViewportPtr viewport);
+
+#pragma warning disable S1450 // Private fields only used as local variables in methods should become local variables
 		private Platform_CreateWindow createWindow;
 		private Platform_DestroyWindow destroyWindow;
 		private Platform_ShowWindow showWindow;
@@ -69,6 +72,9 @@ namespace BootEngine.Layers.GUI
 		private Platform_SetWindowFocus setWindowFocus;
 		private Platform_SetWindowAlpha setWindowAlpha;
 		private Platform_GetWindowMinimized getWindowMinimized;
+
+		private Platform_CreateVkSurface createVulkanSurface;
+#pragma warning restore S1450 // Private fields only used as local variables in methods should become local variables
 
 
 		#region SDL
@@ -92,44 +98,6 @@ namespace BootEngine.Layers.GUI
         private readonly Dictionary<IntPtr, ResourceSetInfo> viewsById = new Dictionary<IntPtr, ResourceSetInfo>();
         private readonly List<IDisposable> ownedResources = new List<IDisposable>();
         private int lastAssignedID = 100;
-
-		//Windows
-		//private readonly long WS_EX_APPWINDOW = 0x00040000L;
-		//private readonly long WS_EX_TOOLWINDOW = 0x00000080L;
-		//private const int GWL_EXSTYLE = -20;
-		private const int SW_SHOWNA = 8;
-
-		//[DllImport("user32.dll")]
-		//static extern int GetSystemMetrics(int smIndex);
-		//[DllImport("user32.dll", EntryPoint = "GetWindowLong")]
-		//private static extern IntPtr GetWindowLongPtr32(IntPtr hWnd, int nIndex);
-		//[DllImport("user32.dll", EntryPoint = "GetWindowLongPtr")]
-		//private static extern IntPtr GetWindowLongPtr64(IntPtr hWnd, int nIndex);
-		//[DllImport("user32.dll", EntryPoint = "SetWindowLong")]
-		//private static extern int SetWindowLong32(IntPtr hWnd, int nIndex, int dwNewLong);
-		//[DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
-		//private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
-		[DllImport("user32.dll")]
-		static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-
-		// This static method is required because Win32 does not support
-		// GetWindowLongPtr directly
-		//public static IntPtr GetWindowLongPtr(IntPtr hWnd, int nIndex)
-		//{
-		//	if (IntPtr.Size == 8)
-		//		return GetWindowLongPtr64(hWnd, nIndex);
-		//	else
-		//		return GetWindowLongPtr32(hWnd, nIndex);
-		//}
-		//// This static method is required because legacy OSes do not support
-		//// SetWindowLongPtr
-		//public static IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong)
-		//{
-		//	if (IntPtr.Size == 8)
-		//		return SetWindowLongPtr64(hWnd, nIndex, dwNewLong);
-		//	else
-		//		return new IntPtr(SetWindowLong32(hWnd, nIndex, dwNewLong.ToInt32()));
-		//}
 		#endregion
 
 		/// <summary>
@@ -170,10 +138,10 @@ namespace BootEngine.Layers.GUI
             indexBuffer.Name = "ImGui.NET Index Buffer";
             RecreateFontDeviceTexture(gd);
 
-            projMatrixBuffer = gd.ResourceFactory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
-            projMatrixBuffer.Name = "ImGui.NET Projection Buffer";
+			projMatrixBuffer = gd.ResourceFactory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
+			projMatrixBuffer.Name = "ImGui.NET Projection Buffer";
 
-            byte[] vertexShaderBytes = LoadEmbeddedShaderCode(gd.ResourceFactory, "imgui-vertex");
+			byte[] vertexShaderBytes = LoadEmbeddedShaderCode(gd.ResourceFactory, "imgui-vertex");
             byte[] fragmentShaderBytes = LoadEmbeddedShaderCode(gd.ResourceFactory, "imgui-frag");
             vertexShader = gd.ResourceFactory.CreateShader(new ShaderDescription(ShaderStages.Vertex, vertexShaderBytes, "VS"));
             fragmentShader = gd.ResourceFactory.CreateShader(new ShaderDescription(ShaderStages.Fragment, fragmentShaderBytes, "FS"));
@@ -202,11 +170,11 @@ namespace BootEngine.Layers.GUI
                 outputDescription);
             pipeline = gd.ResourceFactory.CreateGraphicsPipeline(ref pd);
 
-            mainResourceSet = gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(layout,
-                projMatrixBuffer,
-                gd.PointSampler));
+			mainResourceSet = gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(layout,
+				projMatrixBuffer,
+				gd.PointSampler));
 
-            fontTextureResourceSet = gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(textureLayout, fontTextureView));
+			fontTextureResourceSet = gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(textureLayout, fontTextureView));
         }
 
         /// <summary>
@@ -378,7 +346,7 @@ namespace BootEngine.Layers.GUI
 						{
 							WindowBase window = (WindowBase)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
 							cl.SetFramebuffer(window.GetSwapchain().Framebuffer);
-							cl.ClearColorTarget(0, new RgbaFloat(0.45f, 0.55f, 1f, 1f));
+							cl.ClearColorTarget(0, RgbaFloat.CornflowerBlue);
 							RenderImDrawData(vp.DrawData, gd, cl);
 						}
 					}
@@ -389,12 +357,15 @@ namespace BootEngine.Layers.GUI
 		public void SwapBuffers(GraphicsDevice gd)
 		{
 			gd.SwapBuffers();
-			ImGuiPlatformIOPtr platformIO = ImGui.GetPlatformIO();
-			for (int i = 1; i < platformIO.Viewports.Size; i++)
+			if ((ImGui.GetIO().ConfigFlags & ImGuiConfigFlags.ViewportsEnable) != 0)
 			{
-				ImGuiViewportPtr vp = platformIO.Viewports[i];
-				WindowBase window = (WindowBase)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
-				gd.SwapBuffers(window.GetSwapchain());
+				ImGuiPlatformIOPtr platformIO = ImGui.GetPlatformIO();
+				for (int i = 1; i < platformIO.Viewports.Size; i++)
+				{
+					ImGuiViewportPtr vp = platformIO.Viewports[i];
+					WindowBase window = (WindowBase)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
+					gd.SwapBuffers(window.GetSwapchain());
+				}
 			}
 		}
 
@@ -428,13 +399,14 @@ namespace BootEngine.Layers.GUI
             io.DeltaTime = deltaSeconds; // DeltaTime is in seconds.
 
 			ImGuiPlatformIOPtr plIo = ImGui.GetPlatformIO();
-			var mainSdlWindow = mainWindow.GetSdlWindow();
+			Sdl2Window mainSdlWindow = mainWindow.GetSdlWindow();
 			plIo.MainViewport.Pos = new Vector2(mainSdlWindow.X, mainSdlWindow.Y);
 			plIo.MainViewport.Size = new Vector2(mainSdlWindow.Width, mainSdlWindow.Height);
 		}
 
         private void UpdateImGuiInput()
         {
+			//Pump events for all windows, but only update inputs regarding the focused one
 			ImVector<ImGuiViewportPtr> viewports = ImGui.GetPlatformIO().Viewports;
 			for (int i = 0; i < viewports.Size; i++)
 			{
@@ -470,7 +442,6 @@ namespace BootEngine.Layers.GUI
 				}
 			}
 
-			//TODO: Can I remove this for viewports?
 			io.MouseDown[0] = leftPressed || snapshot.IsMouseDown(MouseButton.Left);
 			io.MouseDown[1] = rightPressed || snapshot.IsMouseDown(MouseButton.Right);
 			io.MouseDown[2] = middlePressed || snapshot.IsMouseDown(MouseButton.Middle);
@@ -485,9 +456,11 @@ namespace BootEngine.Layers.GUI
 				unsafe
 				{
 					uint buttons = p_sdl_GetGlobalMouseState(&x, &y);
-					io.MouseDown[0] = (buttons & 0b0001) != 0;
-					io.MouseDown[1] = (buttons & 0b0010) != 0;
-					io.MouseDown[2] = (buttons & 0b0100) != 0;
+					io.MouseDown[0] = (buttons & 0b00001) != 0;
+					io.MouseDown[1] = (buttons & 0b00010) != 0;
+					io.MouseDown[2] = (buttons & 0b00100) != 0;
+					io.MouseDown[3] = (buttons & 0b01000) != 0;
+					io.MouseDown[4] = (buttons & 0b10000) != 0;
 				}
 				io.MousePos = new Vector2(x, y);
 			}
@@ -550,8 +523,7 @@ namespace BootEngine.Layers.GUI
 
         private void RenderImDrawData(ImDrawDataPtr draw_data, GraphicsDevice gd, CommandList cl)
         {
-
-            if (draw_data.CmdListsCount == 0)
+			if (draw_data.CmdListsCount == 0)
             {
                 return;
             }
@@ -602,16 +574,20 @@ namespace BootEngine.Layers.GUI
                 0.0f,
                 1.0f);
 
-            graphicsDevice.UpdateBuffer(projMatrixBuffer, 0, ref mvp);
-
+			cl.SetPipeline(pipeline);
 			cl.SetViewport(0, new Viewport(draw_data.DisplayPos.X, draw_data.DisplayPos.Y, draw_data.DisplaySize.X, draw_data.DisplaySize.Y, 0, 1));
 			cl.SetFullViewports();
-            cl.SetPipeline(pipeline);
 			cl.SetVertexBuffer(0, vertexBuffer);
-            cl.SetIndexBuffer(indexBuffer, IndexFormat.UInt16);
-            cl.SetGraphicsResourceSet(0, mainResourceSet);
+			cl.SetIndexBuffer(indexBuffer, IndexFormat.UInt16);
 
-            draw_data.ScaleClipRects(draw_data.FramebufferScale);
+			DeviceBuffer projMatrix = gd.ResourceFactory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
+			ResourceSet resourceSet = gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(layout, projMatrix, gd.PointSampler));
+			graphicsDevice.UpdateBuffer(projMatrix, 0, mvp);
+			cl.SetGraphicsResourceSet(0, resourceSet);
+			resourceSet.Dispose();
+			projMatrix.Dispose();
+
+			draw_data.ScaleClipRects(draw_data.FramebufferScale);
 
             // Render command lists
             int vtx_offset = 0;
@@ -702,14 +678,11 @@ namespace BootEngine.Layers.GUI
 
 			if ((io.ConfigFlags & ImGuiConfigFlags.ViewportsEnable) != 0)
 			{
-				if (graphicsDevice.BackendType == GraphicsBackend.OpenGL || graphicsDevice.BackendType == GraphicsBackend.OpenGLES)
-					SetupPlatformIo(sdlWindow, Sdl2Native.SDL_GL_CreateContext(sdlWindow.SdlWindowHandle));
-				else
-					SetupPlatformIo(sdlWindow, IntPtr.Zero);
+				SetupPlatformIo(sdlWindow);
 			}
 		}
 
-		private unsafe void SetupPlatformIo(Sdl2Window sdlWindow, IntPtr sdlGlContext)
+		private unsafe void SetupPlatformIo(Sdl2Window sdlWindow)
 		{
 			ImGuiStylePtr style = ImGui.GetStyle();
 			style.WindowRounding = 0.0f;
@@ -728,6 +701,8 @@ namespace BootEngine.Layers.GUI
 			getWindowMinimized = PlatformGetWindowMinimized;
 			setWindowAlpha = PlatformSetWindowAlpha;
 
+			createVulkanSurface = PlatformCreateVkSurface;
+
 			ImGuiPlatformIOPtr plIo = ImGui.GetPlatformIO();
 			plIo.NativePtr->Platform_CreateWindow = Marshal.GetFunctionPointerForDelegate(createWindow);
 			plIo.NativePtr->Platform_DestroyWindow = Marshal.GetFunctionPointerForDelegate(destroyWindow);
@@ -741,21 +716,13 @@ namespace BootEngine.Layers.GUI
 			plIo.NativePtr->Platform_GetWindowFocus = Marshal.GetFunctionPointerForDelegate(getWindowFocus);
 			plIo.NativePtr->Platform_SetWindowFocus = Marshal.GetFunctionPointerForDelegate(setWindowFocus);
 			plIo.NativePtr->Platform_SetWindowAlpha = Marshal.GetFunctionPointerForDelegate(setWindowAlpha);
-			//plIo.Platform_CreateVkSurface = Marshal.GetFunctionPointerForDelegate<ViewportBoolDelegate>(createVulaknSurface);
+			plIo.Platform_CreateVkSurface = Marshal.GetFunctionPointerForDelegate<Platform_CreateVkSurface>(createVulkanSurface);
 
 			UpdateMonitors();
 
 			ImGuiViewportPtr mainViewport = plIo.MainViewport;
 			mainViewport.PlatformHandle = sdlWindow.Handle;
 			mainViewport.PlatformUserData = (IntPtr)mainWindow.GcHandle;
-
-			//SDL_SysWMinfo sysWmInfo;
-			//Sdl2Native.SDL_GetVersion(&sysWmInfo.version);
-			//if (Sdl2Native.SDL_GetWMWindowInfo(sdlWindow.SdlWindowHandle, &sysWmInfo) > 0)
-			//{
-			//	Win32WindowInfo w32Info = Unsafe.Read<Win32WindowInfo>(&sysWmInfo.info);
-			//	mainViewport.PlatformHandleRaw = w32Info.hinstance;
-			//}
 		}
 
 		private unsafe static void UpdateMonitors()
@@ -903,24 +870,6 @@ namespace BootEngine.Layers.GUI
 			viewport.PlatformUserData = (IntPtr)newWindow.GcHandle;
 			viewport.PlatformHandle = newWindow.GetSdlWindow().Handle;
 
-			//if (sysWmInfo.subsystem == SysWMType.Windows)
-			//{
-			//	viewport.PlatformHandleRaw = Unsafe.Read<Win32WindowInfo>(&sysWmInfo.info).hinstance;
-			//}
-			//IntPtr glContextBackup = IntPtr.Zero;
-			//if (useOpenGl)
-			//{
-			//	glContextBackup = Sdl2Native.SDL_GL_GetCurrentContext();
-			//	Sdl2Native.SDL_GL_SetAttribute(SDL_GLAttribute.ShareWithCurrentContext, 1);
-			//	Sdl2Native.SDL_GL_MakeCurrent(mainViewportData.SdlWindowHandle, mainViewportData.GlContext);
-			//}
-			//if (useOpenGl)
-			//{
-			//	data.GlContext = Sdl2Native.SDL_GL_CreateContext(data.SdlWindowHandle);
-			//	Sdl2Native.SDL_GL_SetSwapInterval(1);
-			//	if (glContextBackup != IntPtr.Zero)
-			//		Sdl2Native.SDL_GL_MakeCurrent(data.SdlWindowHandle, glContextBackup);
-			//}
 		}
 
 		private void PlatformDestroyWindow(ImGuiViewportPtr viewport)
@@ -929,31 +878,13 @@ namespace BootEngine.Layers.GUI
 			{
 				WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
 				window?.Dispose();
-				//Sdl2Native.SDL_GL_DeleteContext(data.GlContext);
 				viewport.PlatformUserData = IntPtr.Zero;
 			}
-			//viewport.PlatformHandle = IntPtr.Zero;
 		}
 
 		private unsafe void PlatformShowWindow(ImGuiViewportPtr viewport)
 		{
 			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
-			//TODO: Check this pointer
-			//IntPtr hWnd = viewport.PlatformHandleRaw;
-			//if ((viewport.Flags & ImGuiViewportFlags.NoTaskBarIcon) != 0)
-			//{
-			//	long exStyle = (long)GetWindowLongPtr(hWnd, GWL_EXSTYLE);
-			//	exStyle &= ~WS_EX_APPWINDOW;
-			//	exStyle |= WS_EX_TOOLWINDOW;
-			//	SetWindowLongPtr(hWnd, GWL_EXSTYLE, new IntPtr(exStyle));
-			//}
-
-			//if ((viewport.Flags & ImGuiViewportFlags.NoFocusOnAppearing) != 0)
-			//{
-			//	ShowWindow(window.GetSdlWindow().Handle, SW_SHOWNA);
-			//	return;
-			//}
-
 			Sdl2Native.SDL_ShowWindow(window.GetSdlWindow().SdlWindowHandle);
 		}
 
