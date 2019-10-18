@@ -5,19 +5,19 @@ using BootEngine.Layers;
 namespace Sandbox
 {
 	internal class TestLayer : LayerBase
-    {
-        public TestLayer() : base("TestLayer") { }
+	{
+		public TestLayer() : base("TestLayer") { }
 
-        public override void OnUpdate()
-        {
+		public override void OnUpdate()
+		{
 			//
-        }
+		}
 
-        public override void OnEvent(EventBase @event)
-        {
+		public override void OnEvent(EventBase @event)
+		{
 			//
-        }
-    }
+		}
+	}
 
 	public class SandboxApp : Application<Platforms.Windows.WindowsWindow>
 	{

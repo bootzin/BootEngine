@@ -8,35 +8,35 @@ using Veldrid.Sdl2;
 namespace Platforms.Windows
 {
 	public class WindowsWindow : WindowBase
-    {
-        #region Constructor
+	{
+		#region Constructor
 		internal WindowsWindow(GraphicsDevice gd, Sdl2Window sdlWindow)
 		{
 			InitializeSubWindow(gd, sdlWindow);
 		}
 
-        public WindowsWindow(WindowProps props)
-        {
-            Initialize(props);
-        }
+		public WindowsWindow(WindowProps props)
+		{
+			Initialize(props);
+		}
 
-        ~WindowsWindow()
-        {
-            Shutdown();
-        }
-        #endregion
+		~WindowsWindow()
+		{
+			Shutdown();
+		}
+		#endregion
 
-        #region Methods
-        #region Public
-        public override void OnUpdate(bool updateSnapshot = true)
-        {
+		#region Methods
+		#region Public
+		public override void OnUpdate(bool updateSnapshot = true)
+		{
 			InputSnapshot snapshot = window.PumpEvents();
 			if (updateSnapshot)
 				InputManager.Snapshot = snapshot;
-        }
-        #endregion
+		}
+		#endregion
 
-        #region Private
+		#region Private
 		private void InitializeSubWindow(GraphicsDevice gd, Sdl2Window sdlWindow)
 		{
 			GcHandle = GCHandle.Alloc(this);
@@ -53,31 +53,31 @@ namespace Platforms.Windows
 			window.Resized += () => swapchain.Resize((uint)window.Width, (uint)window.Height);
 		}
 
-        private void Initialize(WindowProps props)
-        {
+		private void Initialize(WindowProps props)
+		{
 			InputManager.CreateInstance<WindowsInput>();
 
 			GcHandle = GCHandle.Alloc(this);
 
 			VSync = props.VSync;
 
-            GraphicsDeviceOptions options = new GraphicsDeviceOptions()
-            {
-                Debug = false,
-                PreferDepthRangeZeroToOne = true,
-                PreferStandardClipSpaceYDirection = true,
-                ResourceBindingModel = ResourceBindingModel.Improved,
-                SyncToVerticalBlank = VSync,
-                HasMainSwapchain = true,
-                SwapchainDepthFormat = PixelFormat.R16_UNorm,
-                SwapchainSrgbFormat = false
-            };
+			GraphicsDeviceOptions options = new GraphicsDeviceOptions()
+			{
+				Debug = false,
+				PreferDepthRangeZeroToOne = true,
+				PreferStandardClipSpaceYDirection = true,
+				ResourceBindingModel = ResourceBindingModel.Improved,
+				SyncToVerticalBlank = VSync,
+				HasMainSwapchain = true,
+				SwapchainDepthFormat = PixelFormat.R16_UNorm,
+				SwapchainSrgbFormat = false
+			};
 #if DEBUG
-            options.Debug = true;
+			options.Debug = true;
 #endif
-			WindowStartup.CreateWindowAndGraphicsDevice(props, options, GraphicsBackend.OpenGL, out window, out graphicsDevice);
+			WindowStartup.CreateWindowAndGraphicsDevice(props, options, GraphicsBackend.Direct3D11, out window, out graphicsDevice);
 
-            ResourceFactory = graphicsDevice.ResourceFactory;
+			ResourceFactory = graphicsDevice.ResourceFactory;
 			swapchain = graphicsDevice.MainSwapchain;
 
 			//Called twice possibly because of 2 events being fired: Resize and SizeChanged (and Maximized)
@@ -88,22 +88,22 @@ namespace Platforms.Windows
 				EventCallback(new WindowResizeEvent((uint)window.Width, (uint)window.Height));
 			};
 
-            window.Closed += () => EventCallback(new WindowCloseEvent());
+			window.Closed += () => EventCallback(new WindowCloseEvent());
 
-            window.KeyUp += (keyEvent) => EventCallback(new KeyReleasedEvent((int)keyEvent.Key));
-            window.KeyDown += (keyEvent) => EventCallback(new KeyPressedEvent((int)keyEvent.Key, 1));
+			window.KeyUp += (keyEvent) => EventCallback(new KeyReleasedEvent((int)keyEvent.Key));
+			window.KeyDown += (keyEvent) => EventCallback(new KeyPressedEvent((int)keyEvent.Key, 1));
 
-            window.MouseDown += (mouseEvent) => EventCallback(new MouseButtonPressedEvent((int)mouseEvent.MouseButton));
-            window.MouseUp += (mouseEvent) => EventCallback(new MouseButtonReleasedEvent((int)mouseEvent.MouseButton));
-            window.MouseWheel += (mouseEvent) => EventCallback(new MouseScrolledEvent(mouseEvent.WheelDelta));
-            window.MouseMove += (mouseEvent) => EventCallback(new MouseMovedEvent(mouseEvent.MousePosition.X, mouseEvent.MousePosition.Y));
-        }
+			window.MouseDown += (mouseEvent) => EventCallback(new MouseButtonPressedEvent((int)mouseEvent.MouseButton));
+			window.MouseUp += (mouseEvent) => EventCallback(new MouseButtonReleasedEvent((int)mouseEvent.MouseButton));
+			window.MouseWheel += (mouseEvent) => EventCallback(new MouseScrolledEvent(mouseEvent.WheelDelta));
+			window.MouseMove += (mouseEvent) => EventCallback(new MouseMovedEvent(mouseEvent.MousePosition.X, mouseEvent.MousePosition.Y));
+		}
 
-        private void Shutdown()
-        {
-            //Dispose
-        }
-        #endregion
-        #endregion
-    }
+		private void Shutdown()
+		{
+			//Dispose
+		}
+		#endregion
+		#endregion
+	}
 }

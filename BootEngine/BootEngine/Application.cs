@@ -4,11 +4,10 @@ using BootEngine.Layers.GUI;
 using BootEngine.Log;
 using BootEngine.Window;
 using System;
-using System.Linq;
 
 namespace BootEngine
 {
-    public abstract class Application<WindowType> : IDisposable
+	public abstract class Application<WindowType> : IDisposable
 	{
 		#region Properties
 		public static Application<WindowType> App { get; private set; }

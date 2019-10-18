@@ -38,7 +38,7 @@
 		#region Constructor
 		public MouseScrolledEvent(float mouseDelta)
 		{
-            MouseDelta = mouseDelta;
+			MouseDelta = mouseDelta;
 		}
 		#endregion
 

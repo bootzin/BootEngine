@@ -1,13 +1,11 @@
 ﻿using BootEngine.Events;
 using ImGuiNET;
-using System;
-using System.Runtime.InteropServices;
 using Veldrid;
 
 namespace BootEngine.Layers.GUI
 {
 	public class ImGuiLayer<WindowType> : LayerBase
-    {
+	{
 		#region Properties
 		private GraphicsDevice gd;
 		private CommandList cl;
