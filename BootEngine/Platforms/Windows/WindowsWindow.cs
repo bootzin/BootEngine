@@ -65,7 +65,7 @@ namespace Platforms.Windows
 			{
 				Debug = false,
 				PreferDepthRangeZeroToOne = true,
-				PreferStandardClipSpaceYDirection = true,
+				PreferStandardClipSpaceYDirection = false,
 				ResourceBindingModel = ResourceBindingModel.Improved,
 				SyncToVerticalBlank = VSync,
 				HasMainSwapchain = true,
@@ -75,7 +75,7 @@ namespace Platforms.Windows
 #if DEBUG
 			options.Debug = true;
 #endif
-			WindowStartup.CreateWindowAndGraphicsDevice(props, options, GraphicsBackend.Direct3D11, out window, out graphicsDevice);
+			WindowStartup.CreateWindowAndGraphicsDevice(props, options, GraphicsBackend.Vulkan, out window, out graphicsDevice);
 
 			ResourceFactory = graphicsDevice.ResourceFactory;
 			swapchain = graphicsDevice.MainSwapchain;

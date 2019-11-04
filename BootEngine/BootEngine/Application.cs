@@ -43,9 +43,12 @@ namespace BootEngine
 			{
                 LayerStack.Layers.ForEach(layer => layer.OnUpdate());
 
-				ImGuiLayer.Begin();
-				LayerStack.Layers.ForEach(layer => layer.OnGuiRender());
-				ImGuiLayer.End();
+				if (Window.Exists())
+				{
+					ImGuiLayer.Begin();
+					LayerStack.Layers.ForEach(layer => layer.OnGuiRender());
+					ImGuiLayer.End();
+				}
 			}
 		}
 
