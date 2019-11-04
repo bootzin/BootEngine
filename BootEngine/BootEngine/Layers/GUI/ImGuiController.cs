@@ -172,12 +172,12 @@ namespace BootEngine.Layers.GUI
 			projMatrixBuffer = gd.ResourceFactory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
 			projMatrixBuffer.Name = "ImGui.NET Projection Buffer";
 
-			byte[] vertexShaderBytes = LoadEmbeddedShaderCode(gd.ResourceFactory, "imgui-vertex");
-			byte[] fragmentShaderBytes = LoadEmbeddedShaderCode(gd.ResourceFactory, "imgui-frag");
-			vertexShader = gd.ResourceFactory.CreateShader(new ShaderDescription(ShaderStages.Vertex, vertexShaderBytes, "VS"));
-			fragmentShader = gd.ResourceFactory.CreateShader(new ShaderDescription(ShaderStages.Fragment, fragmentShaderBytes, "FS"));
+			Span<byte> vertexShaderBytes = LoadEmbeddedShaderCode(gd.ResourceFactory, "imgui-vertex");
+			Span<byte> fragmentShaderBytes = LoadEmbeddedShaderCode(gd.ResourceFactory, "imgui-frag");
+			vertexShader = gd.ResourceFactory.CreateShader(new ShaderDescription(ShaderStages.Vertex, vertexShaderBytes.ToArray(), "main"));
+			fragmentShader = gd.ResourceFactory.CreateShader(new ShaderDescription(ShaderStages.Fragment, fragmentShaderBytes.ToArray(), "main"));
 
-			VertexLayoutDescription[] vertexLayouts = new VertexLayoutDescription[]
+			Span<VertexLayoutDescription> vertexLayouts = new VertexLayoutDescription[]
 			{
 				new VertexLayoutDescription(
 					new VertexElementDescription("in_position", VertexElementSemantic.Position, VertexElementFormat.Float2),
@@ -196,7 +196,7 @@ namespace BootEngine.Layers.GUI
 				new DepthStencilStateDescription(false, false, ComparisonKind.Always),
 				new RasterizerStateDescription(FaceCullMode.None, PolygonFillMode.Solid, FrontFace.Clockwise, false, true),
 				PrimitiveTopology.TriangleList,
-				new ShaderSetDescription(vertexLayouts, new[] { vertexShader, fragmentShader }),
+				new ShaderSetDescription(vertexLayouts.ToArray(), new[] { vertexShader, fragmentShader }),
 				new ResourceLayout[] { layout, textureLayout },
 				outputDescription);
 			pipeline = gd.ResourceFactory.CreateGraphicsPipeline(ref pd);
@@ -275,7 +275,7 @@ namespace BootEngine.Layers.GUI
 			lastAssignedID = 100;
 		}
 
-		private byte[] LoadEmbeddedShaderCode(ResourceFactory factory, string name)
+		private Span<byte> LoadEmbeddedShaderCode(ResourceFactory factory, string name)
 		{
 			switch (factory.BackendType)
 			{
@@ -304,13 +304,13 @@ namespace BootEngine.Layers.GUI
 			}
 		}
 
-		private byte[] GetEmbeddedResourceBytes(string resourceName)
+		private Span<byte> GetEmbeddedResourceBytes(string resourceName)
 		{
 			Assembly assembly = typeof(ImGuiController).Assembly;
 			using (Stream s = assembly.GetManifestResourceStream(resourceName))
 			{
-				byte[] ret = new byte[s.Length];
-				s.Read(ret, 0, (int)s.Length);
+				Span<byte> ret = new byte[s.Length];
+				s.Read(ret);
 				return ret;
 			}
 		}
@@ -753,7 +753,7 @@ namespace BootEngine.Layers.GUI
 			plIo.NativePtr->Platform_GetWindowFocus = Marshal.GetFunctionPointerForDelegate(getWindowFocus);
 			plIo.NativePtr->Platform_SetWindowFocus = Marshal.GetFunctionPointerForDelegate(setWindowFocus);
 			plIo.NativePtr->Platform_SetWindowAlpha = Marshal.GetFunctionPointerForDelegate(setWindowAlpha);
-			plIo.Platform_CreateVkSurface = Marshal.GetFunctionPointerForDelegate<Platform_CreateVkSurface>(createVulkanSurface);
+			plIo.Platform_CreateVkSurface = Marshal.GetFunctionPointerForDelegate(createVulkanSurface);
 
 			UpdateMonitors();
 

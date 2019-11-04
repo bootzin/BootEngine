@@ -1,6 +1,7 @@
 ﻿using BootEngine;
 using BootEngine.Events;
 using BootEngine.Layers;
+using Platforms.Windows;
 
 namespace Sandbox
 {
@@ -19,7 +20,7 @@ namespace Sandbox
 		}
 	}
 
-	public class SandboxApp : Application<Platforms.Windows.WindowsWindow>
+	public class SandboxApp : Application<WindowsWindow>
 	{
 		public static void Main()
 		{
