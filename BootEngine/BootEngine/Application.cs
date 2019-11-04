@@ -77,9 +77,14 @@ namespace BootEngine
 			{
 				if (disposing)
 				{
+					Window.GetGraphicsDevice().WaitForIdle();
+					Window.Dispose();
 					Window.ResourceFactory = null;
 					Window.GetGraphicsDevice().Dispose();
-                    Window.Dispose();
+					foreach (LayerBase layer in LayerStack.Layers)
+					{
+						layer.OnDetach();
+					}
                     LayerStack.Layers.Clear();
 				}
                 disposed = true;

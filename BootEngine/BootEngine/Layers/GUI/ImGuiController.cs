@@ -142,7 +142,8 @@ namespace BootEngine.Layers.GUI
 			windowWidth = sdlWindow.Width;
 			windowHeight = sdlWindow.Height;
 
-			ImGui.SetCurrentContext(ImGui.CreateContext());
+			IntPtr ctx = ImGui.CreateContext();
+			ImGui.SetCurrentContext(ctx);
 			ImGui.StyleColorsDark();
 
 			CreateDeviceResources(gd, outputDescription);
@@ -673,6 +674,14 @@ namespace BootEngine.Layers.GUI
 		/// </summary>
 		public void Dispose()
 		{
+			unsafe
+			{
+				var plIo = ImGui.GetPlatformIO();
+				Marshal.FreeHGlobal(plIo.NativePtr->Monitors.Data);
+				plIo.NativePtr->Monitors = new ImVector();
+			}
+			ImGui.DestroyContext();
+
 			vertexBuffer.Dispose();
 			indexBuffer.Dispose();
 			projMatrixBuffer.Dispose();

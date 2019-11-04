@@ -33,7 +33,6 @@ namespace BootEngine.Layers.GUI
 		public override void OnDetach()
 		{
 			controller.Dispose();
-			ImGui.DestroyContext();
 		}
 
 		public override void OnUpdate()
