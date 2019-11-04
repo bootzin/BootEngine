@@ -5,9 +5,9 @@ using Veldrid;
 
 namespace BootEngine.Renderer
 {
-	public class Scene
+	public abstract class Scene
 	{
 		public Renderable[] RenderableList { get; set; }
-		public Camera Camera { get; set; }
+		public Camera Camera { get; }
 	}
 }

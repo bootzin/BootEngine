@@ -1,24 +1,36 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Veldrid;
 
 namespace BootEngine.Renderer
 {
-	public class Renderer
+	public abstract class Renderer
 	{
-		private Scene _currentScene;
-		public void Render(Renderable renderable)
+		protected Scene currentScene;
+		protected CommandList CommandList { get; }
+		protected GraphicsDevice GraphicsDevice { get; }
+
+		protected Renderer(CommandList cl, GraphicsDevice gd)
 		{
-			
+			CommandList = cl;
+			GraphicsDevice = gd;
 		}
+
+		public abstract void Render(Renderable renderable);
 
 		public void Render(Scene scene)
 		{
-			_currentScene = scene;
 			foreach (Renderable renderable in scene.RenderableList)
 			{
+				BeginRender();
 				Render(renderable);
+				EndRender();
 			}
 		}
+
+		protected abstract void BeginRender();
+
+		protected abstract void EndRender();
 	}
 }
