@@ -3,9 +3,6 @@
 # IDE0017: Simplify object initialization
 dotnet_style_object_initializer = false:suggestion
 
-# RCS1216: Unnecessary unsafe context.
-dotnet_diagnostic.RCS1216.severity = silent
-
 # IDE0063: Use simple 'using' statement
 csharp_prefer_simple_using_statement = false:suggestion
 

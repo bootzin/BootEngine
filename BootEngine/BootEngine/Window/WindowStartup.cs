@@ -38,15 +38,14 @@ namespace BootEngine.Window
 		{
 			Sdl2Native.SDL_Init(SDLInitFlags.Video);
 
-			window = CreateWindow(ref windowProps, deviceOptions, preferredBackend);
+			window = CreateWindow(ref windowProps, preferredBackend);
 			gd = CreateGraphicsDevice(window, deviceOptions, preferredBackend);
 		}
 		#endregion
 
 		#region CreateWindow
-		private static Sdl2Window CreateWindow(
+		public static Sdl2Window CreateWindow(
 			ref WindowProps windowProps,
-			GraphicsDeviceOptions deviceOptions,
 			GraphicsBackend preferredBackend)
 		{
 			SDL_WindowFlags flags = SDL_WindowFlags.Resizable
@@ -59,7 +58,6 @@ namespace BootEngine.Window
 
 			if (preferredBackend == GraphicsBackend.OpenGL || preferredBackend == GraphicsBackend.OpenGLES)
 			{
-				SetSDLGLContextAttributes(deviceOptions, preferredBackend);
 				flags |= SDL_WindowFlags.OpenGL;
 			}
 
