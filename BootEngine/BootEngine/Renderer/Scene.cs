@@ -8,6 +8,6 @@ namespace BootEngine.Renderer
 	public abstract class Scene
 	{
 		public Renderable[] RenderableList { get; set; }
-		public Camera Camera { get; }
+		public OrthoCamera Camera { get; }
 	}
 }

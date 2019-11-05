@@ -53,6 +53,7 @@ void main()
 {
     fsout_Color = fsin_Color;
 }";
+
 		private static GraphicsDevice _graphicsDevice;
 		private static CommandList _commandList;
 		private static DeviceBuffer _vertexBuffer;
