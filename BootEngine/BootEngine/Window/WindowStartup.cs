@@ -198,18 +198,13 @@ namespace BootEngine.Window
 				}
 			}
 
-			int actualDepthSize;
-			Sdl2Native.SDL_GL_GetAttribute(SDL_GLAttribute.DepthSize, &actualDepthSize);
-			int actualStencilSize;
-			Sdl2Native.SDL_GL_GetAttribute(SDL_GLAttribute.StencilSize, &actualStencilSize);
-
 			Sdl2Native.SDL_GL_SetSwapInterval(options.SyncToVerticalBlank ? 1 : 0);
 
 			Veldrid.OpenGL.OpenGLPlatformInfo platformInfo = new Veldrid.OpenGL.OpenGLPlatformInfo(
 				contextHandle,
 				Sdl2Native.SDL_GL_GetProcAddress,
 				context => Sdl2Native.SDL_GL_MakeCurrent(sdlHandle, context),
-				() => Sdl2Native.SDL_GL_GetCurrentContext(),
+				Sdl2Native.SDL_GL_GetCurrentContext,
 				() => Sdl2Native.SDL_GL_MakeCurrent(new SDL_Window(IntPtr.Zero), IntPtr.Zero),
 				Sdl2Native.SDL_GL_DeleteContext,
 				() => Sdl2Native.SDL_GL_SwapWindow(sdlHandle),
@@ -239,9 +234,7 @@ namespace BootEngine.Window
 					$"{nameof(backend)} must be {nameof(GraphicsBackend.OpenGL)} or {nameof(GraphicsBackend.OpenGLES)}.");
 			}
 
-#pragma warning disable S3265 // Non-flags enums should not be used in bitwise operations
 			SDL_GLContextFlag contextFlags = options.Debug ? SDL_GLContextFlag.Debug | SDL_GLContextFlag.ForwardCompatible : SDL_GLContextFlag.ForwardCompatible;
-#pragma warning restore S3265 // Non-flags enums should not be used in bitwise operations
 
 			Sdl2Native.SDL_GL_SetAttribute(SDL_GLAttribute.ContextFlags, (int)contextFlags);
 

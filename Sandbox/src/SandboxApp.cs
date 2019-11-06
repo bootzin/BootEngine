@@ -1,6 +1,7 @@
 ﻿using BootEngine;
 using BootEngine.Events;
 using BootEngine.Layers;
+using BootEngine.Renderer;
 using BootEngine.Window;
 using Platforms.Windows;
 using System;
@@ -35,11 +36,16 @@ namespace Sandbox
 layout(location = 0) in vec2 Position;
 layout(location = 1) in vec4 Color;
 
+layout (set = 0, binding = 0) uniform ViewProjection
+{
+    mat4 view_projection_matrix;
+};
+
 layout(location = 0) out vec4 fsin_Color;
 
 void main()
 {
-    gl_Position = vec4(Position, 0, 1);
+    gl_Position = view_projection_matrix * vec4(Position, 0, 1);
     fsin_Color = Color;
 }";
 
@@ -59,16 +65,18 @@ void main()
 		private static DeviceBuffer _vertexBuffer;
 		private static DeviceBuffer _indexBuffer;
 		private static Pipeline _pipeline;
+		private static ResourceSet _resourceSet;
+		private readonly static OrthoCamera camera = new OrthoCamera(-2,2,-2,2);
 
 		public static void Main()
 		{
-			var app = new SandboxApp();
-			app.LayerStack.PushLayer(new TestLayer());
-			app.Run();
-			app.Dispose();
+			//var app = new SandboxApp();
+			//app.LayerStack.PushLayer(new TestLayer());
+			//app.Run();
+			//app.Dispose();
 
 			BootEngine.Log.Logger.Init();
-			WindowStartup.CreateWindowAndGraphicsDevice(new WindowProps(), new GraphicsDeviceOptions() { PreferStandardClipSpaceYDirection = true, PreferDepthRangeZeroToOne = true }, GraphicsBackend.Vulkan, out Sdl2Window window, out _graphicsDevice);
+			WindowStartup.CreateWindowAndGraphicsDevice(new WindowProps(), new GraphicsDeviceOptions() { PreferStandardClipSpaceYDirection = true, PreferDepthRangeZeroToOne = true }, GraphicsBackend.Direct3D11, out Sdl2Window window, out _graphicsDevice);
 
 			CreateResources();
 
@@ -107,6 +115,9 @@ void main()
 			_indexBuffer = factory.CreateBuffer(ibDescription);
 			_graphicsDevice.UpdateBuffer(_indexBuffer, 0, quadIndices.ToArray());
 
+			DeviceBuffer cameraBuffer = factory.CreateBuffer(new BufferDescription(16 * sizeof(float), BufferUsage.UniformBuffer));
+			_graphicsDevice.UpdateBuffer(cameraBuffer, 0, camera.ViewProjectionMatrix);
+
 			VertexLayoutDescription vertexLayout = new VertexLayoutDescription(
 				new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
 				new VertexElementDescription("Color", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float4));
@@ -122,9 +133,11 @@ void main()
 
 			Shader[] _shaders = factory.CreateFromSpirv(vertexShaderDesc, fragmentShaderDesc);
 
+			var resourceLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(new ResourceLayoutElementDescription("ViewProjection", ResourceKind.UniformBuffer, ShaderStages.Vertex)));
+
 			// Create pipeline
 			GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription();
-			pipelineDescription.BlendState = BlendStateDescription.SingleAlphaBlend;
+			pipelineDescription.BlendState = BlendStateDescription.SingleOverrideBlend;
 			pipelineDescription.DepthStencilState = new DepthStencilStateDescription(
 				depthTestEnabled: true,
 				depthWriteEnabled: true,
@@ -136,11 +149,13 @@ void main()
 				depthClipEnabled: true,
 				scissorTestEnabled: false);
 			pipelineDescription.PrimitiveTopology = PrimitiveTopology.TriangleStrip;
-			pipelineDescription.ResourceLayouts = Array.Empty<ResourceLayout>();
+			pipelineDescription.ResourceLayouts = new[] { resourceLayout };
 			pipelineDescription.ShaderSet = new ShaderSetDescription(
 				vertexLayouts: new VertexLayoutDescription[] { vertexLayout },
 				shaders: _shaders);
 			pipelineDescription.Outputs = _graphicsDevice.SwapchainFramebuffer.OutputDescription;
+
+			_resourceSet = factory.CreateResourceSet(new ResourceSetDescription(resourceLayout, cameraBuffer));
 
 			_pipeline = factory.CreateGraphicsPipeline(pipelineDescription);
 
@@ -160,6 +175,7 @@ void main()
 			_commandList.SetVertexBuffer(0, _vertexBuffer);
 			_commandList.SetIndexBuffer(_indexBuffer, IndexFormat.UInt16);
 			_commandList.SetPipeline(_pipeline);
+			_commandList.SetGraphicsResourceSet(0, _resourceSet);
 			// Issue a Draw command for a single instance with 4 indices.
 			_commandList.DrawIndexed(
 				indexCount: 4,
