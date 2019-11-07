@@ -2,20 +2,67 @@
 using BootEngine.Events;
 using BootEngine.Layers;
 using BootEngine.Renderer;
-using BootEngine.Window;
 using Platforms.Windows;
 using System;
 using System.Numerics;
 using System.Text;
 using Veldrid;
-using Veldrid.Sdl2;
 using Veldrid.SPIRV;
 
 namespace Sandbox
 {
-	internal class TestLayer : LayerBase
+	internal class ExampleLayer : LayerBase
 	{
-		public TestLayer() : base("TestLayer") { }
+		#region Shaders
+		private const string VertexCode = @"
+			#version 430
+
+			layout(location = 0) in vec2 Position;
+			layout(location = 1) in vec4 Color;
+
+			layout (set = 0, binding = 0) uniform ViewProjection
+			{
+				mat4 view_projection_matrix;
+			};
+
+			layout(location = 0) out vec4 fsin_Color;
+
+			void main()
+			{
+				gl_Position = view_projection_matrix * vec4(Position, 0, 1);
+				fsin_Color = Color;
+			}";
+
+		private const string FragmentCode = @"
+			#version 430
+
+			layout(location = 0) in vec4 fsin_Color;
+			layout(location = 0) out vec4 fsout_Color;
+
+			void main()
+			{
+				fsout_Color = fsin_Color;
+			}";
+		#endregion
+
+		public ExampleLayer() : base("Example")
+		{
+			_graphicsDevice = Application<WindowsWindow>.App.Window.GraphicsDevice;
+		}
+
+		private readonly GraphicsDevice _graphicsDevice;
+		private CommandList _commandList;
+		private DeviceBuffer _vertexBuffer;
+		private DeviceBuffer _indexBuffer;
+		private DeviceBuffer _cameraBuffer;
+		private Pipeline _pipeline;
+		private ResourceSet _resourceSet;
+		private OrthoCamera _camera;
+
+		public override void OnAttach()
+		{
+			CreateResources();
+		}
 
 		public override void OnUpdate()
 		{
@@ -26,73 +73,13 @@ namespace Sandbox
 		{
 			//
 		}
-	}
 
-	public class SandboxApp : Application<WindowsWindow>
-	{
-		private const string VertexCode = @"
-#version 430
-
-layout(location = 0) in vec2 Position;
-layout(location = 1) in vec4 Color;
-
-layout (set = 0, binding = 0) uniform ViewProjection
-{
-    mat4 view_projection_matrix;
-};
-
-layout(location = 0) out vec4 fsin_Color;
-
-void main()
-{
-    gl_Position = view_projection_matrix * vec4(Position, 0, 1);
-    fsin_Color = Color;
-}";
-
-		private const string FragmentCode = @"
-#version 430
-
-layout(location = 0) in vec4 fsin_Color;
-layout(location = 0) out vec4 fsout_Color;
-
-void main()
-{
-    fsout_Color = fsin_Color;
-}";
-
-		private static GraphicsDevice _graphicsDevice;
-		private static CommandList _commandList;
-		private static DeviceBuffer _vertexBuffer;
-		private static DeviceBuffer _indexBuffer;
-		private static DeviceBuffer _cameraBuffer;
-		private static Pipeline _pipeline;
-		private static ResourceSet _resourceSet;
-		private static OrthoCamera _camera;
-
-		public static void Main()
+		public override void OnGuiRender()
 		{
-			//var app = new SandboxApp();
-			//app.LayerStack.PushLayer(new TestLayer());
-			//app.Run();
-			//app.Dispose();
-
-			BootEngine.Log.Logger.Init();
-			WindowStartup.CreateWindowAndGraphicsDevice(new WindowProps(), new GraphicsDeviceOptions() { PreferStandardClipSpaceYDirection = true, PreferDepthRangeZeroToOne = true }, GraphicsBackend.Direct3D11, out Sdl2Window window, out _graphicsDevice);
-
-			CreateResources();
-
-			while (window.Exists)
-			{
-				window.PumpEvents();
-
-				if (window.Exists)
-				{
-					Draw();
-				}
-			}
+			Draw();
 		}
 
-		private static void CreateResources()
+		private void CreateResources()
 		{
 			ResourceFactory factory = _graphicsDevice.ResourceFactory;
 
@@ -111,7 +98,7 @@ void main()
 			_vertexBuffer = factory.CreateBuffer(vbDescription);
 			_graphicsDevice.UpdateBuffer(_vertexBuffer, 0, quadVertices.ToArray());
 
-			Span<ushort> quadIndices = stackalloc ushort[]{ 0, 1, 2, 3 };
+			Span<ushort> quadIndices = stackalloc ushort[] { 0, 1, 2, 3 };
 			BufferDescription ibDescription = new BufferDescription(
 				4 * sizeof(ushort),
 				BufferUsage.IndexBuffer);
@@ -142,11 +129,11 @@ void main()
 			GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription();
 			pipelineDescription.BlendState = BlendStateDescription.SingleOverrideBlend;
 			pipelineDescription.DepthStencilState = new DepthStencilStateDescription(
-				depthTestEnabled: true,
+				depthTestEnabled: false,
 				depthWriteEnabled: true,
-				comparisonKind: ComparisonKind.LessEqual);
+				comparisonKind: ComparisonKind.Always);
 			pipelineDescription.RasterizerState = new RasterizerStateDescription(
-				cullMode: FaceCullMode.None,
+				cullMode: FaceCullMode.Back,
 				fillMode: PolygonFillMode.Solid,
 				frontFace: FrontFace.Clockwise,
 				depthClipEnabled: true,
@@ -165,17 +152,18 @@ void main()
 			_commandList = factory.CreateCommandList();
 		}
 
-		private static void Draw()
+		private void Draw()
 		{
-			// Begin() must be called before commands can be issued.
 			_commandList.Begin();
 
 			// We want to render directly to the output window.
 			_commandList.SetFramebuffer(_graphicsDevice.SwapchainFramebuffer);
-			_commandList.ClearColorTarget(0, RgbaFloat.Black);
+			_commandList.SetViewport(0, new Viewport(0, 0, _graphicsDevice.SwapchainFramebuffer.Width, _graphicsDevice.SwapchainFramebuffer.Height, 0, 1));
+			_commandList.SetFullViewports();
+			_commandList.ClearColorTarget(0, RgbaFloat.LightGrey);
 
 			_camera.Position = new Vector3(.1f, .1f, 0);
-			_camera.Rotation = 3.1415f/4f;
+			_camera.Rotation = 3.1415f / 4f;
 			_graphicsDevice.UpdateBuffer(_cameraBuffer, 0, _camera.ViewProjectionMatrix);
 
 			// Set all relevant state to draw our quad.
@@ -191,25 +179,38 @@ void main()
 				vertexOffset: 0,
 				instanceStart: 0);
 
-			// End() must be called before commands can be submitted for execution.
 			_commandList.End();
 			_graphicsDevice.SubmitCommands(_commandList);
-
-			// Once commands have been submitted, the rendered image can be presented to the application window.
-			_graphicsDevice.SwapBuffers();
 		}
 
-		private struct VertexPositionColor
+		private readonly struct VertexPositionColor
 		{
 			public const uint SizeInBytes = 24;
-			public Vector2 Position;
-			public RgbaFloat Color;
+			public readonly Vector2 Position;
+			public readonly RgbaFloat Color;
 
 			public VertexPositionColor(Vector2 position, RgbaFloat color)
 			{
-				Position = position;
-				Color = color;
+				this.Position = position;
+				this.Color = color;
 			}
+		}
+	}
+
+	public class SandboxApp : Application<WindowsWindow>
+	{
+		public SandboxApp(GraphicsBackend backend) : base(backend)
+		{
+		}
+
+		public static void Main()
+		{
+			var app = new SandboxApp(GraphicsBackend.OpenGL);
+			app.LayerStack.PushLayer(new ExampleLayer());
+			app.Run();
+			app.Dispose();
+
+			//WindowStartup.CreateWindowAndGraphicsDevice(new WindowProps(), new GraphicsDeviceOptions() { PreferStandardClipSpaceYDirection = true, PreferDepthRangeZeroToOne = true }, GraphicsBackend.Direct3D11, out Sdl2Window window, out _graphicsDevice);
 		}
 	}
 }

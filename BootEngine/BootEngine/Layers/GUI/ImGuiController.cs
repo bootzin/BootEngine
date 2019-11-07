@@ -137,7 +137,7 @@ namespace BootEngine.Layers.GUI
 		public ImGuiController(GraphicsDevice gd, OutputDescription outputDescription, WindowBase window)
 		{
 			mainWindow = window;
-			Sdl2Window sdlWindow = window.GetSdlWindow();
+			Sdl2Window sdlWindow = window.SdlWindow;
 
 			windowWidth = sdlWindow.Width;
 			windowHeight = sdlWindow.Height;
@@ -209,6 +209,11 @@ namespace BootEngine.Layers.GUI
 			fontTextureResourceSet = gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(textureLayout, fontTextureView));
 		}
 
+		private IntPtr GetNextImGuiBindingID()
+		{
+			return (IntPtr)(++lastAssignedID);
+		}
+
 		/// <summary>
 		/// Gets or creates a handle for a texture to be drawn with ImGui.
 		/// Pass the returned handle to Image() or ImageButton().
@@ -226,11 +231,6 @@ namespace BootEngine.Layers.GUI
 			}
 
 			return rsi.ImGuiBinding;
-		}
-
-		private IntPtr GetNextImGuiBindingID()
-		{
-			return (IntPtr)(++lastAssignedID);
 		}
 
 		/// <summary>
@@ -377,7 +377,7 @@ namespace BootEngine.Layers.GUI
 						if ((vp.Flags & ImGuiViewportFlags.Minimized) == 0)
 						{
 							WindowBase window = (WindowBase)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
-							cl.SetFramebuffer(window.GetSwapchain().Framebuffer);
+							cl.SetFramebuffer(window.Swapchain.Framebuffer);
 							RenderImDrawData(vp.DrawData, gd, cl);
 						}
 					}
@@ -395,7 +395,7 @@ namespace BootEngine.Layers.GUI
 				{
 					ImGuiViewportPtr vp = platformIO.Viewports[i];
 					WindowBase window = (WindowBase)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
-					gd.SwapBuffers(window.GetSwapchain());
+					gd.SwapBuffers(window.Swapchain);
 				}
 			}
 		}
@@ -430,7 +430,7 @@ namespace BootEngine.Layers.GUI
 			io.DeltaTime = deltaSeconds; // DeltaTime is in seconds.
 
 			ImGuiPlatformIOPtr plIo = ImGui.GetPlatformIO();
-			Sdl2Window mainSdlWindow = mainWindow.GetSdlWindow();
+			Sdl2Window mainSdlWindow = mainWindow.SdlWindow;
 			plIo.MainViewport.Pos = new Vector2(mainSdlWindow.X, mainSdlWindow.Y);
 			plIo.MainViewport.Size = new Vector2(mainSdlWindow.Width, mainSdlWindow.Height);
 		}
@@ -446,7 +446,7 @@ namespace BootEngine.Layers.GUI
 				for (int i = 0; i < viewports.Size; i++)
 				{
 					WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewports[i].PlatformUserData).Target;
-					bool atualizarSnapshot = window.GetSdlWindow().Focused;
+					bool atualizarSnapshot = window.SdlWindow.Focused;
 					window.OnUpdate(atualizarSnapshot);
 				}
 			}
@@ -796,8 +796,8 @@ namespace BootEngine.Layers.GUI
 			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
 			SDL_SysWMinfo sysWmInfo;
 			Sdl2Native.SDL_GetVersion(&sysWmInfo.version);
-			Sdl2Native.SDL_GetWMWindowInfo(window.GetSdlWindow().SdlWindowHandle, &sysWmInfo);
-			return GetSurfaceSource(sysWmInfo).CreateSurface(new Vulkan.VkInstance(window.GetSdlWindow().SdlWindowHandle)) != Vulkan.VkSurfaceKHR.Null;
+			Sdl2Native.SDL_GetWMWindowInfo(window.SdlWindow.SdlWindowHandle, &sysWmInfo);
+			return GetSurfaceSource(sysWmInfo).CreateSurface(new Vulkan.VkInstance(window.SdlWindow.SdlWindowHandle)) != Vulkan.VkSurfaceKHR.Null;
 		}
 
 		private unsafe static VkSurfaceSource GetSurfaceSource(SDL_SysWMinfo sysWmInfo)
@@ -820,51 +820,51 @@ namespace BootEngine.Layers.GUI
 		private byte PlatformGetWindowMinimized(ImGuiViewportPtr viewport)
 		{
 			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
-			return (Sdl2Native.SDL_GetWindowFlags(window.GetSdlWindow().SdlWindowHandle) & SDL_WindowFlags.Minimized) != 0 ? (byte)1 : (byte)0;
+			return (Sdl2Native.SDL_GetWindowFlags(window.SdlWindow.SdlWindowHandle) & SDL_WindowFlags.Minimized) != 0 ? (byte)1 : (byte)0;
 		}
 
 		private bool PlatformGetWindowFocus(ImGuiViewportPtr viewport)
 		{
 			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
-			return (Sdl2Native.SDL_GetWindowFlags(window.GetSdlWindow().SdlWindowHandle) & SDL_WindowFlags.InputFocus) != 0;
+			return (Sdl2Native.SDL_GetWindowFlags(window.SdlWindow.SdlWindowHandle) & SDL_WindowFlags.InputFocus) != 0;
 		}
 
 		private static void PlatformSetWindowFocus(ImGuiViewportPtr viewport)
 		{
 			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
-			Sdl_RaiseWindow(window.GetSdlWindow().SdlWindowHandle);
+			Sdl_RaiseWindow(window.SdlWindow.SdlWindowHandle);
 		}
 
 		private void PlatformSetWindowAlpha(ImGuiViewportPtr viewport, float alpha)
 		{
 			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
-			window.GetSdlWindow().Opacity = alpha;
+			window.SdlWindow.Opacity = alpha;
 		}
 
 		private void PlatformSetWindowTitle(ImGuiViewportPtr viewport, string title)
 		{
 			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
-			window.GetSdlWindow().Title = title;
+			window.SdlWindow.Title = title;
 		}
 
 		private void PlatformSetWindowPosition(ImGuiViewportPtr viewport, Vector2 pos)
 		{
 			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
-			window.GetSdlWindow().X = (int)pos.X;
-			window.GetSdlWindow().Y = (int)pos.Y;
+			window.SdlWindow.X = (int)pos.X;
+			window.SdlWindow.Y = (int)pos.Y;
 		}
 
 		private void PlatformSetWindowSize(ImGuiViewportPtr viewport, Vector2 size)
 		{
 			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
-			Sdl2Native.SDL_SetWindowSize(window.GetSdlWindow().SdlWindowHandle, (int)size.X, (int)size.Y);
+			Sdl2Native.SDL_SetWindowSize(window.SdlWindow.SdlWindowHandle, (int)size.X, (int)size.Y);
 		}
 
 		private void PlatformGetWindowSize(Vector2 size, ImGuiViewportPtr viewport)
 		{
 			//Seems to work
 			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
-			Rectangle bounds = window.GetSdlWindow().Bounds;
+			Rectangle bounds = window.SdlWindow.Bounds;
 			size.X = bounds.Width;
 			size.Y = bounds.Height;
 		}
@@ -872,14 +872,14 @@ namespace BootEngine.Layers.GUI
 		private void PlatformGetWindowPosition(Vector2 pos, ImGuiViewportPtr viewport)
 		{
 			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
-			Rectangle bounds = window.GetSdlWindow().Bounds;
+			Rectangle bounds = window.SdlWindow.Bounds;
 			pos.X = bounds.X;
 			pos.Y = bounds.Y;
 		}
 
 		private unsafe void PlatformCreateWindow(ImGuiViewportPtr viewport)
 		{
-			SDL_WindowFlags sdlFlags = (Sdl2Native.SDL_GetWindowFlags(mainWindow.GetSdlWindow().SdlWindowHandle) & SDL_WindowFlags.AllowHighDpi)
+			SDL_WindowFlags sdlFlags = (Sdl2Native.SDL_GetWindowFlags(mainWindow.SdlWindow.SdlWindowHandle) & SDL_WindowFlags.AllowHighDpi)
 				| SDL_WindowFlags.Hidden;
 			sdlFlags |= ((viewport.Flags & ImGuiViewportFlags.NoDecoration) != 0) ? SDL_WindowFlags.Borderless : SDL_WindowFlags.Resizable;
 
@@ -898,10 +898,10 @@ namespace BootEngine.Layers.GUI
 			sdlWindow.Moved += (_) => viewport.PlatformRequestMove = true;
 			sdlWindow.Closed += () => viewport.PlatformRequestClose = true;
 
-			WindowBase newWindow = WindowBase.CreateSubWindow(graphicsDevice, sdlWindow, mainWindow.GetType());
+			WindowBase newWindow = WindowBase.CreateSubWindow(in graphicsDevice, in sdlWindow, mainWindow.GetType());
 
 			viewport.PlatformUserData = (IntPtr)newWindow.GcHandle;
-			viewport.PlatformHandle = newWindow.GetSdlWindow().Handle;
+			viewport.PlatformHandle = newWindow.SdlWindow.Handle;
 		}
 
 		private void PlatformDestroyWindow(ImGuiViewportPtr viewport)
@@ -917,7 +917,7 @@ namespace BootEngine.Layers.GUI
 		private unsafe void PlatformShowWindow(ImGuiViewportPtr viewport)
 		{
 			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
-			Sdl2Native.SDL_ShowWindow(window.GetSdlWindow().SdlWindowHandle);
+			Sdl2Native.SDL_ShowWindow(window.SdlWindow.SdlWindowHandle);
 		}
 
 		#region Structs

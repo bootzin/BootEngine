@@ -34,10 +34,13 @@ namespace BootEngine.Window
 	{
 		#region Properties
 		public Action<EventBase> EventCallback { get; set; }
-
 		public ResourceFactory ResourceFactory { get; set; }
 		public GCHandle GcHandle { get; set; }
-		protected bool VSync { get; set; }
+		protected bool VSync { get { return GraphicsDevice.SyncToVerticalBlank; } set { SetVSync(in value); } }
+		public ref GraphicsDevice GraphicsDevice => ref graphicsDevice;
+		public Swapchain Swapchain => swapchain;
+		public Sdl2Window SdlWindow => window;
+		public bool Exists => window.Exists;
 
 		protected GraphicsDevice graphicsDevice;
 		protected Sdl2Window window;
@@ -49,27 +52,10 @@ namespace BootEngine.Window
 		#region Methods
 		public abstract void OnUpdate(bool updateSnapshot = true);
 
-		public bool Exists() => window.Exists;
 
-		public virtual Sdl2Window GetSdlWindow()
-		{
-			return window;
-		}
-
-		public GraphicsDevice GetGraphicsDevice()
-		{
-			return graphicsDevice;
-		}
-
-		public Swapchain GetSwapchain()
-		{
-			return swapchain;
-		}
-
-		public virtual void SetVSync(bool enabled)
+		public virtual void SetVSync(in bool enabled)
 		{
 			graphicsDevice.SyncToVerticalBlank = enabled;
-			VSync = enabled;
 		}
 
 		public virtual bool IsVSync()
@@ -77,14 +63,14 @@ namespace BootEngine.Window
 			return graphicsDevice.SyncToVerticalBlank;
 		}
 
-		public static WindowBase CreateMainWindow<T>(WindowProps props = null)
+		public static WindowBase CreateMainWindow<T>(in WindowProps props = null, in GraphicsBackend backend = GraphicsBackend.Direct3D11)
 		{
 			if (typeof(T) == typeof(WindowsWindow))
-				return new WindowsWindow(props ?? new WindowProps());
+				return new WindowsWindow(props ?? new WindowProps(), backend);
 			return null;
 		}
 
-		public static WindowBase CreateSubWindow(GraphicsDevice gd, Sdl2Window sdlWindow, Type windowType)
+		public static WindowBase CreateSubWindow(in GraphicsDevice gd, in Sdl2Window sdlWindow, in Type windowType)
 		{
 			if (windowType == typeof(WindowsWindow))
 				return new WindowsWindow(gd, sdlWindow);

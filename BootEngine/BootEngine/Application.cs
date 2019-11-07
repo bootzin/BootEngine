@@ -19,13 +19,13 @@ namespace BootEngine
 		private bool disposed;
         #endregion
 
-        protected Application()
+        protected Application(Veldrid.GraphicsBackend backend = Veldrid.GraphicsBackend.Direct3D11)
         {
             Logger.Init();
 			Logger.Assert(App == null, "App already initialized");
 			App = this;
             LayerStack = new LayerStack();
-            Window = WindowBase.CreateMainWindow<WindowType>();
+            Window = WindowBase.CreateMainWindow<WindowType>(backend: backend);
             Window.EventCallback = OnEvent;
 			ImGuiLayer = new ImGuiLayer<WindowType>();
 			LayerStack.PushOverlay(ImGuiLayer);
@@ -39,11 +39,11 @@ namespace BootEngine
 		#region Public Methods
 		public void Run()
 		{
-			while (Window.Exists())
+			while (Window.Exists)
 			{
                 LayerStack.Layers.ForEach(layer => layer.OnUpdate());
 
-				if (Window.Exists())
+				if (Window.Exists)
 				{
 					ImGuiLayer.Begin();
 					LayerStack.Layers.ForEach(layer => layer.OnGuiRender());
@@ -77,10 +77,10 @@ namespace BootEngine
 			{
 				if (disposing)
 				{
-					Window.GetGraphicsDevice().WaitForIdle();
+					Window.GraphicsDevice.WaitForIdle();
 					Window.Dispose();
 					Window.ResourceFactory = null;
-					Window.GetGraphicsDevice().Dispose();
+					Window.GraphicsDevice.Dispose();
 					foreach (LayerBase layer in LayerStack.Layers)
 					{
 						layer.OnDetach();

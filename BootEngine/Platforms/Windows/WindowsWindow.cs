@@ -15,9 +15,9 @@ namespace Platforms.Windows
 			InitializeSubWindow(gd, sdlWindow);
 		}
 
-		public WindowsWindow(WindowProps props)
+		public WindowsWindow(WindowProps props, GraphicsBackend backend)
 		{
-			Initialize(props);
+			Initialize(props, backend);
 		}
 
 		~WindowsWindow()
@@ -53,13 +53,11 @@ namespace Platforms.Windows
 			window.Resized += () => swapchain.Resize((uint)window.Width, (uint)window.Height);
 		}
 
-		private void Initialize(WindowProps props)
+		private void Initialize(WindowProps props, GraphicsBackend backend)
 		{
 			InputManager.CreateInstance<WindowsInput>();
 
 			GcHandle = GCHandle.Alloc(this);
-
-			VSync = props.VSync;
 
 			GraphicsDeviceOptions options = new GraphicsDeviceOptions()
 			{
@@ -67,7 +65,7 @@ namespace Platforms.Windows
 				PreferDepthRangeZeroToOne = true,
 				PreferStandardClipSpaceYDirection = false,
 				ResourceBindingModel = ResourceBindingModel.Improved,
-				SyncToVerticalBlank = VSync,
+				SyncToVerticalBlank = props.VSync,
 				HasMainSwapchain = true,
 				SwapchainDepthFormat = PixelFormat.R16_UNorm,
 				SwapchainSrgbFormat = false
@@ -75,8 +73,9 @@ namespace Platforms.Windows
 #if DEBUG
 			options.Debug = true;
 #endif
-			WindowStartup.CreateWindowAndGraphicsDevice(props, options, GraphicsBackend.Direct3D11, out window, out graphicsDevice);
+			WindowStartup.CreateWindowAndGraphicsDevice(props, options, backend, out window, out graphicsDevice);
 
+			VSync = props.VSync;
 			ResourceFactory = graphicsDevice.ResourceFactory;
 			swapchain = graphicsDevice.MainSwapchain;
 
