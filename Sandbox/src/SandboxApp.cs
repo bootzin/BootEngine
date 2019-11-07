@@ -64,9 +64,10 @@ void main()
 		private static CommandList _commandList;
 		private static DeviceBuffer _vertexBuffer;
 		private static DeviceBuffer _indexBuffer;
+		private static DeviceBuffer _cameraBuffer;
 		private static Pipeline _pipeline;
 		private static ResourceSet _resourceSet;
-		private readonly static OrthoCamera camera = new OrthoCamera(-2,2,-2,2);
+		private static OrthoCamera _camera;
 
 		public static void Main()
 		{
@@ -95,6 +96,8 @@ void main()
 		{
 			ResourceFactory factory = _graphicsDevice.ResourceFactory;
 
+			_camera = new OrthoCamera(-1, 1, -1, 1, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted);
+
 			Span<VertexPositionColor> quadVertices = stackalloc VertexPositionColor[]
 			{
 				new VertexPositionColor(new Vector2(-.75f, .75f), RgbaFloat.Red),
@@ -115,8 +118,8 @@ void main()
 			_indexBuffer = factory.CreateBuffer(ibDescription);
 			_graphicsDevice.UpdateBuffer(_indexBuffer, 0, quadIndices.ToArray());
 
-			DeviceBuffer cameraBuffer = factory.CreateBuffer(new BufferDescription(16 * sizeof(float), BufferUsage.UniformBuffer));
-			_graphicsDevice.UpdateBuffer(cameraBuffer, 0, camera.ViewProjectionMatrix);
+			_cameraBuffer = factory.CreateBuffer(new BufferDescription(16 * sizeof(float), BufferUsage.UniformBuffer));
+			_graphicsDevice.UpdateBuffer(_cameraBuffer, 0, _camera.ViewProjectionMatrix);
 
 			VertexLayoutDescription vertexLayout = new VertexLayoutDescription(
 				new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
@@ -143,7 +146,7 @@ void main()
 				depthWriteEnabled: true,
 				comparisonKind: ComparisonKind.LessEqual);
 			pipelineDescription.RasterizerState = new RasterizerStateDescription(
-				cullMode: FaceCullMode.Back,
+				cullMode: FaceCullMode.None,
 				fillMode: PolygonFillMode.Solid,
 				frontFace: FrontFace.Clockwise,
 				depthClipEnabled: true,
@@ -155,7 +158,7 @@ void main()
 				shaders: _shaders);
 			pipelineDescription.Outputs = _graphicsDevice.SwapchainFramebuffer.OutputDescription;
 
-			_resourceSet = factory.CreateResourceSet(new ResourceSetDescription(resourceLayout, cameraBuffer));
+			_resourceSet = factory.CreateResourceSet(new ResourceSetDescription(resourceLayout, _cameraBuffer));
 
 			_pipeline = factory.CreateGraphicsPipeline(pipelineDescription);
 
@@ -170,6 +173,10 @@ void main()
 			// We want to render directly to the output window.
 			_commandList.SetFramebuffer(_graphicsDevice.SwapchainFramebuffer);
 			_commandList.ClearColorTarget(0, RgbaFloat.Black);
+
+			_camera.Position = new Vector3(.1f, .1f, 0);
+			_camera.Rotation = 3.1415f/4f;
+			_graphicsDevice.UpdateBuffer(_cameraBuffer, 0, _camera.ViewProjectionMatrix);
 
 			// Set all relevant state to draw our quad.
 			_commandList.SetVertexBuffer(0, _vertexBuffer);

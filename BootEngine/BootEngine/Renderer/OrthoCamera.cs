@@ -17,11 +17,33 @@ namespace BootEngine.Renderer
 		public ref readonly Matrix4x4 ViewMatrix => ref viewMatrix;
 		public ref readonly Matrix4x4 ViewProjectionMatrix => ref viewProjectionMatrix;
 
-		public OrthoCamera(float left, float right, float bottom, float top)
+		public Matrix4x4 OpenGLMatrix;
+
+		public OrthoCamera(float left, float right, float bottom, float top, bool useReverseDepth = false, bool isClipSpaceYInverted = false)
 		{
-			projectionMatrix = Matrix4x4.CreateOrthographicOffCenter(left, right, bottom, top, -1.0f, 1.0f);
+			if (useReverseDepth)
+			{
+				projectionMatrix = Matrix4x4.CreateOrthographicOffCenter(left, right, bottom, top, 1f, -1f);
+			}
+			else
+			{
+				projectionMatrix = Matrix4x4.CreateOrthographicOffCenter(left, right, bottom, top, -1f, 1f);
+			}
+			if (isClipSpaceYInverted)
+			{
+				projectionMatrix *= new Matrix4x4(
+					1, 0, 0, 0,
+					0, -1, 0, 0,
+					0, 0, 1, 0,
+					0, 0, 0, 1);
+			}
 			viewMatrix = Matrix4x4.Identity;
 			viewProjectionMatrix = ViewMatrix * ProjectionMatrix;
+			OpenGLMatrix = new Matrix4x4(
+				1/right, 0, 0, 0,
+				0, 1/top, 0, 0,
+				0, 0, -2/2, 0,
+				0, 0, 0, 1);
 		}
 
 		private void UpdateViewMatrix()
