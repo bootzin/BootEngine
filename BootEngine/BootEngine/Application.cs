@@ -4,6 +4,7 @@ using BootEngine.Layers.GUI;
 using BootEngine.Log;
 using BootEngine.Window;
 using System;
+using System.Diagnostics;
 
 namespace BootEngine
 {
@@ -39,10 +40,27 @@ namespace BootEngine
 		#region Public Methods
 		public void Run()
 		{
+			long previousFrameTicks = 0;
+			Stopwatch sw = new Stopwatch();
+			sw.Start();
+
 			while (Window.Exists)
 			{
+				long currentFrameTicks = sw.ElapsedTicks;
+				float deltaSeconds = (currentFrameTicks - previousFrameTicks) / (float)Stopwatch.Frequency;
+
+				//while (_limitFrameRate && deltaSeconds < _desiredFrameLengthSeconds)
+				//{
+				//	currentFrameTicks = sw.ElapsedTicks;
+				//	deltaSeconds = (currentFrameTicks - previousFrameTicks) / (double)Stopwatch.Frequency;
+				//}
+
+				Logger.Info(deltaSeconds);
+
+				previousFrameTicks = currentFrameTicks;
+
 				Window.OnUpdate();
-				LayerStack.Layers.ForEach(layer => layer.OnUpdate());
+				LayerStack.Layers.ForEach(layer => layer.OnUpdate(deltaSeconds));
 
 				if (Window.Exists)
 				{

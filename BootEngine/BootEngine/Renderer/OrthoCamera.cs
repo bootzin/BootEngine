@@ -48,7 +48,7 @@ namespace BootEngine.Renderer
 			viewProjectionMatrix = ViewMatrix * ProjectionMatrix;
 		}
 
-		public void Update()
+		public void Update(float deltaSeconds)
 		{
 			InputManager inputManager = InputManager.Instance;
 
@@ -80,8 +80,8 @@ namespace BootEngine.Renderer
 				rot -= (float)Util.Deg2Rad(5);
 			}
 
-			Position += dir * .1f;
-			Rotation += rot;
+			Position += dir * .1f * deltaSeconds;
+			Rotation += rot * deltaSeconds;
 		}
 	}
 }

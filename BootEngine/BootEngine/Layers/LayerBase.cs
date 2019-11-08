@@ -18,7 +18,7 @@ namespace BootEngine.Layers
 		#region Methods
 		public virtual void OnAttach() { }
 		public virtual void OnDetach() { }
-		public virtual void OnUpdate() { }
+		public virtual void OnUpdate(float deltaSeconds) { }
 		public virtual void OnEvent(EventBase @event) { }
 		public virtual void OnGuiRender() { }
 		#endregion

@@ -35,9 +35,9 @@ namespace BootEngine.Layers.GUI
 			controller.Dispose();
 		}
 
-		public override void OnUpdate()
+		public override void OnUpdate(float deltaSeconds)
 		{
-			controller.Update(1f / 60);
+			controller.Update(deltaSeconds);
 		}
 
 		public void Begin()

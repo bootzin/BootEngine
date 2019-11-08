@@ -65,9 +65,9 @@ namespace Sandbox
 			CreateResources();
 		}
 
-		public override void OnUpdate()
+		public override void OnUpdate(float deltaSeconds)
 		{
-			_camera.Update();
+			_camera.Update(deltaSeconds);
 			Draw();
 		}
 
@@ -205,7 +205,7 @@ namespace Sandbox
 
 		public static void Main()
 		{
-			var app = new SandboxApp(GraphicsBackend.Vulkan);
+			var app = new SandboxApp(GraphicsBackend.OpenGL);
 			app.LayerStack.PushLayer(new ExampleLayer());
 			app.Run();
 			app.Dispose();
