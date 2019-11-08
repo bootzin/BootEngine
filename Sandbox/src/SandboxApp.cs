@@ -2,6 +2,7 @@
 using BootEngine.Events;
 using BootEngine.Layers;
 using BootEngine.Renderer;
+using ImGuiNET;
 using Platforms.Windows;
 using System;
 using System.Numerics;
@@ -28,20 +29,20 @@ namespace Sandbox
 			};
 
 			layout(location = 0) in vec2 Position;
-			layout(location = 1) in vec4 Color;
-
-			layout(location = 0) out vec4 fsin_Color;
 
 			void main()
 			{
 				gl_Position = view_projection_matrix * model_matrix * vec4(Position, 0, 1);
-				fsin_Color = Color;
 			}";
 
 		private const string FragmentCode = @"
 			#version 430 core
 
-			layout(location = 0) in vec4 fsin_Color;
+			layout(set = 2, binding = 0) uniform Color
+			{
+				vec4 fsin_Color;
+			};
+
 			layout(location = 0) out vec4 fsout_Color;
 
 			void main()
@@ -61,6 +62,8 @@ namespace Sandbox
 		private DeviceBuffer _indexBuffer;
 		private DeviceBuffer _cameraBuffer;
 		private DeviceBuffer _squareTransform;
+		private DeviceBuffer _colorBuffer;
+		private Vector3 _squareColor;
 		private Pipeline _pipeline;
 		private ResourceSet _resourceSet;
 		private OrthoCamera _camera;
@@ -94,7 +97,9 @@ namespace Sandbox
 
 		public override void OnGuiRender()
 		{
-			//
+			ImGui.Begin("Settings");
+			ImGui.ColorEdit3("Square Color", ref _squareColor);
+			ImGui.End();
 		}
 
 		private void CreateResources()
@@ -102,16 +107,17 @@ namespace Sandbox
 			ResourceFactory factory = _graphicsDevice.ResourceFactory;
 
 			_camera = new OrthoCamera(-1.6f, 1.6f, -.9f, .9f, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted);
+			_squareColor = new Vector3(.8f, .2f, .3f);
 
-			Span<VertexPositionColor> quadVertices = stackalloc VertexPositionColor[]
+			Span<Vector2> quadVertices = stackalloc Vector2[]
 			{
-				new VertexPositionColor(new Vector2(-.5f, .5f), RgbaFloat.Red),
-				new VertexPositionColor(new Vector2(.5f, .5f), RgbaFloat.Green),
-				new VertexPositionColor(new Vector2(-.5f, -.5f), RgbaFloat.Blue),
-				new VertexPositionColor(new Vector2(.5f, -.5f), RgbaFloat.Yellow)
+				new Vector2(-.5f, .5f),
+				new Vector2(.5f, .5f),
+				new Vector2(-.5f, -.5f),
+				new Vector2(.5f, -.5f)
 			};
 			BufferDescription vbDescription = new BufferDescription(
-				4 * VertexPositionColor.SizeInBytes,
+				4 * 2 * 4,
 				BufferUsage.VertexBuffer);
 			_vertexBuffer = factory.CreateBuffer(vbDescription);
 			_graphicsDevice.UpdateBuffer(_vertexBuffer, 0, quadVertices.ToArray());
@@ -129,9 +135,10 @@ namespace Sandbox
 			_squareTransform = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
 			_graphicsDevice.UpdateBuffer(_squareTransform, 0, Matrix4x4.Identity);
 
+			_colorBuffer = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
+
 			VertexLayoutDescription vertexLayout = new VertexLayoutDescription(
-				new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
-				new VertexElementDescription("Color", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float4));
+				new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2));
 
 			ShaderDescription vertexShaderDesc = new ShaderDescription(
 				ShaderStages.Vertex,
@@ -147,7 +154,8 @@ namespace Sandbox
 			var resourceLayout = factory.CreateResourceLayout(
 				new ResourceLayoutDescription(
 					new ResourceLayoutElementDescription("ViewProjection", ResourceKind.UniformBuffer, ShaderStages.Vertex),
-					new ResourceLayoutElementDescription("Transform", ResourceKind.UniformBuffer, ShaderStages.Vertex)));
+					new ResourceLayoutElementDescription("Transform", ResourceKind.UniformBuffer, ShaderStages.Vertex),
+					new ResourceLayoutElementDescription("Color", ResourceKind.UniformBuffer, ShaderStages.Fragment)));
 
 			// Create pipeline
 			GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription();
@@ -169,7 +177,7 @@ namespace Sandbox
 				shaders: _shaders);
 			pipelineDescription.Outputs = _graphicsDevice.SwapchainFramebuffer.OutputDescription;
 
-			_resourceSet = factory.CreateResourceSet(new ResourceSetDescription(resourceLayout, _cameraBuffer, _squareTransform));
+			_resourceSet = factory.CreateResourceSet(new ResourceSetDescription(resourceLayout, _cameraBuffer, _squareTransform, _colorBuffer));
 
 			_pipeline = factory.CreateGraphicsPipeline(pipelineDescription);
 
@@ -186,6 +194,7 @@ namespace Sandbox
 			_commandList.ClearColorTarget(0, RgbaFloat.CornflowerBlue);
 
 			_commandList.UpdateBuffer(_cameraBuffer, 0, _camera.ViewProjectionMatrix);
+			_commandList.UpdateBuffer(_colorBuffer, 0, _squareColor);
 
 			_commandList.SetVertexBuffer(0, _vertexBuffer);
 			_commandList.SetIndexBuffer(_indexBuffer, IndexFormat.UInt16);
@@ -196,8 +205,8 @@ namespace Sandbox
 			{
 				for (int x = 0; x < 20; x++)
 				{
-					Vector3 pos = new Vector3(x * 1.41f, y * 1.41f, 0f);
-					Matrix4x4 translation = Matrix4x4.CreateTranslation(pos) * Matrix4x4.CreateScale(.4f);
+					Vector3 pos = new Vector3(x * 1.11f, y * 1.11f, 0f);
+					Matrix4x4 translation = Matrix4x4.CreateTranslation(pos) * Matrix4x4.CreateScale(.1f);
 					_commandList.UpdateBuffer(_squareTransform, 0, translation);
 
 					_commandList.DrawIndexed(
