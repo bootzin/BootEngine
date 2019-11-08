@@ -73,14 +73,14 @@ namespace BootEngine.Renderer
 			float rot = 0f;
 			if (inputManager.GetKeyDown(KeyCodes.Q))
 			{
-				rot += (float)Util.Deg2Rad(5);
+				rot += (float)Util.Deg2Rad(60);
 			}
 			else if (inputManager.GetKeyDown(KeyCodes.E))
 			{
-				rot -= (float)Util.Deg2Rad(5);
+				rot -= (float)Util.Deg2Rad(60);
 			}
 
-			Position += dir * .1f * deltaSeconds;
+			Position += dir * 2f * deltaSeconds;
 			Rotation += rot * deltaSeconds;
 		}
 	}
