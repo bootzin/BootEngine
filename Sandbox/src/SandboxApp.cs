@@ -6,6 +6,7 @@ using Platforms.Windows;
 using System;
 using System.Numerics;
 using System.Text;
+using Utils;
 using Veldrid;
 using Veldrid.SPIRV;
 
@@ -15,15 +16,15 @@ namespace Sandbox
 	{
 		#region Shaders
 		private const string VertexCode = @"
-			#version 430
+			#version 430 core
 
-			layout(location = 0) in vec2 Position;
-			layout(location = 1) in vec4 Color;
-
-			layout (set = 0, binding = 0) uniform ViewProjection
+			uniform ViewProjection
 			{
 				mat4 view_projection_matrix;
 			};
+
+			layout(location = 0) in vec2 Position;
+			layout(location = 1) in vec4 Color;
 
 			layout(location = 0) out vec4 fsin_Color;
 
@@ -34,7 +35,7 @@ namespace Sandbox
 			}";
 
 		private const string FragmentCode = @"
-			#version 430
+			#version 430 core
 
 			layout(location = 0) in vec4 fsin_Color;
 			layout(location = 0) out vec4 fsout_Color;
@@ -66,7 +67,8 @@ namespace Sandbox
 
 		public override void OnUpdate()
 		{
-			//
+			_camera.Update();
+			Draw();
 		}
 
 		public override void OnEvent(EventBase @event)
@@ -76,14 +78,14 @@ namespace Sandbox
 
 		public override void OnGuiRender()
 		{
-			Draw();
+			//
 		}
 
 		private void CreateResources()
 		{
 			ResourceFactory factory = _graphicsDevice.ResourceFactory;
 
-			_camera = new OrthoCamera(-1, 1, -1, 1, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted);
+			_camera = new OrthoCamera(-1.0f, 1.0f, -1f, 1f, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted);
 
 			Span<VertexPositionColor> quadVertices = stackalloc VertexPositionColor[]
 			{
@@ -105,7 +107,7 @@ namespace Sandbox
 			_indexBuffer = factory.CreateBuffer(ibDescription);
 			_graphicsDevice.UpdateBuffer(_indexBuffer, 0, quadIndices.ToArray());
 
-			_cameraBuffer = factory.CreateBuffer(new BufferDescription(16 * sizeof(float), BufferUsage.UniformBuffer));
+			_cameraBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
 			_graphicsDevice.UpdateBuffer(_cameraBuffer, 0, _camera.ViewProjectionMatrix);
 
 			VertexLayoutDescription vertexLayout = new VertexLayoutDescription(
@@ -160,10 +162,8 @@ namespace Sandbox
 			_commandList.SetFramebuffer(_graphicsDevice.SwapchainFramebuffer);
 			_commandList.SetViewport(0, new Viewport(0, 0, _graphicsDevice.SwapchainFramebuffer.Width, _graphicsDevice.SwapchainFramebuffer.Height, 0, 1));
 			_commandList.SetFullViewports();
-			_commandList.ClearColorTarget(0, RgbaFloat.LightGrey);
+			_commandList.ClearColorTarget(0, RgbaFloat.CornflowerBlue);
 
-			_camera.Position = new Vector3(.1f, .1f, 0);
-			_camera.Rotation = 3.1415f / 4f;
 			_graphicsDevice.UpdateBuffer(_cameraBuffer, 0, _camera.ViewProjectionMatrix);
 
 			// Set all relevant state to draw our quad.
@@ -205,12 +205,10 @@ namespace Sandbox
 
 		public static void Main()
 		{
-			var app = new SandboxApp(GraphicsBackend.OpenGL);
+			var app = new SandboxApp(GraphicsBackend.Vulkan);
 			app.LayerStack.PushLayer(new ExampleLayer());
 			app.Run();
 			app.Dispose();
-
-			//WindowStartup.CreateWindowAndGraphicsDevice(new WindowProps(), new GraphicsDeviceOptions() { PreferStandardClipSpaceYDirection = true, PreferDepthRangeZeroToOne = true }, GraphicsBackend.Direct3D11, out Sdl2Window window, out _graphicsDevice);
 		}
 	}
 }

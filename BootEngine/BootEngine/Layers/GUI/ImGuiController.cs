@@ -387,7 +387,6 @@ namespace BootEngine.Layers.GUI
 
 		public void SwapBuffers(GraphicsDevice gd)
 		{
-			gd.SwapBuffers();
 			if ((ImGui.GetIO().ConfigFlags & ImGuiConfigFlags.ViewportsEnable) != 0)
 			{
 				ImGuiPlatformIOPtr platformIO = ImGui.GetPlatformIO();
@@ -599,14 +598,12 @@ namespace BootEngine.Layers.GUI
 				indexOffsetInElements += (uint)cmd_list.IdxBuffer.Size;
 			}
 
-			// Setup orthographic projection matrix into our constant buffer
-			Matrix4x4 mvp = Matrix4x4.CreateOrthographicOffCenter(
+			//Setup orthographic projection matrix into our constant buffer
+			Matrix4x4 mvp = new Renderer.OrthoCamera(
 				draw_data.DisplayPos.X,
 				draw_data.DisplayPos.X + draw_data.DisplaySize.X,
 				draw_data.DisplayPos.Y + draw_data.DisplaySize.Y,
-				draw_data.DisplayPos.Y,
-				0.0f,
-				1.0f);
+				draw_data.DisplayPos.Y, gd.IsDepthRangeZeroToOne, gd.IsClipSpaceYInverted).ViewProjectionMatrix;
 
 			cl.SetPipeline(pipeline);
 			cl.SetViewport(0, new Viewport(draw_data.DisplayPos.X, draw_data.DisplayPos.Y, draw_data.DisplaySize.X, draw_data.DisplaySize.Y, 0, 1));
@@ -680,7 +677,6 @@ namespace BootEngine.Layers.GUI
 				Marshal.FreeHGlobal(plIo.NativePtr->Monitors.Data);
 				plIo.NativePtr->Monitors = new ImVector();
 			}
-			ImGui.DestroyContext();
 
 			vertexBuffer.Dispose();
 			indexBuffer.Dispose();
@@ -699,6 +695,8 @@ namespace BootEngine.Layers.GUI
 			{
 				resource.Dispose();
 			}
+
+			ImGui.DestroyContext();
 		}
 
 		private void SetupImGuiIo(Sdl2Window sdlWindow)
@@ -898,7 +896,7 @@ namespace BootEngine.Layers.GUI
 			sdlWindow.Moved += (_) => viewport.PlatformRequestMove = true;
 			sdlWindow.Closed += () => viewport.PlatformRequestClose = true;
 
-			WindowBase newWindow = WindowBase.CreateSubWindow(in graphicsDevice, in sdlWindow, mainWindow.GetType());
+			WindowBase newWindow = WindowBase.CreateSubWindow(graphicsDevice, sdlWindow, mainWindow.GetType());
 
 			viewport.PlatformUserData = (IntPtr)newWindow.GcHandle;
 			viewport.PlatformHandle = newWindow.SdlWindow.Handle;

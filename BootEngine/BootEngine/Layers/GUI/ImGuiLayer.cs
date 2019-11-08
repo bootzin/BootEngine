@@ -25,7 +25,7 @@ namespace BootEngine.Layers.GUI
 			gd = window.GraphicsDevice;
 			cl = window.ResourceFactory.CreateCommandList();
 
-			controller = new ImGuiController(gd, gd.MainSwapchain.Framebuffer.OutputDescription, window);
+			controller = new ImGuiController(gd, gd.SwapchainFramebuffer.OutputDescription, window);
 
 			sdlWindow.Resized += () => controller.WindowResized(sdlWindow.Width, sdlWindow.Height);
 		}
@@ -49,17 +49,17 @@ namespace BootEngine.Layers.GUI
 		public void End()
 		{
 			cl.SetFramebuffer(gd.SwapchainFramebuffer);
-			//cl.ClearColorTarget(0, new RgbaFloat(0.45f, 0.55f, 0.6f, 1f));
 			controller.Render(gd, cl);
 
 			cl.End();
+
 			gd.SubmitCommands(cl);
 			controller.SwapBuffers(gd);
 		}
 
 		public override void OnEvent(EventBase @event)
 		{
-			new EventDispatcher(@event).Dispatch<KeyPressedEvent>((_) => true);
+			//
 		}
 
 		public override void OnGuiRender()

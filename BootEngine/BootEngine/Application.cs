@@ -41,13 +41,15 @@ namespace BootEngine
 		{
 			while (Window.Exists)
 			{
-                LayerStack.Layers.ForEach(layer => layer.OnUpdate());
+				Window.OnUpdate();
+				LayerStack.Layers.ForEach(layer => layer.OnUpdate());
 
 				if (Window.Exists)
 				{
 					ImGuiLayer.Begin();
 					LayerStack.Layers.ForEach(layer => layer.OnGuiRender());
 					ImGuiLayer.End();
+					Window.GraphicsDevice.SwapBuffers();
 				}
 			}
 		}
@@ -78,13 +80,13 @@ namespace BootEngine
 				if (disposing)
 				{
 					Window.GraphicsDevice.WaitForIdle();
-					Window.Dispose();
-					Window.ResourceFactory = null;
-					Window.GraphicsDevice.Dispose();
 					foreach (LayerBase layer in LayerStack.Layers)
 					{
 						layer.OnDetach();
 					}
+					Window.Dispose();
+					Window.GraphicsDevice.Dispose();
+					Window.ResourceFactory = null;
                     LayerStack.Layers.Clear();
 				}
                 disposed = true;

@@ -7,17 +7,17 @@ using Veldrid.Sdl2;
 
 namespace BootEngine.Window
 {
-	public sealed class WindowProps
+	public class WindowProps
 	{
-		public uint Width { get; set; }
-		public uint Height { get; set; }
-		public string Title { get; set; }
-		public int X { get; set; }
-		public int Y { get; set; }
-		public bool VSync { get; set; }
-		public WindowState WindowInitialState { get; set; }
+		public int Width { get; }
+		public int Height { get; }
+		public string Title { get; }
+		public int X { get; }
+		public int Y { get; }
+		public bool VSync { get; }
+		public WindowState WindowInitialState { get; }
 
-		public WindowProps(string title = "Boot Engine", uint width = 1280, uint height = 760,
+		public WindowProps(string title = "Boot Engine", int width = 1280, int height = 760,
 			int x = 0, int y = 0, bool vSync = true, WindowState windowState = WindowState.Normal)
 		{
 			Height = height;
@@ -63,14 +63,14 @@ namespace BootEngine.Window
 			return graphicsDevice.SyncToVerticalBlank;
 		}
 
-		public static WindowBase CreateMainWindow<T>(in WindowProps props = null, in GraphicsBackend backend = GraphicsBackend.Direct3D11)
+		public static WindowBase CreateMainWindow<T>(WindowProps props = null, GraphicsBackend backend = GraphicsBackend.Direct3D11)
 		{
 			if (typeof(T) == typeof(WindowsWindow))
 				return new WindowsWindow(props ?? new WindowProps(), backend);
 			return null;
 		}
 
-		public static WindowBase CreateSubWindow(in GraphicsDevice gd, in Sdl2Window sdlWindow, in Type windowType)
+		public static WindowBase CreateSubWindow(GraphicsDevice gd, Sdl2Window sdlWindow, Type windowType)
 		{
 			if (windowType == typeof(WindowsWindow))
 				return new WindowsWindow(gd, sdlWindow);

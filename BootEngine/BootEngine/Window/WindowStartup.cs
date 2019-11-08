@@ -65,8 +65,8 @@ namespace BootEngine.Window
 				windowProps.Title,
 				windowProps.X,
 				windowProps.Y,
-				(int)windowProps.Width,
-				(int)windowProps.Height,
+				windowProps.Width,
+				windowProps.Height,
 				flags,
 				false);
 		}
@@ -165,7 +165,7 @@ namespace BootEngine.Window
 				options.SwapchainDepthFormat,
 				options.SyncToVerticalBlank,
 				colorSrgb);
-			return GraphicsDevice.CreateVulkan(options, scDesc);
+			return GraphicsDevice.CreateVulkan(options, scDesc, new VulkanDeviceOptions());
 		}
 #endif
 		#endregion
