@@ -401,9 +401,9 @@ namespace BootEngine.Window
 
 		private static (int Major, int Minor) TestMaxVersion(bool gles)
 		{
-			(int, int)[] testVersions = gles
-				? new[] { (3, 2), (3, 0) }
-				: new[] { (4, 6), (4, 3), (4, 0), (3, 3), (3, 0) };
+			Span<(int, int)> testVersions = gles
+				? stackalloc[] { (3, 2), (3, 0) }
+				: stackalloc[] { (4, 6), (4, 3), (4, 0), (3, 3), (3, 0) };
 
 			foreach ((int major, int minor) in testVersions)
 			{

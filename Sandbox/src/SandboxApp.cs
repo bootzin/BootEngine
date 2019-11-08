@@ -6,7 +6,6 @@ using Platforms.Windows;
 using System;
 using System.Numerics;
 using System.Text;
-using Utils;
 using Veldrid;
 using Veldrid.SPIRV;
 
@@ -18,9 +17,14 @@ namespace Sandbox
 		private const string VertexCode = @"
 			#version 430 core
 
-			uniform ViewProjection
+			layout(set = 0, binding = 0) uniform ViewProjection
 			{
 				mat4 view_projection_matrix;
+			};
+
+			layout(set = 1, binding = 0) uniform Transform
+			{
+				mat4 model_matrix;
 			};
 
 			layout(location = 0) in vec2 Position;
@@ -30,7 +34,7 @@ namespace Sandbox
 
 			void main()
 			{
-				gl_Position = view_projection_matrix * vec4(Position, 0, 1);
+				gl_Position = view_projection_matrix * model_matrix * vec4(Position, 0, 1);
 				fsin_Color = Color;
 			}";
 
@@ -56,6 +60,7 @@ namespace Sandbox
 		private DeviceBuffer _vertexBuffer;
 		private DeviceBuffer _indexBuffer;
 		private DeviceBuffer _cameraBuffer;
+		private DeviceBuffer _squareTransform;
 		private Pipeline _pipeline;
 		private ResourceSet _resourceSet;
 		private OrthoCamera _camera;
@@ -63,6 +68,17 @@ namespace Sandbox
 		public override void OnAttach()
 		{
 			CreateResources();
+		}
+
+		public override void OnDetach()
+		{
+			_commandList.Dispose();
+			_vertexBuffer.Dispose();
+			_indexBuffer.Dispose();
+			_cameraBuffer.Dispose();
+			_squareTransform.Dispose();
+			_pipeline.Dispose();
+			_resourceSet.Dispose();
 		}
 
 		public override void OnUpdate(float deltaSeconds)
@@ -85,14 +101,14 @@ namespace Sandbox
 		{
 			ResourceFactory factory = _graphicsDevice.ResourceFactory;
 
-			_camera = new OrthoCamera(-1.0f, 1.0f, -1f, 1f, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted);
+			_camera = new OrthoCamera(-1.6f, 1.6f, -.9f, .9f, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted);
 
 			Span<VertexPositionColor> quadVertices = stackalloc VertexPositionColor[]
 			{
-				new VertexPositionColor(new Vector2(-.75f, .75f), RgbaFloat.Red),
-				new VertexPositionColor(new Vector2(.75f, .75f), RgbaFloat.Green),
-				new VertexPositionColor(new Vector2(-.75f, -.75f), RgbaFloat.Blue),
-				new VertexPositionColor(new Vector2(.75f, -.75f), RgbaFloat.Yellow)
+				new VertexPositionColor(new Vector2(-.5f, .5f), RgbaFloat.Red),
+				new VertexPositionColor(new Vector2(.5f, .5f), RgbaFloat.Green),
+				new VertexPositionColor(new Vector2(-.5f, -.5f), RgbaFloat.Blue),
+				new VertexPositionColor(new Vector2(.5f, -.5f), RgbaFloat.Yellow)
 			};
 			BufferDescription vbDescription = new BufferDescription(
 				4 * VertexPositionColor.SizeInBytes,
@@ -110,6 +126,9 @@ namespace Sandbox
 			_cameraBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
 			_graphicsDevice.UpdateBuffer(_cameraBuffer, 0, _camera.ViewProjectionMatrix);
 
+			_squareTransform = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
+			_graphicsDevice.UpdateBuffer(_squareTransform, 0, Matrix4x4.Identity);
+
 			VertexLayoutDescription vertexLayout = new VertexLayoutDescription(
 				new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
 				new VertexElementDescription("Color", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float4));
@@ -125,7 +144,10 @@ namespace Sandbox
 
 			Shader[] _shaders = factory.CreateFromSpirv(vertexShaderDesc, fragmentShaderDesc);
 
-			var resourceLayout = factory.CreateResourceLayout(new ResourceLayoutDescription(new ResourceLayoutElementDescription("ViewProjection", ResourceKind.UniformBuffer, ShaderStages.Vertex)));
+			var resourceLayout = factory.CreateResourceLayout(
+				new ResourceLayoutDescription(
+					new ResourceLayoutElementDescription("ViewProjection", ResourceKind.UniformBuffer, ShaderStages.Vertex),
+					new ResourceLayoutElementDescription("Transform", ResourceKind.UniformBuffer, ShaderStages.Vertex)));
 
 			// Create pipeline
 			GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription();
@@ -147,7 +169,7 @@ namespace Sandbox
 				shaders: _shaders);
 			pipelineDescription.Outputs = _graphicsDevice.SwapchainFramebuffer.OutputDescription;
 
-			_resourceSet = factory.CreateResourceSet(new ResourceSetDescription(resourceLayout, _cameraBuffer));
+			_resourceSet = factory.CreateResourceSet(new ResourceSetDescription(resourceLayout, _cameraBuffer, _squareTransform));
 
 			_pipeline = factory.CreateGraphicsPipeline(pipelineDescription);
 
@@ -158,26 +180,34 @@ namespace Sandbox
 		{
 			_commandList.Begin();
 
-			// We want to render directly to the output window.
 			_commandList.SetFramebuffer(_graphicsDevice.SwapchainFramebuffer);
 			_commandList.SetViewport(0, new Viewport(0, 0, _graphicsDevice.SwapchainFramebuffer.Width, _graphicsDevice.SwapchainFramebuffer.Height, 0, 1));
 			_commandList.SetFullViewports();
 			_commandList.ClearColorTarget(0, RgbaFloat.CornflowerBlue);
 
-			_graphicsDevice.UpdateBuffer(_cameraBuffer, 0, _camera.ViewProjectionMatrix);
+			_commandList.UpdateBuffer(_cameraBuffer, 0, _camera.ViewProjectionMatrix);
 
-			// Set all relevant state to draw our quad.
 			_commandList.SetVertexBuffer(0, _vertexBuffer);
 			_commandList.SetIndexBuffer(_indexBuffer, IndexFormat.UInt16);
 			_commandList.SetPipeline(_pipeline);
 			_commandList.SetGraphicsResourceSet(0, _resourceSet);
-			// Issue a Draw command for a single instance with 4 indices.
-			_commandList.DrawIndexed(
-				indexCount: 4,
-				instanceCount: 1,
-				indexStart: 0,
-				vertexOffset: 0,
-				instanceStart: 0);
+
+			for (int y = 0; y < 20; y++)
+			{
+				for (int x = 0; x < 20; x++)
+				{
+					Vector3 pos = new Vector3(x * 1.41f, y * 1.41f, 0f);
+					Matrix4x4 translation = Matrix4x4.CreateTranslation(pos) * Matrix4x4.CreateScale(.4f);
+					_commandList.UpdateBuffer(_squareTransform, 0, translation);
+
+					_commandList.DrawIndexed(
+						indexCount: 4,
+						instanceCount: 1,
+						indexStart: 0,
+						vertexOffset: 0,
+						instanceStart: 0);
+				}
+			}
 
 			_commandList.End();
 			_graphicsDevice.SubmitCommands(_commandList);
@@ -205,7 +235,7 @@ namespace Sandbox
 
 		public static void Main()
 		{
-			var app = new SandboxApp(GraphicsBackend.OpenGL);
+			var app = new SandboxApp(GraphicsBackend.Direct3D11);
 			app.LayerStack.PushLayer(new ExampleLayer());
 			app.Run();
 			app.Dispose();

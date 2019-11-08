@@ -6,6 +6,9 @@ namespace BootEngine.Renderer
 {
 	public class OrthoCamera : ICamera
 	{
+		private const float CAMERA_MOVE_SPEED = 2f;
+		private const float CAMERA_ROTATION_SPEED = 60f;
+
 		private Vector3 position;
 		private float rotation;
 		private Matrix4x4 projectionMatrix;
@@ -73,14 +76,14 @@ namespace BootEngine.Renderer
 			float rot = 0f;
 			if (inputManager.GetKeyDown(KeyCodes.Q))
 			{
-				rot += (float)Util.Deg2Rad(60);
+				rot += (float)Util.Deg2Rad(CAMERA_ROTATION_SPEED);
 			}
 			else if (inputManager.GetKeyDown(KeyCodes.E))
 			{
-				rot -= (float)Util.Deg2Rad(60);
+				rot -= (float)Util.Deg2Rad(CAMERA_ROTATION_SPEED);
 			}
 
-			Position += dir * 2f * deltaSeconds;
+			Position += dir * CAMERA_MOVE_SPEED * deltaSeconds;
 			Rotation += rot * deltaSeconds;
 		}
 	}
