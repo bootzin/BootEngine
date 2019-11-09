@@ -63,7 +63,7 @@ namespace Platforms.Windows
 			{
 				Debug = false,
 				PreferDepthRangeZeroToOne = true,
-				PreferStandardClipSpaceYDirection = true,
+				PreferStandardClipSpaceYDirection = false,
 				ResourceBindingModel = ResourceBindingModel.Improved,
 				SyncToVerticalBlank = props.VSync,
 				HasMainSwapchain = true,
@@ -71,7 +71,6 @@ namespace Platforms.Windows
 				SwapchainSrgbFormat = false
 			};
 #if DEBUG
-			if (backend != GraphicsBackend.Vulkan)
 				options.Debug = true;
 #endif
 			WindowStartup.CreateWindowAndGraphicsDevice(props, options, backend, out window, out graphicsDevice);

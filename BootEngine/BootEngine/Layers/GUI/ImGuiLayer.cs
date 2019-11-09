@@ -33,6 +33,7 @@ namespace BootEngine.Layers.GUI
 		public override void OnDetach()
 		{
 			controller.Dispose();
+			cl.Dispose();
 		}
 
 		public override void OnUpdate(float deltaSeconds)

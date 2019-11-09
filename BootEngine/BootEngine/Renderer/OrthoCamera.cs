@@ -22,7 +22,7 @@ namespace BootEngine.Renderer
 		public ref readonly Matrix4x4 ViewMatrix => ref viewMatrix;
 		public ref readonly Matrix4x4 ViewProjectionMatrix => ref viewProjectionMatrix;
 
-		public OrthoCamera(float left, float right, float bottom, float top, bool useReverseDepth = false, bool isClipSpaceYInverted = false)
+		public OrthoCamera(float left, float right, float bottom, float top, bool useReverseDepth = false, bool swapYAxis = false)
 		{
 			if (useReverseDepth)
 			{
@@ -32,7 +32,7 @@ namespace BootEngine.Renderer
 			{
 				projectionMatrix = Matrix4x4.CreateOrthographicOffCenter(left, right, bottom, top, -1f, 1f);
 			}
-			if (isClipSpaceYInverted)
+			if (swapYAxis)
 			{
 				projectionMatrix *= new Matrix4x4(
 					1, 0, 0, 0,

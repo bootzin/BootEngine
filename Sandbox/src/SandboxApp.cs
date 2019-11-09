@@ -23,7 +23,7 @@ namespace Sandbox
 				mat4 view_projection_matrix;
 			};
 
-			layout(set = 1, binding = 0) uniform Transform
+			layout(set = 0, binding = 1) uniform Transform
 			{
 				mat4 model_matrix;
 			};
@@ -38,7 +38,7 @@ namespace Sandbox
 		private const string FragmentCode = @"
 			#version 430 core
 
-			layout(set = 2, binding = 0) uniform Color
+			layout(set = 0, binding = 2) uniform Color
 			{
 				vec4 fsin_Color;
 			};
@@ -79,6 +79,7 @@ namespace Sandbox
 			_vertexBuffer.Dispose();
 			_indexBuffer.Dispose();
 			_cameraBuffer.Dispose();
+			_colorBuffer.Dispose();
 			_squareTransform.Dispose();
 			_pipeline.Dispose();
 			_resourceSet.Dispose();
@@ -106,6 +107,8 @@ namespace Sandbox
 		{
 			ResourceFactory factory = _graphicsDevice.ResourceFactory;
 
+			_commandList = factory.CreateCommandList();
+
 			_camera = new OrthoCamera(-1.6f, 1.6f, -.9f, .9f, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted);
 			_squareColor = new Vector3(.8f, .2f, .3f);
 
@@ -116,6 +119,7 @@ namespace Sandbox
 				new Vector2(-.5f, -.5f),
 				new Vector2(.5f, -.5f)
 			};
+
 			BufferDescription vbDescription = new BufferDescription(
 				4 * 2 * 4,
 				BufferUsage.VertexBuffer);
@@ -130,11 +134,7 @@ namespace Sandbox
 			_graphicsDevice.UpdateBuffer(_indexBuffer, 0, quadIndices.ToArray());
 
 			_cameraBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
-			_graphicsDevice.UpdateBuffer(_cameraBuffer, 0, _camera.ViewProjectionMatrix);
-
 			_squareTransform = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
-			_graphicsDevice.UpdateBuffer(_squareTransform, 0, Matrix4x4.Identity);
-
 			_colorBuffer = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
 
 			VertexLayoutDescription vertexLayout = new VertexLayoutDescription(
@@ -151,11 +151,15 @@ namespace Sandbox
 
 			Shader[] _shaders = factory.CreateFromSpirv(vertexShaderDesc, fragmentShaderDesc);
 
-			var resourceLayout = factory.CreateResourceLayout(
+			ResourceLayout resourceLayout = factory.CreateResourceLayout(
 				new ResourceLayoutDescription(
 					new ResourceLayoutElementDescription("ViewProjection", ResourceKind.UniformBuffer, ShaderStages.Vertex),
 					new ResourceLayoutElementDescription("Transform", ResourceKind.UniformBuffer, ShaderStages.Vertex),
 					new ResourceLayoutElementDescription("Color", ResourceKind.UniformBuffer, ShaderStages.Fragment)));
+
+			_graphicsDevice.DisposeWhenIdle(resourceLayout);
+			_graphicsDevice.DisposeWhenIdle(_shaders[0]);
+			_graphicsDevice.DisposeWhenIdle(_shaders[1]);
 
 			// Create pipeline
 			GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription();
@@ -180,8 +184,6 @@ namespace Sandbox
 			_resourceSet = factory.CreateResourceSet(new ResourceSetDescription(resourceLayout, _cameraBuffer, _squareTransform, _colorBuffer));
 
 			_pipeline = factory.CreateGraphicsPipeline(pipelineDescription);
-
-			_commandList = factory.CreateCommandList();
 		}
 
 		private void Draw()
@@ -194,7 +196,6 @@ namespace Sandbox
 			_commandList.ClearColorTarget(0, RgbaFloat.CornflowerBlue);
 
 			_commandList.UpdateBuffer(_cameraBuffer, 0, _camera.ViewProjectionMatrix);
-			_commandList.UpdateBuffer(_colorBuffer, 0, _squareColor);
 
 			_commandList.SetVertexBuffer(0, _vertexBuffer);
 			_commandList.SetIndexBuffer(_indexBuffer, IndexFormat.UInt16);
@@ -208,6 +209,7 @@ namespace Sandbox
 					Vector3 pos = new Vector3(x * 1.11f, y * 1.11f, 0f);
 					Matrix4x4 translation = Matrix4x4.CreateTranslation(pos) * Matrix4x4.CreateScale(.1f);
 					_commandList.UpdateBuffer(_squareTransform, 0, translation);
+					_commandList.UpdateBuffer(_colorBuffer, 0, _squareColor);
 
 					_commandList.DrawIndexed(
 						indexCount: 4,
@@ -244,7 +246,7 @@ namespace Sandbox
 
 		public static void Main()
 		{
-			var app = new SandboxApp(GraphicsBackend.Direct3D11);
+			var app = new SandboxApp(GraphicsBackend.Vulkan);
 			app.LayerStack.PushLayer(new ExampleLayer());
 			app.Run();
 			app.Dispose();

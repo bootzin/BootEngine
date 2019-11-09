@@ -195,7 +195,7 @@ namespace BootEngine.Layers.GUI
 			GraphicsPipelineDescription pd = new GraphicsPipelineDescription(
 				BlendStateDescription.SingleAlphaBlend,
 				new DepthStencilStateDescription(false, false, ComparisonKind.Always),
-				new RasterizerStateDescription(FaceCullMode.None, PolygonFillMode.Solid, FrontFace.Clockwise, false, true),
+				new RasterizerStateDescription(FaceCullMode.None, PolygonFillMode.Solid, FrontFace.Clockwise, true, true),
 				PrimitiveTopology.TriangleList,
 				new ShaderSetDescription(vertexLayouts.ToArray(), new[] { vertexShader, fragmentShader }),
 				new ResourceLayout[] { layout, textureLayout },
@@ -598,12 +598,24 @@ namespace BootEngine.Layers.GUI
 				indexOffsetInElements += (uint)cmd_list.IdxBuffer.Size;
 			}
 
-			//Setup orthographic projection matrix into our constant buffer
-			Matrix4x4 mvp = new Renderer.OrthoCamera(
+			//Setup orthographic projection matrix regarding backend
+			Matrix4x4 mvp;
+			if (gd.BackendType == GraphicsBackend.Vulkan && !gd.IsClipSpaceYInverted)
+			{
+				mvp = new Renderer.OrthoCamera(
+				draw_data.DisplayPos.X,
+				draw_data.DisplayPos.X + draw_data.DisplaySize.X,
+				draw_data.DisplayPos.Y,
+				draw_data.DisplayPos.Y + draw_data.DisplaySize.Y, gd.IsDepthRangeZeroToOne).ViewProjectionMatrix;
+			}
+			else
+			{
+				mvp = new Renderer.OrthoCamera(
 				draw_data.DisplayPos.X,
 				draw_data.DisplayPos.X + draw_data.DisplaySize.X,
 				draw_data.DisplayPos.Y + draw_data.DisplaySize.Y,
-				draw_data.DisplayPos.Y, gd.IsDepthRangeZeroToOne, gd.IsClipSpaceYInverted).ViewProjectionMatrix;
+				draw_data.DisplayPos.Y, gd.IsDepthRangeZeroToOne).ViewProjectionMatrix;
+			}
 
 			cl.SetPipeline(pipeline);
 			cl.SetViewport(0, new Viewport(draw_data.DisplayPos.X, draw_data.DisplayPos.Y, draw_data.DisplaySize.X, draw_data.DisplaySize.Y, 0, 1));
@@ -613,10 +625,10 @@ namespace BootEngine.Layers.GUI
 
 			DeviceBuffer projMatrix = gd.ResourceFactory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
 			ResourceSet resourceSet = gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(layout, projMatrix, gd.PointSampler));
-			graphicsDevice.UpdateBuffer(projMatrix, 0, mvp);
+			cl.UpdateBuffer(projMatrix, 0, ref mvp);
 			cl.SetGraphicsResourceSet(0, resourceSet);
-			resourceSet.Dispose();
-			projMatrix.Dispose();
+			graphicsDevice.DisposeWhenIdle(resourceSet);
+			graphicsDevice.DisposeWhenIdle(projMatrix);
 
 			draw_data.ScaleClipRects(draw_data.FramebufferScale);
 
@@ -678,25 +690,25 @@ namespace BootEngine.Layers.GUI
 				plIo.NativePtr->Monitors = new ImVector();
 			}
 
-			vertexBuffer.Dispose();
-			indexBuffer.Dispose();
-			projMatrixBuffer.Dispose();
-			fontTexture.Dispose();
-			fontTextureView.Dispose();
-			vertexShader.Dispose();
-			fragmentShader.Dispose();
-			layout.Dispose();
-			textureLayout.Dispose();
-			pipeline.Dispose();
-			mainResourceSet.Dispose();
-			fontTextureResourceSet.Dispose();
-
 			foreach (IDisposable resource in ownedResources)
 			{
 				resource.Dispose();
 			}
 
 			ImGui.DestroyContext();
+
+			pipeline.Dispose();
+			vertexBuffer.Dispose();
+			indexBuffer.Dispose();
+			projMatrixBuffer.Dispose();
+			fontTextureResourceSet.Dispose();
+			fontTextureView.Dispose();
+			fontTexture.Dispose();
+			vertexShader.Dispose();
+			fragmentShader.Dispose();
+			mainResourceSet.Dispose();
+			layout.Dispose();
+			textureLayout.Dispose();
 		}
 
 		private void SetupImGuiIo(Sdl2Window sdlWindow)
