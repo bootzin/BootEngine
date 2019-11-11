@@ -385,6 +385,9 @@ namespace BootEngine.Layers.GUI
 			}
 		}
 
+		/// <summary>
+		/// Swaps Buffers for additional windows created with imgui
+		/// </summary>
 		public void SwapBuffers(GraphicsDevice gd)
 		{
 			if ((ImGui.GetIO().ConfigFlags & ImGuiConfigFlags.ViewportsEnable) != 0)
@@ -723,12 +726,12 @@ namespace BootEngine.Layers.GUI
 
 			io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard | ImGuiConfigFlags.DockingEnable;
 
-			io.BackendFlags |= ImGuiBackendFlags.HasMouseCursors | ImGuiBackendFlags.HasSetMousePos;
+			io.BackendFlags |= ImGuiBackendFlags.HasMouseCursors | ImGuiBackendFlags.HasSetMousePos | ImGuiBackendFlags.RendererHasVtxOffset;
 
-			if (graphicsDevice.BackendType == GraphicsBackend.Direct3D11)
+			if (graphicsDevice.BackendType != GraphicsBackend.OpenGL)
 			{
 				io.ConfigFlags |= ImGuiConfigFlags.ViewportsEnable;
-				io.BackendFlags |= ImGuiBackendFlags.RendererHasViewports | ImGuiBackendFlags.RendererHasVtxOffset;
+				io.BackendFlags |= ImGuiBackendFlags.RendererHasViewports;
 				io.BackendFlags |= ImGuiBackendFlags.PlatformHasViewports;// | ImGuiBackendFlags.HasMouseHoveredViewport;
 			}
 
@@ -772,7 +775,7 @@ namespace BootEngine.Layers.GUI
 			plIo.NativePtr->Platform_GetWindowFocus = Marshal.GetFunctionPointerForDelegate(getWindowFocus);
 			plIo.NativePtr->Platform_SetWindowFocus = Marshal.GetFunctionPointerForDelegate(setWindowFocus);
 			plIo.NativePtr->Platform_SetWindowAlpha = Marshal.GetFunctionPointerForDelegate(setWindowAlpha);
-			plIo.Platform_CreateVkSurface = Marshal.GetFunctionPointerForDelegate(createVulkanSurface);
+			plIo.NativePtr->Platform_CreateVkSurface = Marshal.GetFunctionPointerForDelegate(createVulkanSurface);
 
 			UpdateMonitors();
 
@@ -803,6 +806,7 @@ namespace BootEngine.Layers.GUI
 
 		private unsafe bool PlatformCreateVkSurface(ImGuiViewportPtr viewport)
 		{
+			//TODO: Properly avoid memory leak for unreleased Vk surface
 			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
 			SDL_SysWMinfo sysWmInfo;
 			Sdl2Native.SDL_GetVersion(&sysWmInfo.version);

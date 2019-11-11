@@ -49,6 +49,41 @@ namespace Sandbox
 			{
 				fsout_Color = fsin_Color;
 			}";
+
+		private const string TextureVertexCode = @"
+			#version 450
+
+			layout(set = 0, binding = 0) uniform ViewProjection
+			{
+				mat4 view_projection_matrix;
+			};
+
+			layout(set = 0, binding = 1) uniform Transform
+			{
+				mat4 model_matrix;
+			};
+
+			layout(location = 0) in vec2 Position;
+			layout(location = 1) in vec2 TexCoord;
+
+			layout(location = 0) out vec4 fsin_Color;
+
+			void main()
+			{
+				gl_Position = view_projection_matrix * model_matrix * vec4(Position, 0, 1);
+				fsin_Color = vec4(TexCoord, 0, 1);
+			}";
+
+		private const string TextureFragmentCode = @"
+			#version 450
+
+			layout(location = 0) in vec4 fsin_Color;
+			layout(location = 0) out vec4 fsout_Color;
+
+			void main()
+			{
+				fsout_Color = fsin_Color;
+			}";
 		#endregion
 
 		public ExampleLayer() : base("Example")
@@ -65,6 +100,7 @@ namespace Sandbox
 		private DeviceBuffer _colorBuffer;
 		private Vector3 _squareColor;
 		private Pipeline _pipeline;
+		private Pipeline _texPipeline;
 		private ResourceSet _resourceSet;
 		private OrthoCamera _camera;
 
@@ -112,16 +148,16 @@ namespace Sandbox
 			_camera = new OrthoCamera(-1.6f, 1.6f, -.9f, .9f, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted);
 			_squareColor = new Vector3(.8f, .2f, .3f);
 
-			Span<Vector2> quadVertices = stackalloc Vector2[]
+			Span<VertexPositionTexture> quadVertices = stackalloc VertexPositionTexture[]
 			{
-				new Vector2(-.5f, .5f),
-				new Vector2(.5f, .5f),
-				new Vector2(-.5f, -.5f),
-				new Vector2(.5f, -.5f)
+				new VertexPositionTexture(new Vector2(-.5f, .5f), new Vector2(0.0f, 1.0f)),
+				new VertexPositionTexture(new Vector2(.5f, .5f), new Vector2(1.0f, 1.0f)),
+				new VertexPositionTexture(new Vector2(-.5f, -.5f), new Vector2(0.0f, 0.0f)),
+				new VertexPositionTexture(new Vector2(.5f, -.5f), new Vector2(1.0f, 0.0f))
 			};
 
 			BufferDescription vbDescription = new BufferDescription(
-				4 * 2 * 4,
+				VertexPositionTexture.SizeInBytes * 4,
 				BufferUsage.VertexBuffer);
 			_vertexBuffer = factory.CreateBuffer(vbDescription);
 			_graphicsDevice.UpdateBuffer(_vertexBuffer, 0, quadVertices.ToArray());
@@ -138,7 +174,8 @@ namespace Sandbox
 			_colorBuffer = factory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
 
 			VertexLayoutDescription vertexLayout = new VertexLayoutDescription(
-				new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2));
+				new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
+				new VertexElementDescription("TexCoord", VertexElementSemantic.Color, VertexElementFormat.Float2));
 
 			ShaderDescription vertexShaderDesc = new ShaderDescription(
 				ShaderStages.Vertex,
@@ -151,6 +188,17 @@ namespace Sandbox
 
 			Shader[] _shaders = factory.CreateFromSpirv(vertexShaderDesc, fragmentShaderDesc);
 
+			ShaderDescription texVertexShaderDesc = new ShaderDescription(
+				ShaderStages.Vertex,
+				Encoding.UTF8.GetBytes(TextureVertexCode),
+				"main");
+			ShaderDescription texFragmentShaderDesc = new ShaderDescription(
+				ShaderStages.Fragment,
+				Encoding.UTF8.GetBytes(TextureFragmentCode),
+				"main");
+
+			Shader[] texShaders = factory.CreateFromSpirv(texVertexShaderDesc, texFragmentShaderDesc);
+
 			ResourceLayout resourceLayout = factory.CreateResourceLayout(
 				new ResourceLayoutDescription(
 					new ResourceLayoutElementDescription("ViewProjection", ResourceKind.UniformBuffer, ShaderStages.Vertex),
@@ -160,6 +208,8 @@ namespace Sandbox
 			_graphicsDevice.DisposeWhenIdle(resourceLayout);
 			_graphicsDevice.DisposeWhenIdle(_shaders[0]);
 			_graphicsDevice.DisposeWhenIdle(_shaders[1]);
+			_graphicsDevice.DisposeWhenIdle(texShaders[0]);
+			_graphicsDevice.DisposeWhenIdle(texShaders[1]);
 
 			// Create pipeline
 			GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription();
@@ -172,7 +222,7 @@ namespace Sandbox
 				cullMode: FaceCullMode.Back,
 				fillMode: PolygonFillMode.Solid,
 				frontFace: FrontFace.Clockwise,
-				depthClipEnabled: true,
+				depthClipEnabled: false,
 				scissorTestEnabled: false);
 			pipelineDescription.PrimitiveTopology = PrimitiveTopology.TriangleStrip;
 			pipelineDescription.ResourceLayouts = new[] { resourceLayout };
@@ -184,6 +234,12 @@ namespace Sandbox
 			_resourceSet = factory.CreateResourceSet(new ResourceSetDescription(resourceLayout, _cameraBuffer, _squareTransform, _colorBuffer));
 
 			_pipeline = factory.CreateGraphicsPipeline(pipelineDescription);
+
+			GraphicsPipelineDescription texPipelineDesc = pipelineDescription;
+			texPipelineDesc.ShaderSet = new ShaderSetDescription(vertexLayouts: new VertexLayoutDescription[] { vertexLayout },
+				shaders: texShaders);
+
+			_texPipeline = factory.CreateGraphicsPipeline(texPipelineDesc);
 		}
 
 		private void Draw()
@@ -220,6 +276,15 @@ namespace Sandbox
 				}
 			}
 
+			_commandList.SetPipeline(_texPipeline);
+			_commandList.UpdateBuffer(_squareTransform, 0, Matrix4x4.CreateScale(1.5f));
+			_commandList.DrawIndexed(
+						indexCount: 4,
+						instanceCount: 1,
+						indexStart: 0,
+						vertexOffset: 0,
+						instanceStart: 0);
+
 			_commandList.End();
 			_graphicsDevice.SubmitCommands(_commandList);
 		}
@@ -236,6 +301,19 @@ namespace Sandbox
 				this.Color = color;
 			}
 		}
+
+		private readonly struct VertexPositionTexture
+		{
+			public const uint SizeInBytes = 16;
+			public readonly Vector2 Position;
+			public readonly Vector2 TexCoord;
+
+			public VertexPositionTexture(Vector2 position, Vector2 texCoord)
+			{
+				this.Position = position;
+				this.TexCoord = texCoord;
+			}
+		}
 	}
 
 	public class SandboxApp : Application<WindowsWindow>
@@ -246,7 +324,7 @@ namespace Sandbox
 
 		public static void Main()
 		{
-			var app = new SandboxApp(GraphicsBackend.Vulkan);
+			var app = new SandboxApp(GraphicsBackend.OpenGL);
 			app.LayerStack.PushLayer(new ExampleLayer());
 			app.Run();
 			app.Dispose();
