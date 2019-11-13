@@ -66,23 +66,26 @@ namespace Sandbox
 			layout(location = 0) in vec2 Position;
 			layout(location = 1) in vec2 TexCoord;
 
-			layout(location = 0) out vec4 fsin_Color;
+			layout(location = 0) out vec2 outTexCoord;
 
 			void main()
 			{
+				outTexCoord = TexCoord;
 				gl_Position = view_projection_matrix * model_matrix * vec4(Position, 0, 1);
-				fsin_Color = vec4(TexCoord, 0, 1);
 			}";
 
 		private const string TextureFragmentCode = @"
 			#version 450
 
-			layout(location = 0) in vec4 fsin_Color;
-			layout(location = 0) out vec4 fsout_Color;
+			layout(location = 0) in vec2 TexCoord;
+			layout(location = 0) out vec4 color;
+
+			layout(binding = 2) uniform texture2D Texture;
+			layout(binding = 3) uniform sampler Sampler;
 
 			void main()
 			{
-				fsout_Color = fsin_Color;
+				color = texture(sampler2D(Texture, Sampler), TexCoord);
 			}";
 		#endregion
 
@@ -101,7 +104,9 @@ namespace Sandbox
 		private Vector3 _squareColor;
 		private Pipeline _pipeline;
 		private Pipeline _texPipeline;
+		private ResourceSet _texResourceSet;
 		private ResourceSet _resourceSet;
+		private Texture _texture;
 		private OrthoCamera _camera;
 
 		public override void OnAttach()
@@ -119,6 +124,7 @@ namespace Sandbox
 			_squareTransform.Dispose();
 			_pipeline.Dispose();
 			_resourceSet.Dispose();
+			_texResourceSet.Dispose();
 		}
 
 		public override void OnUpdate(float deltaSeconds)
@@ -147,6 +153,7 @@ namespace Sandbox
 
 			_camera = new OrthoCamera(-1.6f, 1.6f, -.9f, .9f, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted);
 			_squareColor = new Vector3(.8f, .2f, .3f);
+			_texture = Utils.Util.LoadTexture2D(_graphicsDevice, "assets/textures/sampleCat.jpg", TextureUsage.Sampled);
 
 			Span<VertexPositionTexture> quadVertices = stackalloc VertexPositionTexture[]
 			{
@@ -175,7 +182,7 @@ namespace Sandbox
 
 			VertexLayoutDescription vertexLayout = new VertexLayoutDescription(
 				new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
-				new VertexElementDescription("TexCoord", VertexElementSemantic.Color, VertexElementFormat.Float2));
+				new VertexElementDescription("TexCoord", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2));
 
 			ShaderDescription vertexShaderDesc = new ShaderDescription(
 				ShaderStages.Vertex,
@@ -205,7 +212,15 @@ namespace Sandbox
 					new ResourceLayoutElementDescription("Transform", ResourceKind.UniformBuffer, ShaderStages.Vertex),
 					new ResourceLayoutElementDescription("Color", ResourceKind.UniformBuffer, ShaderStages.Fragment)));
 
+			ResourceLayout texResourceLayout = factory.CreateResourceLayout(
+				new ResourceLayoutDescription(
+					new ResourceLayoutElementDescription("ViewProjection", ResourceKind.UniformBuffer, ShaderStages.Vertex),
+					new ResourceLayoutElementDescription("Transform", ResourceKind.UniformBuffer, ShaderStages.Vertex),
+					new ResourceLayoutElementDescription("Texture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+					new ResourceLayoutElementDescription("Sampler", ResourceKind.Sampler, ShaderStages.Fragment)));
+
 			_graphicsDevice.DisposeWhenIdle(resourceLayout);
+			_graphicsDevice.DisposeWhenIdle(texResourceLayout);
 			_graphicsDevice.DisposeWhenIdle(_shaders[0]);
 			_graphicsDevice.DisposeWhenIdle(_shaders[1]);
 			_graphicsDevice.DisposeWhenIdle(texShaders[0]);
@@ -231,13 +246,25 @@ namespace Sandbox
 				shaders: _shaders);
 			pipelineDescription.Outputs = _graphicsDevice.SwapchainFramebuffer.OutputDescription;
 
-			_resourceSet = factory.CreateResourceSet(new ResourceSetDescription(resourceLayout, _cameraBuffer, _squareTransform, _colorBuffer));
+			_resourceSet = factory.CreateResourceSet(new ResourceSetDescription(
+				resourceLayout,
+				_cameraBuffer,
+				_squareTransform,
+				_colorBuffer));
+
+			_texResourceSet = factory.CreateResourceSet(new ResourceSetDescription(
+				texResourceLayout,
+				_cameraBuffer,
+				_squareTransform,
+				_texture,
+				_graphicsDevice.PointSampler));
 
 			_pipeline = factory.CreateGraphicsPipeline(pipelineDescription);
 
 			GraphicsPipelineDescription texPipelineDesc = pipelineDescription;
 			texPipelineDesc.ShaderSet = new ShaderSetDescription(vertexLayouts: new VertexLayoutDescription[] { vertexLayout },
 				shaders: texShaders);
+			texPipelineDesc.ResourceLayouts = new[] { texResourceLayout };
 
 			_texPipeline = factory.CreateGraphicsPipeline(texPipelineDesc);
 		}
@@ -277,6 +304,7 @@ namespace Sandbox
 			}
 
 			_commandList.SetPipeline(_texPipeline);
+			_commandList.SetGraphicsResourceSet(0, _texResourceSet);
 			_commandList.UpdateBuffer(_squareTransform, 0, Matrix4x4.CreateScale(1.5f));
 			_commandList.DrawIndexed(
 						indexCount: 4,
@@ -324,7 +352,7 @@ namespace Sandbox
 
 		public static void Main()
 		{
-			var app = new SandboxApp(GraphicsBackend.OpenGL);
+			var app = new SandboxApp(GraphicsBackend.Direct3D11);
 			app.LayerStack.PushLayer(new ExampleLayer());
 			app.Run();
 			app.Dispose();
