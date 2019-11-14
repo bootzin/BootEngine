@@ -51,7 +51,7 @@ namespace Sandbox
 			}";
 
 		private const string TextureVertexCode = @"
-			#version 450
+			#version 430 core
 
 			layout(set = 0, binding = 0) uniform ViewProjection
 			{
@@ -75,13 +75,13 @@ namespace Sandbox
 			}";
 
 		private const string TextureFragmentCode = @"
-			#version 450
+			#version 430 core
 
 			layout(location = 0) in vec2 TexCoord;
 			layout(location = 0) out vec4 color;
 
-			layout(binding = 2) uniform texture2D Texture;
-			layout(binding = 3) uniform sampler Sampler;
+			layout(set = 0, binding = 2) uniform texture2D Texture;
+			layout(set = 0, binding = 3) uniform sampler Sampler;
 
 			void main()
 			{
@@ -125,6 +125,8 @@ namespace Sandbox
 			_pipeline.Dispose();
 			_resourceSet.Dispose();
 			_texResourceSet.Dispose();
+			_texture.Dispose();
+			_texPipeline.Dispose();
 		}
 
 		public override void OnUpdate(float deltaSeconds)
@@ -153,7 +155,7 @@ namespace Sandbox
 
 			_camera = new OrthoCamera(-1.6f, 1.6f, -.9f, .9f, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted);
 			_squareColor = new Vector3(.8f, .2f, .3f);
-			_texture = Utils.Util.LoadTexture2D(_graphicsDevice, "assets/textures/sampleCat.jpg", TextureUsage.Sampled);
+			_texture = Utils.Util.LoadTexture2D(_graphicsDevice, "assets/textures/sampleFly.png", TextureUsage.Sampled);
 
 			Span<VertexPositionTexture> quadVertices = stackalloc VertexPositionTexture[]
 			{
@@ -257,16 +259,17 @@ namespace Sandbox
 				_cameraBuffer,
 				_squareTransform,
 				_texture,
-				_graphicsDevice.PointSampler));
-
-			_pipeline = factory.CreateGraphicsPipeline(pipelineDescription);
+				_graphicsDevice.LinearSampler));
 
 			GraphicsPipelineDescription texPipelineDesc = pipelineDescription;
 			texPipelineDesc.ShaderSet = new ShaderSetDescription(vertexLayouts: new VertexLayoutDescription[] { vertexLayout },
 				shaders: texShaders);
 			texPipelineDesc.ResourceLayouts = new[] { texResourceLayout };
+			texPipelineDesc.BlendState = BlendStateDescription.SingleAlphaBlend;
 
 			_texPipeline = factory.CreateGraphicsPipeline(texPipelineDesc);
+
+			_pipeline = factory.CreateGraphicsPipeline(pipelineDescription);
 		}
 
 		private void Draw()
@@ -292,7 +295,7 @@ namespace Sandbox
 					Vector3 pos = new Vector3(x * 1.11f, y * 1.11f, 0f);
 					Matrix4x4 translation = Matrix4x4.CreateTranslation(pos) * Matrix4x4.CreateScale(.1f);
 					_commandList.UpdateBuffer(_squareTransform, 0, translation);
-					_commandList.UpdateBuffer(_colorBuffer, 0, _squareColor);
+					_commandList.UpdateBuffer(_colorBuffer, 0, (pos / 10) - (_camera.Position * 1.1f) + _squareColor);
 
 					_commandList.DrawIndexed(
 						indexCount: 4,

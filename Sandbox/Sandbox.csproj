@@ -31,6 +31,7 @@
   <ItemGroup>
     <None Remove="assets\textures\sampleCat.jpg" />
     <None Remove="assets\textures\sampleDog.png" />
+    <None Remove="assets\textures\sampleFly.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -39,6 +40,9 @@
     </Content>
     <Content Include="assets\textures\sampleDog.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="assets\textures\sampleFly.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
