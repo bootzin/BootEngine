@@ -52,7 +52,6 @@ namespace BootEngine.Window
 		#region Methods
 		public abstract void OnUpdate(bool updateSnapshot = true);
 
-
 		public virtual void SetVSync(in bool enabled)
 		{
 			graphicsDevice.SyncToVerticalBlank = enabled;

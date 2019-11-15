@@ -24,6 +24,7 @@ namespace BootEngine.Input
 				UpdateInputState(value);
 			}
 		}
+
 		public static InputManager Instance { get; private set; }
 
 		public static T CreateInstance<T>() where T : InputManager, new()

@@ -7,15 +7,26 @@ using Veldrid;
 
 namespace BootEngine.AssetManager
 {
-	public class AssetManager
+	public sealed class AssetManager
 	{
+		#region Properties
 		private readonly GraphicsDevice gd;
+		#endregion
 
+		#region Constructor
 		public AssetManager(GraphicsDevice graphicsDevice)
 		{
 			gd = graphicsDevice;
 		}
+		#endregion
 
+		#region Textures
+		/// <summary>
+		/// Loads and updates a single 2D <see cref="Texture"/>
+		/// </summary>
+		/// <param name="texturePath">Path to the texture.</param>
+		/// <param name="usage">A collection of flags determining the <see cref="TextureUsage"/></param>
+		/// <returns>The update <see cref="Texture"/></returns>
 		public Texture LoadTexture2D(string texturePath, TextureUsage usage)
 		{
 			ImageResult texSrc = ImageHelper.LoadImage(texturePath);
@@ -40,7 +51,9 @@ namespace BootEngine.AssetManager
 				0); // ArrayLayers
 			return tex;
 		}
+		#endregion
 
+		#region Shaders
 		/// <summary>
 		/// Loads both vertex and fragment shaders from a single custom file
 		/// </summary>
@@ -51,7 +64,10 @@ namespace BootEngine.AssetManager
 			(string vs, string fs) = ShaderHelper.LoadShaders(path);
 			var vertexShader = gd.ResourceFactory.CreateShader(new ShaderDescription(ShaderStages.Vertex, Encoding.UTF8.GetBytes(vs), "main"));
 			var fragShader = gd.ResourceFactory.CreateShader(new ShaderDescription(ShaderStages.Fragment, Encoding.UTF8.GetBytes(fs), "main"));
-			return new[] { vertexShader, fragShader };
+			Shader[] shaders = new Shader[2] { vertexShader, fragShader };
+			vertexShader.Dispose();
+			fragShader.Dispose();
+			return shaders;
 		}
 
 		/// <summary>
@@ -114,5 +130,6 @@ namespace BootEngine.AssetManager
 			ShaderDescription fragmentShaderDesc = new ShaderDescription(ShaderStages.Fragment, fragmentBytecode, "main");
 			return gd.ResourceFactory.CreateFromSpirv(vertexShaderDesc, fragmentShaderDesc);
 		}
+		#endregion
 	}
 }

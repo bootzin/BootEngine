@@ -11,7 +11,7 @@ using Veldrid;
 
 namespace Sandbox
 {
-	internal class ExampleLayer : LayerBase
+	internal sealed class ExampleLayer : LayerBase
 	{
 		public ExampleLayer() : base("Example")
 		{
@@ -156,7 +156,7 @@ namespace Sandbox
 				depthClipEnabled: false,
 				scissorTestEnabled: false);
 			pipelineDescription.PrimitiveTopology = PrimitiveTopology.TriangleStrip;
-			pipelineDescription.ResourceLayouts = new[] { resourceLayout };
+			pipelineDescription.ResourceLayouts = new ResourceLayout[] { resourceLayout };
 			pipelineDescription.ShaderSet = new ShaderSetDescription(
 				vertexLayouts: new VertexLayoutDescription[] { vertexLayout },
 				shaders: _shaders);
@@ -178,7 +178,7 @@ namespace Sandbox
 			GraphicsPipelineDescription texPipelineDesc = pipelineDescription;
 			texPipelineDesc.ShaderSet = new ShaderSetDescription(vertexLayouts: new VertexLayoutDescription[] { vertexLayout },
 				shaders: texShaders);
-			texPipelineDesc.ResourceLayouts = new[] { texResourceLayout };
+			texPipelineDesc.ResourceLayouts = new ResourceLayout[] { texResourceLayout };
 			texPipelineDesc.BlendState = BlendStateDescription.SingleAlphaBlend;
 
 			_texPipeline = factory.CreateGraphicsPipeline(texPipelineDesc);
@@ -234,7 +234,7 @@ namespace Sandbox
 			_graphicsDevice.SubmitCommands(_commandList);
 		}
 
-		private readonly struct VertexPositionTexture
+		public readonly struct VertexPositionTexture
 		{
 			public const uint SizeInBytes = 16;
 			public readonly Vector2 Position;
@@ -248,7 +248,7 @@ namespace Sandbox
 		}
 	}
 
-	public class SandboxApp : Application<WindowsWindow>
+	public sealed class SandboxApp : Application<WindowsWindow>
 	{
 		public SandboxApp(GraphicsBackend backend) : base(backend)
 		{

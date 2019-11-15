@@ -7,7 +7,7 @@ using Veldrid.Sdl2;
 
 namespace Platforms.Windows
 {
-	public class WindowsWindow : WindowBase
+	public sealed class WindowsWindow : WindowBase
 	{
 		#region Constructor
 		internal WindowsWindow(GraphicsDevice gd, Sdl2Window sdlWindow)

@@ -24,7 +24,7 @@
 		#region Methods
 		public override string ToString()
 		{
-			return "WindowResizeEvent: (" + Width + ", " + Height + ")";
+			return $"WindowResizeEvent: ({Width}, {Height})";
 		}
 		#endregion
 	}

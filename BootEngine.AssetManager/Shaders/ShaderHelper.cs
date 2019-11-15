@@ -9,6 +9,7 @@ namespace BootEngine.AssetManager.Shaders
 	public static class ShaderHelper
 	{
 		private const string TYPE_TOKEN = "#type";
+
 		public static byte[] LoadShader(string path)
 		{
 			return ReadFile(Path.Combine("shaders", path));

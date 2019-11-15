@@ -24,7 +24,7 @@
 		#region Methods
 		public override string ToString()
 		{
-			return "MouseMovedEvent: (" + MouseX + ", " + MouseY + ")";
+			return $"MouseMovedEvent: ({MouseX}, {MouseY})";
 		}
 		#endregion
 	}

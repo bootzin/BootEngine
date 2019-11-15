@@ -178,15 +178,14 @@ namespace BootEngine.Window
 			GraphicsBackend backend)
 		{
 			Sdl2Native.SDL_ClearError();
-			IntPtr sdlHandle = window.SdlWindowHandle;
 
 			SDL_SysWMinfo sysWmInfo;
 			Sdl2Native.SDL_GetVersion(&sysWmInfo.version);
-			Sdl2Native.SDL_GetWMWindowInfo(sdlHandle, &sysWmInfo);
+			Sdl2Native.SDL_GetWMWindowInfo(window.SdlWindowHandle, &sysWmInfo);
 
 			SetSDLGLContextAttributes(options, backend);
 
-			IntPtr contextHandle = Sdl2Native.SDL_GL_CreateContext(sdlHandle);
+			IntPtr contextHandle = Sdl2Native.SDL_GL_CreateContext(window.SdlWindowHandle);
 			byte* error = Sdl2Native.SDL_GetError();
 			if (error != null)
 			{
@@ -203,11 +202,11 @@ namespace BootEngine.Window
 			Veldrid.OpenGL.OpenGLPlatformInfo platformInfo = new Veldrid.OpenGL.OpenGLPlatformInfo(
 				contextHandle,
 				Sdl2Native.SDL_GL_GetProcAddress,
-				context => Sdl2Native.SDL_GL_MakeCurrent(sdlHandle, context),
+				context => Sdl2Native.SDL_GL_MakeCurrent(window.SdlWindowHandle, context),
 				Sdl2Native.SDL_GL_GetCurrentContext,
 				() => Sdl2Native.SDL_GL_MakeCurrent(new SDL_Window(IntPtr.Zero), IntPtr.Zero),
 				Sdl2Native.SDL_GL_DeleteContext,
-				() => Sdl2Native.SDL_GL_SwapWindow(sdlHandle),
+				() => Sdl2Native.SDL_GL_SwapWindow(window.SdlWindowHandle),
 				sync => Sdl2Native.SDL_GL_SetSwapInterval(sync ? 1 : 0));
 
 			Veldrid.OpenGLBinding.OpenGLNative.LoadGetString(Sdl2Native.SDL_GL_GetCurrentContext(), Sdl2Native.SDL_GL_GetProcAddress);

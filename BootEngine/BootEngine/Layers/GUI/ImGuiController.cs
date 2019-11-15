@@ -197,7 +197,7 @@ namespace BootEngine.Layers.GUI
 				new DepthStencilStateDescription(false, false, ComparisonKind.Always),
 				new RasterizerStateDescription(FaceCullMode.None, PolygonFillMode.Solid, FrontFace.Clockwise, true, true),
 				PrimitiveTopology.TriangleList,
-				new ShaderSetDescription(vertexLayouts.ToArray(), new[] { vertexShader, fragmentShader }),
+				new ShaderSetDescription(vertexLayouts.ToArray(), new Shader[] { vertexShader, fragmentShader }),
 				new ResourceLayout[] { layout, textureLayout },
 				outputDescription);
 			pipeline = gd.ResourceFactory.CreateGraphicsPipeline(ref pd);
@@ -463,11 +463,11 @@ namespace BootEngine.Layers.GUI
 			bool leftPressed = false;
 			bool middlePressed = false;
 			bool rightPressed = false;
-			foreach (MouseEvent me in snapshot.MouseEvents)
+			for (int me = 0; me < snapshot.MouseEvents.Count; me++)
 			{
-				if (me.Down)
+				if (snapshot.MouseEvents[me].Down)
 				{
-					switch (me.MouseButton)
+					switch (snapshot.MouseEvents[me].MouseButton)
 					{
 						case MouseButton.Left:
 							leftPressed = true;
@@ -918,7 +918,7 @@ namespace BootEngine.Layers.GUI
 			if (viewport.PlatformUserData != IntPtr.Zero)
 			{
 				WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
-				window?.Dispose();
+				window.Dispose();
 				viewport.PlatformUserData = IntPtr.Zero;
 			}
 		}
@@ -930,7 +930,7 @@ namespace BootEngine.Layers.GUI
 		}
 
 		#region Structs
-		private struct ResourceSetInfo
+		private readonly struct ResourceSetInfo
 		{
 			public readonly IntPtr ImGuiBinding;
 			public readonly ResourceSet ResourceSet;

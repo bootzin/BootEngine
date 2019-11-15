@@ -4,7 +4,7 @@ using Veldrid;
 
 namespace BootEngine.Layers.GUI
 {
-	public class ImGuiLayer<WindowType> : LayerBase
+	public sealed class ImGuiLayer<WindowType> : LayerBase
 	{
 		#region Properties
 		private GraphicsDevice gd;

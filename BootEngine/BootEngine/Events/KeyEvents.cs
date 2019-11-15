@@ -38,7 +38,7 @@
 		#region Methods
 		public override string ToString()
 		{
-			return "KeyPressedEvent: " + KeyCode + " (" + RepeatCount + " repeats)";
+			return $"KeyPressedEvent: {KeyCode} ({RepeatCount} repeats)";
 		}
 
 		public static EventType GetEventType => EventType.KeyPressed;

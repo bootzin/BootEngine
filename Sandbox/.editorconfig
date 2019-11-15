@@ -2,3 +2,9 @@
 
 # IDE0017: Simplify object initialization
 dotnet_style_object_initializer = false:suggestion
+
+# HAA0502: Explicit new reference type allocation
+dotnet_diagnostic.HAA0502.severity = none
+
+# HAA0501: Explicit new array type allocation
+dotnet_diagnostic.HAA0501.severity = none
