@@ -10,6 +10,7 @@
     <IsLinux Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">true</IsLinux>
     <StartupObject></StartupObject>
     <Configurations>Debug;Release;Dist</Configurations>
+    <AssetsDir>$(MSBuildThisFileDirectory)assets</AssetsDir>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -29,20 +30,23 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="assets\textures\sampleCat.jpg" />
-    <None Remove="assets\textures\sampleDog.png" />
-    <None Remove="assets\textures\sampleFly.png" />
+    <Content Include="$(AssetsDir)\textures\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>assets\textures\%(RecursiveDir)\%(FileName)%(Extension)</Link>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="assets\textures\sampleCat.jpg">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="assets\textures\sampleDog.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="assets\textures\sampleFly.png">
+    <Content Include="$(AssetsDir)\models\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>assets\models\%(RecursiveDir)\%(FileName)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="$(AssetsDir)\shaders\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>assets\shaders\%(RecursiveDir)\%(FileName)%(Extension)</Link>
     </Content>
   </ItemGroup>
 
@@ -52,7 +56,6 @@
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
     <PackageReference Include="Veldrid" Version="4.7.0" />
     <PackageReference Include="Veldrid.SDL2" Version="4.7.0" />
-    <PackageReference Include="Veldrid.SPIRV" Version="1.0.11" />
   </ItemGroup>
 
   <ItemGroup>
@@ -81,6 +84,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>cimgui.dll</TargetPath>
     </ContentWithTargetPath>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BootEngine.AssetManager\BootEngine.AssetManager.csproj" />
   </ItemGroup>
 
 </Project>

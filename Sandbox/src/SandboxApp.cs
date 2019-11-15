@@ -1,4 +1,5 @@
 ﻿using BootEngine;
+using BootEngine.AssetManager;
 using BootEngine.Events;
 using BootEngine.Layers;
 using BootEngine.Renderer;
@@ -6,89 +7,12 @@ using ImGuiNET;
 using Platforms.Windows;
 using System;
 using System.Numerics;
-using System.Text;
 using Veldrid;
-using Veldrid.SPIRV;
 
 namespace Sandbox
 {
 	internal class ExampleLayer : LayerBase
 	{
-		#region Shaders
-		private const string VertexCode = @"
-			#version 430 core
-
-			layout(set = 0, binding = 0) uniform ViewProjection
-			{
-				mat4 view_projection_matrix;
-			};
-
-			layout(set = 0, binding = 1) uniform Transform
-			{
-				mat4 model_matrix;
-			};
-
-			layout(location = 0) in vec2 Position;
-
-			void main()
-			{
-				gl_Position = view_projection_matrix * model_matrix * vec4(Position, 0, 1);
-			}";
-
-		private const string FragmentCode = @"
-			#version 430 core
-
-			layout(set = 0, binding = 2) uniform Color
-			{
-				vec4 fsin_Color;
-			};
-
-			layout(location = 0) out vec4 fsout_Color;
-
-			void main()
-			{
-				fsout_Color = fsin_Color;
-			}";
-
-		private const string TextureVertexCode = @"
-			#version 430 core
-
-			layout(set = 0, binding = 0) uniform ViewProjection
-			{
-				mat4 view_projection_matrix;
-			};
-
-			layout(set = 0, binding = 1) uniform Transform
-			{
-				mat4 model_matrix;
-			};
-
-			layout(location = 0) in vec2 Position;
-			layout(location = 1) in vec2 TexCoord;
-
-			layout(location = 0) out vec2 outTexCoord;
-
-			void main()
-			{
-				outTexCoord = TexCoord;
-				gl_Position = view_projection_matrix * model_matrix * vec4(Position, 0, 1);
-			}";
-
-		private const string TextureFragmentCode = @"
-			#version 430 core
-
-			layout(location = 0) in vec2 TexCoord;
-			layout(location = 0) out vec4 color;
-
-			layout(set = 0, binding = 2) uniform texture2D Texture;
-			layout(set = 0, binding = 3) uniform sampler Sampler;
-
-			void main()
-			{
-				color = texture(sampler2D(Texture, Sampler), TexCoord);
-			}";
-		#endregion
-
 		public ExampleLayer() : base("Example")
 		{
 			_graphicsDevice = Application<WindowsWindow>.App.Window.GraphicsDevice;
@@ -100,14 +24,23 @@ namespace Sandbox
 		private DeviceBuffer _indexBuffer;
 		private DeviceBuffer _cameraBuffer;
 		private DeviceBuffer _squareTransform;
-		private DeviceBuffer _colorBuffer;
 		private Vector3 _squareColor;
+		private DeviceBuffer _colorBuffer;
 		private Pipeline _pipeline;
 		private Pipeline _texPipeline;
 		private ResourceSet _texResourceSet;
 		private ResourceSet _resourceSet;
 		private Texture _texture;
 		private OrthoCamera _camera;
+		private AssetManager assetManager;
+
+		private AssetManager AssetManager
+		{
+			get
+			{
+				return assetManager ?? (assetManager = new AssetManager(_graphicsDevice));
+			}
+		}
 
 		public override void OnAttach()
 		{
@@ -155,7 +88,7 @@ namespace Sandbox
 
 			_camera = new OrthoCamera(-1.6f, 1.6f, -.9f, .9f, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted);
 			_squareColor = new Vector3(.8f, .2f, .3f);
-			_texture = Utils.Util.LoadTexture2D(_graphicsDevice, "assets/textures/sampleFly.png", TextureUsage.Sampled);
+			_texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
 
 			Span<VertexPositionTexture> quadVertices = stackalloc VertexPositionTexture[]
 			{
@@ -186,27 +119,8 @@ namespace Sandbox
 				new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
 				new VertexElementDescription("TexCoord", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2));
 
-			ShaderDescription vertexShaderDesc = new ShaderDescription(
-				ShaderStages.Vertex,
-				Encoding.UTF8.GetBytes(VertexCode),
-				"main");
-			ShaderDescription fragmentShaderDesc = new ShaderDescription(
-				ShaderStages.Fragment,
-				Encoding.UTF8.GetBytes(FragmentCode),
-				"main");
-
-			Shader[] _shaders = factory.CreateFromSpirv(vertexShaderDesc, fragmentShaderDesc);
-
-			ShaderDescription texVertexShaderDesc = new ShaderDescription(
-				ShaderStages.Vertex,
-				Encoding.UTF8.GetBytes(TextureVertexCode),
-				"main");
-			ShaderDescription texFragmentShaderDesc = new ShaderDescription(
-				ShaderStages.Fragment,
-				Encoding.UTF8.GetBytes(TextureFragmentCode),
-				"main");
-
-			Shader[] texShaders = factory.CreateFromSpirv(texVertexShaderDesc, texFragmentShaderDesc);
+			Shader[] _shaders = AssetManager.GenerateShaders("FlatColor.glsl");
+			Shader[] texShaders = AssetManager.GenerateShaders("Texture.glsl");
 
 			ResourceLayout resourceLayout = factory.CreateResourceLayout(
 				new ResourceLayoutDescription(
@@ -318,19 +232,6 @@ namespace Sandbox
 
 			_commandList.End();
 			_graphicsDevice.SubmitCommands(_commandList);
-		}
-
-		private readonly struct VertexPositionColor
-		{
-			public const uint SizeInBytes = 24;
-			public readonly Vector2 Position;
-			public readonly RgbaFloat Color;
-
-			public VertexPositionColor(Vector2 position, RgbaFloat color)
-			{
-				this.Position = position;
-				this.Color = color;
-			}
 		}
 
 		private readonly struct VertexPositionTexture

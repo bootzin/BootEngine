@@ -625,13 +625,8 @@ namespace BootEngine.Layers.GUI
 			cl.SetFullViewports();
 			cl.SetVertexBuffer(0, vertexBuffer);
 			cl.SetIndexBuffer(indexBuffer, IndexFormat.UInt16);
-
-			DeviceBuffer projMatrix = gd.ResourceFactory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
-			ResourceSet resourceSet = gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(layout, projMatrix, gd.PointSampler));
-			cl.UpdateBuffer(projMatrix, 0, ref mvp);
-			cl.SetGraphicsResourceSet(0, resourceSet);
-			graphicsDevice.DisposeWhenIdle(resourceSet);
-			graphicsDevice.DisposeWhenIdle(projMatrix);
+			cl.UpdateBuffer(projMatrixBuffer, 0, ref mvp);
+			cl.SetGraphicsResourceSet(0, mainResourceSet);
 
 			draw_data.ScaleClipRects(draw_data.FramebufferScale);
 
