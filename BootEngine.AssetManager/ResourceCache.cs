@@ -2,6 +2,7 @@
 using Veldrid;
 using System.Collections.Concurrent;
 using Utils.Exceptions;
+using System.Collections.Generic;
 
 namespace BootEngine.AssetManager
 {
@@ -32,6 +33,14 @@ namespace BootEngine.AssetManager
 			for (int i = 0; i < shaders.Length; i++)
 			{
 				AddShader(shaders[i]);
+			}
+		}
+
+		public static void ClearCache()
+		{
+			foreach (KeyValuePair<string, Shader> keyValuePair in ShaderCache)
+			{
+				keyValuePair.Value.Dispose();
 			}
 		}
 	}

@@ -1,10 +1,10 @@
 ﻿using BootEngine.AssetManager.Images;
 using BootEngine.AssetManager.Shaders;
 using StbImageSharp;
-using System.Text;
-using Veldrid.SPIRV;
-using Veldrid;
 using System;
+using System.Text;
+using Veldrid;
+using Veldrid.SPIRV;
 
 namespace BootEngine.AssetManager
 {
@@ -18,6 +18,11 @@ namespace BootEngine.AssetManager
 		public AssetManager(GraphicsDevice graphicsDevice)
 		{
 			gd = graphicsDevice;
+		}
+
+		~AssetManager()
+		{
+			ResourceCache.ClearCache();
 		}
 		#endregion
 

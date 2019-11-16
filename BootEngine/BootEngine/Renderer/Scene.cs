@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Veldrid;
+﻿using BootEngine.Renderer.Cameras;
 
 namespace BootEngine.Renderer
 {
 	public abstract class Scene
 	{
 		public Renderable[] RenderableList { get; set; }
-		public OrthoCamera Camera { get; }
+		public OrthoCameraController CameraController { get; }
 	}
 }

@@ -1,4 +1,5 @@
 ﻿using BootEngine.Input;
+using BootEngine.Renderer.Cameras;
 using BootEngine.Window;
 using ImGuiNET;
 using System;
@@ -605,7 +606,7 @@ namespace BootEngine.Layers.GUI
 			Matrix4x4 mvp;
 			if (gd.BackendType == GraphicsBackend.Vulkan && !gd.IsClipSpaceYInverted)
 			{
-				mvp = new Renderer.OrthoCamera(
+				mvp = new OrthoCamera(
 				draw_data.DisplayPos.X,
 				draw_data.DisplayPos.X + draw_data.DisplaySize.X,
 				draw_data.DisplayPos.Y,
@@ -613,7 +614,7 @@ namespace BootEngine.Layers.GUI
 			}
 			else
 			{
-				mvp = new Renderer.OrthoCamera(
+				mvp = new OrthoCamera(
 				draw_data.DisplayPos.X,
 				draw_data.DisplayPos.X + draw_data.DisplaySize.X,
 				draw_data.DisplayPos.Y + draw_data.DisplaySize.Y,

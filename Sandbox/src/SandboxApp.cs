@@ -2,7 +2,7 @@
 using BootEngine.AssetManager;
 using BootEngine.Events;
 using BootEngine.Layers;
-using BootEngine.Renderer;
+using BootEngine.Renderer.Cameras;
 using ImGuiNET;
 using Platforms.Windows;
 using System;
@@ -16,9 +16,12 @@ namespace Sandbox
 		public ExampleLayer() : base("Example")
 		{
 			_graphicsDevice = Application<WindowsWindow>.App.Window.GraphicsDevice;
+			float aspectRatio = (float)Application<WindowsWindow>.App.Window.SdlWindow.Width / Application<WindowsWindow>.App.Window.SdlWindow.Height;
+			_cameraController = new OrthoCameraController(aspectRatio, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted, true);
 		}
 
 		private readonly GraphicsDevice _graphicsDevice;
+		private readonly OrthoCameraController _cameraController;
 		private CommandList _commandList;
 		private DeviceBuffer _vertexBuffer;
 		private DeviceBuffer _indexBuffer;
@@ -31,7 +34,6 @@ namespace Sandbox
 		private ResourceSet _texResourceSet;
 		private ResourceSet _resourceSet;
 		private Texture _texture;
-		private OrthoCamera _camera;
 		private AssetManager assetManager;
 
 		private AssetManager AssetManager
@@ -64,13 +66,13 @@ namespace Sandbox
 
 		public override void OnUpdate(float deltaSeconds)
 		{
-			_camera.Update(deltaSeconds);
+			_cameraController.Update(deltaSeconds);
 			Draw();
 		}
 
-		public override void OnEvent(EventBase @event)
+		public override void OnEvent(EventBase e)
 		{
-			//
+			_cameraController.OnEvent(e);
 		}
 
 		public override void OnGuiRender()
@@ -84,9 +86,6 @@ namespace Sandbox
 		{
 			ResourceFactory factory = _graphicsDevice.ResourceFactory;
 
-			_commandList = factory.CreateCommandList();
-
-			_camera = new OrthoCamera(-1.6f, 1.6f, -.9f, .9f, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted);
 			_squareColor = new Vector3(.8f, .2f, .3f);
 			_texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
 
@@ -184,6 +183,8 @@ namespace Sandbox
 			_texPipeline = factory.CreateGraphicsPipeline(texPipelineDesc);
 
 			_pipeline = factory.CreateGraphicsPipeline(pipelineDescription);
+
+			_commandList = factory.CreateCommandList();
 		}
 
 		private void Draw()
@@ -195,7 +196,7 @@ namespace Sandbox
 			_commandList.SetFullViewports();
 			_commandList.ClearColorTarget(0, RgbaFloat.CornflowerBlue);
 
-			_commandList.UpdateBuffer(_cameraBuffer, 0, _camera.ViewProjectionMatrix);
+			_commandList.UpdateBuffer(_cameraBuffer, 0, _cameraController.Camera.ViewProjectionMatrix);
 
 			_commandList.SetVertexBuffer(0, _vertexBuffer);
 			_commandList.SetIndexBuffer(_indexBuffer, IndexFormat.UInt16);
@@ -209,7 +210,7 @@ namespace Sandbox
 					Vector3 pos = new Vector3(x * 1.11f, y * 1.11f, 0f);
 					Matrix4x4 translation = Matrix4x4.CreateTranslation(pos) * Matrix4x4.CreateScale(.1f);
 					_commandList.UpdateBuffer(_squareTransform, 0, translation);
-					_commandList.UpdateBuffer(_colorBuffer, 0, (pos / 10) - (_camera.Position * 1.1f) + _squareColor);
+					_commandList.UpdateBuffer(_colorBuffer, 0, (pos / 10) - (_cameraController.Camera.Position * 1.1f) + _squareColor);
 
 					_commandList.DrawIndexed(
 						indexCount: 4,

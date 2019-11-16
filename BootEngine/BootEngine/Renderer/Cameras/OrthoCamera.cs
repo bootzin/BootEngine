@@ -1,19 +1,16 @@
-﻿using BootEngine.Input;
-using System.Numerics;
-using Utils;
+﻿using System.Numerics;
 
-namespace BootEngine.Renderer
+namespace BootEngine.Renderer.Cameras
 {
 	public class OrthoCamera : ICamera
 	{
-		private const float CAMERA_MOVE_SPEED = 2f;
-		private const float CAMERA_ROTATION_SPEED = 60f;
-
 		private Vector3 position;
 		private float rotation;
 		private Matrix4x4 projectionMatrix;
 		private Matrix4x4 viewMatrix;
 		private Matrix4x4 viewProjectionMatrix;
+		private readonly bool useReverseDepth;
+		private readonly bool swapYAxis;
 
 		public Vector3 Position { get { return position; } set { position = value; UpdateViewMatrix(); } }
 		public float Rotation { get => rotation; set { rotation = value; UpdateViewMatrix(); } }
@@ -23,6 +20,14 @@ namespace BootEngine.Renderer
 		public ref readonly Matrix4x4 ViewProjectionMatrix => ref viewProjectionMatrix;
 
 		public OrthoCamera(float left, float right, float bottom, float top, bool useReverseDepth = false, bool swapYAxis = false)
+		{
+			this.useReverseDepth = useReverseDepth;
+			this.swapYAxis = swapYAxis;
+			viewMatrix = Matrix4x4.Identity;
+			SetProjectionMatrix(left, right, bottom, top);
+		}
+
+		public void SetProjectionMatrix(float left, float right, float bottom, float top)
 		{
 			if (useReverseDepth)
 			{
@@ -40,7 +45,6 @@ namespace BootEngine.Renderer
 					0, 0, 1, 0,
 					0, 0, 0, 1);
 			}
-			viewMatrix = Matrix4x4.Identity;
 			viewProjectionMatrix = ViewMatrix * ProjectionMatrix;
 		}
 
@@ -49,42 +53,6 @@ namespace BootEngine.Renderer
 			Matrix4x4 transform = Matrix4x4.CreateTranslation(Position) * Matrix4x4.CreateRotationZ(Rotation);
 			Matrix4x4.Invert(transform, out viewMatrix);
 			viewProjectionMatrix = ViewMatrix * ProjectionMatrix;
-		}
-
-		public void Update(float deltaSeconds)
-		{
-			InputManager inputManager = InputManager.Instance;
-
-			Vector3 dir = Vector3.Zero;
-			if (inputManager.GetKeyDown(KeyCodes.A))
-			{
-				dir -= Vector3.UnitX;
-			}
-			else if (inputManager.GetKeyDown(KeyCodes.D))
-			{
-				dir += Vector3.UnitX;
-			}
-			if (inputManager.GetKeyDown(KeyCodes.S))
-			{
-				dir -= Vector3.UnitY;
-			}
-			else if (inputManager.GetKeyDown(KeyCodes.W))
-			{
-				dir += Vector3.UnitY;
-			}
-
-			float rot = 0f;
-			if (inputManager.GetKeyDown(KeyCodes.Q))
-			{
-				rot += (float)Util.Deg2Rad(CAMERA_ROTATION_SPEED);
-			}
-			else if (inputManager.GetKeyDown(KeyCodes.E))
-			{
-				rot -= (float)Util.Deg2Rad(CAMERA_ROTATION_SPEED);
-			}
-
-			Position += dir * CAMERA_MOVE_SPEED * deltaSeconds;
-			Rotation += rot * deltaSeconds;
 		}
 	}
 }

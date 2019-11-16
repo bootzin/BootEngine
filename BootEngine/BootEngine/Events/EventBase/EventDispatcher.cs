@@ -16,6 +16,7 @@ namespace BootEngine.Events
 		#endregion
 
 		#region Methods
+		//TODO: Consider moving this method inside EventBase as an extension method
 		public bool Dispatch<T>(Func<T, bool> func) where T : EventBase
 		{
 			if (Event is T)
