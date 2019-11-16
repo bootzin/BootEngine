@@ -4,6 +4,7 @@ using StbImageSharp;
 using System.Text;
 using Veldrid.SPIRV;
 using Veldrid;
+using System;
 
 namespace BootEngine.AssetManager
 {
@@ -62,11 +63,12 @@ namespace BootEngine.AssetManager
 		public Shader[] LoadShaders(string path)
 		{
 			(string vs, string fs) = ShaderHelper.LoadShaders(path);
-			var vertexShader = gd.ResourceFactory.CreateShader(new ShaderDescription(ShaderStages.Vertex, Encoding.UTF8.GetBytes(vs), "main"));
-			var fragShader = gd.ResourceFactory.CreateShader(new ShaderDescription(ShaderStages.Fragment, Encoding.UTF8.GetBytes(fs), "main"));
-			Shader[] shaders = new Shader[2] { vertexShader, fragShader };
-			vertexShader.Dispose();
-			fragShader.Dispose();
+			Shader[] shaders = new Shader[2];
+			shaders[0] = gd.ResourceFactory.CreateShader(new ShaderDescription(ShaderStages.Vertex, Encoding.UTF8.GetBytes(vs), "main"));
+			shaders[0].Name = ExtractNameFromPath(path) + "-Vertex";
+			shaders[1] = gd.ResourceFactory.CreateShader(new ShaderDescription(ShaderStages.Fragment, Encoding.UTF8.GetBytes(fs), "main"));
+			shaders[1].Name = ExtractNameFromPath(path) + "-Fragment";
+			ResourceCache.AddShaders(shaders);
 			return shaders;
 		}
 
@@ -74,15 +76,17 @@ namespace BootEngine.AssetManager
 		/// Loads every shader specified in <paramref name="pathStageList"/>. 
 		/// Does not generate equivalents for other backends.
 		/// </summary>
-		/// <param name="pathStageList">Array of path-stage arguments for the shader</param>
+		/// <param name="pathStageList">Array of path-stage tuple arguments for the shader</param>
 		/// <returns>An array with the created shaders.</returns>
-		public Shader[] LoadShaders(params (string path, ShaderStages stage)[] pathStageList)
+		public Shader[] LoadShaders(params (string Path, ShaderStages Stage)[] pathStageList)
 		{
 			Shader[] shaders = new Shader[pathStageList.Length];
 			for (int i = 0; i < pathStageList.Length; i++)
 			{
-				shaders[i] = gd.ResourceFactory.CreateShader(new ShaderDescription(pathStageList[i].stage, ShaderHelper.LoadShader(pathStageList[i].path), "main"));
+				shaders[i] = gd.ResourceFactory.CreateShader(new ShaderDescription(pathStageList[i].Stage, ShaderHelper.LoadShader(pathStageList[i].Path), "main"));
+				shaders[i].Name = $"{ExtractNameFromPath(pathStageList[i].Path)}-{pathStageList[i].Stage}";
 			}
+			ResourceCache.AddShaders(shaders);
 			return shaders;
 		}
 
@@ -95,40 +99,46 @@ namespace BootEngine.AssetManager
 		public Shader[] GenerateShaders(string path)
 		{
 			(string vs, string fs) = ShaderHelper.LoadShaders(path);
-			ShaderDescription vertexShaderDesc = new ShaderDescription(ShaderStages.Vertex, Encoding.UTF8.GetBytes(vs), "main");
-			ShaderDescription fragmentShaderDesc = new ShaderDescription(ShaderStages.Fragment, Encoding.UTF8.GetBytes(fs), "main");
-			Shader[] shaders = gd.ResourceFactory.CreateFromSpirv(vertexShaderDesc, fragmentShaderDesc);
-			shaders[0].Name = path + "-Vertex";
-			shaders[1].Name = path + "-Fragment";
-			return shaders;
+			return GenerateShaders(ExtractNameFromPath(path), vs, fs);
 		}
 
 		/// <summary>
 		/// Loads both the vertex and the fragment shader and generates necessary 
 		/// files for other backends using Veldrid.SPIRV
 		/// </summary>
+		/// <param name="setName">The name of the shader set. Should be unique.</param>
 		/// <param name="vertexSrc">Vertex shader source code</param>
 		/// <param name="fragmentSrc">Fragment shader source code</param>
 		/// <returns>An array containing both the vertex and the fragment shader compiled.</returns>
-		public Shader[] GenerateShaders(string vertexSrc, string fragmentSrc)
+		public Shader[] GenerateShaders(string setName, string vertexSrc, string fragmentSrc)
 		{
-			ShaderDescription vertexShaderDesc = new ShaderDescription(ShaderStages.Vertex, Encoding.UTF8.GetBytes(vertexSrc), "main");
-			ShaderDescription fragmentShaderDesc = new ShaderDescription(ShaderStages.Fragment, Encoding.UTF8.GetBytes(fragmentSrc), "main");
-			return gd.ResourceFactory.CreateFromSpirv(vertexShaderDesc, fragmentShaderDesc);
+			return GenerateShaders(setName, Encoding.UTF8.GetBytes(vertexSrc), Encoding.UTF8.GetBytes(fragmentSrc));
 		}
 
 		/// <summary>
 		/// Loads both the vertex and the fragment shader and generates necessary 
 		/// files for other backends using Veldrid.SPIRV
 		/// </summary>
+		/// <param name="setName">The name of the shader set. Should be unique.</param>
 		/// <param name="vertexBytecode">Vertex shader bytecode</param>
 		/// <param name="fragmentBytecode">Fragment shader bytecode</param>
 		/// <returns>An array containing both the vertex and the fragment shader compiled.</returns>
-		public Shader[] GenerateShaders(byte[] vertexBytecode, byte[] fragmentBytecode)
+		public Shader[] GenerateShaders(string setName, byte[] vertexBytecode, byte[] fragmentBytecode)
 		{
 			ShaderDescription vertexShaderDesc = new ShaderDescription(ShaderStages.Vertex, vertexBytecode, "main");
 			ShaderDescription fragmentShaderDesc = new ShaderDescription(ShaderStages.Fragment, fragmentBytecode, "main");
-			return gd.ResourceFactory.CreateFromSpirv(vertexShaderDesc, fragmentShaderDesc);
+			Shader[] shaders =  gd.ResourceFactory.CreateFromSpirv(vertexShaderDesc, fragmentShaderDesc);
+			shaders[0].Name = setName + "-Vertex";
+			shaders[1].Name = setName + "-Fragment";
+			ResourceCache.AddShaders(shaders);
+			return shaders;
+		}
+		#endregion
+
+		#region Utils
+		private string ExtractNameFromPath(ReadOnlySpan<char> path)
+		{
+			return path.Slice(path.LastIndexOfAny("/\\") + 1, path.LastIndexOf(".")).ToString();
 		}
 		#endregion
 	}
