@@ -132,7 +132,7 @@ namespace BootEngine.AssetManager
 		{
 			ShaderDescription vertexShaderDesc = new ShaderDescription(ShaderStages.Vertex, vertexBytecode, "main");
 			ShaderDescription fragmentShaderDesc = new ShaderDescription(ShaderStages.Fragment, fragmentBytecode, "main");
-			Shader[] shaders =  gd.ResourceFactory.CreateFromSpirv(vertexShaderDesc, fragmentShaderDesc);
+			Shader[] shaders = gd.ResourceFactory.CreateFromSpirv(vertexShaderDesc, fragmentShaderDesc);
 			shaders[0].Name = setName + "-Vertex";
 			shaders[1].Name = setName + "-Fragment";
 			ResourceCache.AddShaders(shaders);

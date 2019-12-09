@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using Veldrid;
 
 namespace BootEngine.Renderer
 {
-	public class Renderer2D : Renderer
+	public sealed class Renderer2D : Renderer
 	{
 		public Renderer2D(CommandList cl, GraphicsDevice gd) : base(cl, gd)
 		{

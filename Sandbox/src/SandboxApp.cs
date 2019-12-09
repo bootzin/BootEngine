@@ -70,9 +70,9 @@ namespace Sandbox
 			Draw();
 		}
 
-		public override void OnEvent(EventBase e)
+		public override void OnEvent(EventBase @event)
 		{
-			_cameraController.OnEvent(e);
+			_cameraController.OnEvent(@event);
 		}
 
 		public override void OnGuiRender()
@@ -257,7 +257,7 @@ namespace Sandbox
 
 		public static void Main()
 		{
-			var app = new SandboxApp(GraphicsBackend.Direct3D11);
+			var app = new SandboxApp(GraphicsBackend.OpenGL);
 			app.LayerStack.PushLayer(new ExampleLayer());
 			app.Run();
 			app.Dispose();

@@ -155,10 +155,18 @@ namespace BootEngine.Layers.GUI
 			SetPerFrameImGuiData(1f / 60);
 		}
 
-		public void WindowResized(int width, int height)
+		public void WindowResized(int width, int height, bool minimized)
 		{
-			windowWidth = width;
-			windowHeight = height;
+			if (!minimized)
+			{
+				windowWidth = width;
+				windowHeight = height;
+			}
+			else
+			{
+				windowWidth = 0;
+				windowHeight = 0;
+			}
 		}
 
 		public void CreateDeviceResources(GraphicsDevice gd, OutputDescription outputDescription)
@@ -365,7 +373,10 @@ namespace BootEngine.Layers.GUI
 			{
 				frameBegun = false;
 				ImGui.Render();
-				RenderImDrawData(ImGui.GetDrawData(), gd, cl);
+				if (!mainWindow.Minimized)
+				{
+					RenderImDrawData(ImGui.GetDrawData(), gd, cl);
+				}
 
 				// Update and Render additional Platform Windows
 				if ((ImGui.GetIO().ConfigFlags & ImGuiConfigFlags.ViewportsEnable) != 0)

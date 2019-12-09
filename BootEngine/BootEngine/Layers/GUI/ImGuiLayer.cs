@@ -27,7 +27,7 @@ namespace BootEngine.Layers.GUI
 
 			controller = new ImGuiController(gd, gd.SwapchainFramebuffer.OutputDescription, window);
 
-			sdlWindow.Resized += () => controller.WindowResized(sdlWindow.Width, sdlWindow.Height);
+			sdlWindow.Resized += () => controller.WindowResized(sdlWindow.Width, sdlWindow.Height, sdlWindow.WindowState == WindowState.Minimized);
 		}
 
 		public override void OnDetach()
@@ -36,19 +36,16 @@ namespace BootEngine.Layers.GUI
 			cl.Dispose();
 		}
 
-		public override void OnUpdate(float deltaSeconds)
+		public void Begin(float deltaSeconds)
 		{
 			controller.Update(deltaSeconds);
-		}
-
-		public void Begin()
-		{
 			controller.BeginFrame();
 			cl.Begin();
 		}
 
 		public void End()
 		{
+
 			cl.SetFramebuffer(gd.SwapchainFramebuffer);
 			controller.Render(gd, cl);
 

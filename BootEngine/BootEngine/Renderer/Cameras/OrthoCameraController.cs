@@ -6,7 +6,7 @@ using Utils;
 
 namespace BootEngine.Renderer.Cameras
 {
-	public class OrthoCameraController : IUpdatable
+	public sealed class OrthoCameraController : IUpdatable
 	{
 		private const float CAMERA_MOVE_SPEED = 2f;
 		private const float CAMERA_ROTATION_SPEED = 60f;
@@ -86,7 +86,7 @@ namespace BootEngine.Renderer.Cameras
 		private bool OnWindowResized(WindowResizeEvent e)
 		{
 			aspectRatio = (float)e.Width / e.Height;
-			Camera.SetProjectionMatrix(-aspectRatio * zoomLevel, aspectRatio * zoomLevel, -zoomLevel, zoomLevel); 
+			Camera.SetProjectionMatrix(-aspectRatio * zoomLevel, aspectRatio * zoomLevel, -zoomLevel, zoomLevel);
 			return false;
 		}
 	}

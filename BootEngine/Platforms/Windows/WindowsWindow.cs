@@ -71,7 +71,7 @@ namespace Platforms.Windows
 				SwapchainSrgbFormat = false
 			};
 #if DEBUG
-				options.Debug = true;
+			options.Debug = true;
 #endif
 			WindowStartup.CreateWindowAndGraphicsDevice(props, options, backend, out window, out graphicsDevice);
 

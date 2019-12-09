@@ -14,23 +14,23 @@ namespace BootEngine
 		public static Application<WindowType> App { get; private set; }
 
 		public WindowBase Window { get; }
-        protected LayerStack LayerStack { get; }
+		protected LayerStack LayerStack { get; }
 
 		private ImGuiLayer<WindowType> ImGuiLayer { get; }
 		private bool disposed;
-        #endregion
+		#endregion
 
-        protected Application(Veldrid.GraphicsBackend backend = Veldrid.GraphicsBackend.Direct3D11)
-        {
-            Logger.Init();
+		protected Application(Veldrid.GraphicsBackend backend = Veldrid.GraphicsBackend.Direct3D11)
+		{
+			Logger.Init();
 			Logger.Assert(App == null, "App already initialized");
 			App = this;
-            LayerStack = new LayerStack();
-            Window = WindowBase.CreateMainWindow<WindowType>(backend: backend);
-            Window.EventCallback = OnEvent;
+			LayerStack = new LayerStack();
+			Window = WindowBase.CreateMainWindow<WindowType>(backend: backend);
+			Window.EventCallback = OnEvent;
 			ImGuiLayer = new ImGuiLayer<WindowType>();
 			LayerStack.PushOverlay(ImGuiLayer);
-        }
+		}
 
 		~Application()
 		{
@@ -49,22 +49,16 @@ namespace BootEngine
 				long currentFrameTicks = sw.ElapsedTicks;
 				float deltaSeconds = (currentFrameTicks - previousFrameTicks) / (float)Stopwatch.Frequency;
 
-				//while (_limitFrameRate && deltaSeconds < _desiredFrameLengthSeconds)
-				//{
-				//	currentFrameTicks = sw.ElapsedTicks;
-				//	deltaSeconds = (currentFrameTicks - previousFrameTicks) / (double)Stopwatch.Frequency;
-				//}
-
 				Logger.Info(deltaSeconds);
 
 				previousFrameTicks = currentFrameTicks;
 
-				Window.OnUpdate();
-				LayerStack.Layers.ForEach(layer => layer.OnUpdate(deltaSeconds));
-
 				if (Window.Exists)
 				{
-					ImGuiLayer.Begin();
+					if (!Window.Minimized)
+						LayerStack.Layers.ForEach(layer => layer.OnUpdate(deltaSeconds));
+
+					ImGuiLayer.Begin(deltaSeconds);
 					LayerStack.Layers.ForEach(layer => layer.OnGuiRender());
 					ImGuiLayer.End();
 					Window.GraphicsDevice.SwapBuffers();
@@ -72,16 +66,16 @@ namespace BootEngine
 			}
 		}
 
-        public void OnEvent(EventBase @event)
-        {
-            Logger.CoreInfo(@event);
-            for (int index = LayerStack.Layers.Count; index > 0;)
-            {
-                LayerStack.Layers[--index].OnEvent(@event);
-                if (@event.Handled)
-                    break;
-            }
-        }
+		public void OnEvent(EventBase @event)
+		{
+			Logger.CoreInfo(@event);
+			for (int index = LayerStack.Layers.Count; index > 0;)
+			{
+				LayerStack.Layers[--index].OnEvent(@event);
+				if (@event.Handled)
+					break;
+			}
+		}
 		#endregion
 
 		#region IDisposable Methods
@@ -105,9 +99,9 @@ namespace BootEngine
 					Window.Dispose();
 					Window.GraphicsDevice.Dispose();
 					Window.ResourceFactory = null;
-                    LayerStack.Layers.Clear();
+					LayerStack.Layers.Clear();
 				}
-                disposed = true;
+				disposed = true;
 			}
 		}
 		#endregion

@@ -2,7 +2,7 @@
 
 namespace BootEngine.Renderer.Cameras
 {
-	public class OrthoCamera : ICamera
+	public sealed class OrthoCamera : ICamera
 	{
 		private Vector3 position;
 		private float rotation;

@@ -2,7 +2,7 @@
 
 namespace BootEngine.Events
 {
-	public class EventDispatcher
+	public sealed class EventDispatcher
 	{
 		#region Properties
 		public EventBase Event { get; }

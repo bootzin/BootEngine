@@ -41,6 +41,7 @@ namespace BootEngine.Window
 		public Swapchain Swapchain => swapchain;
 		public Sdl2Window SdlWindow => window;
 		public bool Exists => window.Exists;
+		public bool Minimized => window.WindowState == WindowState.Minimized;
 
 		protected GraphicsDevice graphicsDevice;
 		protected Sdl2Window window;
