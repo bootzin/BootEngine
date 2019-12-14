@@ -17,15 +17,17 @@ namespace BootEngine.Renderer.Cameras
 
 		public OrthoCamera Camera { get; }
 
-		public OrthoCameraController(OrthoCamera camera, bool enableRotation = false)
+		public OrthoCameraController(OrthoCamera camera, float aspectRatio, bool enableRotation = false)
 		{
 			Camera = camera;
 			this.enableRotation = enableRotation;
+			this.aspectRatio = aspectRatio;
 		}
 
 		public OrthoCameraController(float aspectRatio, bool useReverseDepth = false, bool swapYAxis = false, bool enableRotation = false)
 		{
 			Camera = new OrthoCamera(-aspectRatio * zoomLevel, aspectRatio * zoomLevel, -zoomLevel, zoomLevel, useReverseDepth, swapYAxis);
+			this.aspectRatio = aspectRatio;
 			this.enableRotation = enableRotation;
 		}
 
