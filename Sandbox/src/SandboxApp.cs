@@ -203,7 +203,7 @@ namespace Sandbox
 			_commandList.SetPipeline(_pipeline);
 			_commandList.SetGraphicsResourceSet(0, _resourceSet);
 
-			for (int y = 0; y < 20; y++)
+			for (int y = 0; y < 10; y++)
 			{
 				for (int x = 0; x < 20; x++)
 				{
@@ -257,7 +257,7 @@ namespace Sandbox
 
 		public static void Main()
 		{
-			var app = new SandboxApp(GraphicsBackend.OpenGL);
+			var app = new SandboxApp(GraphicsBackend.Vulkan);
 			app.LayerStack.PushLayer(new ExampleLayer());
 			app.Run();
 			app.Dispose();

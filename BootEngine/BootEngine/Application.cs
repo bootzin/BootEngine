@@ -53,16 +53,15 @@ namespace BootEngine
 
 				previousFrameTicks = currentFrameTicks;
 
-				if (Window.Exists)
-				{
-					if (!Window.Minimized)
-						LayerStack.Layers.ForEach(layer => layer.OnUpdate(deltaSeconds));
+				if (!Window.Minimized)
+					LayerStack.Layers.ForEach(layer => layer.OnUpdate(deltaSeconds));
 
-					ImGuiLayer.Begin(deltaSeconds);
-					LayerStack.Layers.ForEach(layer => layer.OnGuiRender());
-					ImGuiLayer.End();
+				ImGuiLayer.Begin(deltaSeconds); //Window is updated in here
+				LayerStack.Layers.ForEach(layer => layer.OnGuiRender());
+				ImGuiLayer.End();
+
+				if (Window.Exists)
 					Window.GraphicsDevice.SwapBuffers();
-				}
 			}
 		}
 
