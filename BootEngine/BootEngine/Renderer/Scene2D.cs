@@ -7,6 +7,7 @@ namespace BootEngine.Renderer
 		public DeviceBuffer IndexBuffer { get; set; }
 		public DeviceBuffer VertexBuffer { get; set; }
 		public DeviceBuffer CameraBuffer { get; set; }
+		public ResourceLayout ResourceLayout { get; set; }
 		public Pipeline Pipeline { get; set; }
 		public Shader[] Shaders { get; set; }
 
@@ -18,6 +19,7 @@ namespace BootEngine.Renderer
 				VertexBuffer.Dispose();
 				CameraBuffer.Dispose();
 				Pipeline.Dispose();
+				ResourceLayout.Dispose();
 				for (int i = 0; i < Shaders.Length; i++)
 					Shaders[i].Dispose();
 			}

@@ -50,12 +50,11 @@ namespace BootEngine.Renderer
 
 			Scene.Shaders = AssetManager.GenerateShadersFromFile("FlatColor.glsl");
 
-			ResourceLayout resourceLayout = factory.CreateResourceLayout(
+			Scene.ResourceLayout = factory.CreateResourceLayout(
 				new ResourceLayoutDescription(
 					new ResourceLayoutElementDescription("ViewProjection", ResourceKind.UniformBuffer, ShaderStages.Vertex),
 					new ResourceLayoutElementDescription("Transform", ResourceKind.UniformBuffer, ShaderStages.Vertex),
 					new ResourceLayoutElementDescription("Color", ResourceKind.UniformBuffer, ShaderStages.Fragment)));
-			_gd.DisposeWhenIdle(resourceLayout);
 
 			GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription();
 			pipelineDescription.BlendState = BlendStateDescription.SingleOverrideBlend;
@@ -70,7 +69,7 @@ namespace BootEngine.Renderer
 				depthClipEnabled: false,
 				scissorTestEnabled: false);
 			pipelineDescription.PrimitiveTopology = PrimitiveTopology.TriangleStrip;
-			pipelineDescription.ResourceLayouts = new ResourceLayout[] { resourceLayout };
+			pipelineDescription.ResourceLayouts = new ResourceLayout[] { Scene.ResourceLayout };
 			pipelineDescription.ShaderSet = new ShaderSetDescription(
 				vertexLayouts: new VertexLayoutDescription[] { vertexLayout },
 				shaders: Scene.Shaders);
@@ -108,16 +107,8 @@ namespace BootEngine.Renderer
 			Matrix4x4 translation = Matrix4x4.CreateTranslation(position) * Matrix4x4.CreateScale(new Vector3(size, 1f));
 			_gd.UpdateBuffer(renderable.TransformBuffer, 0, translation);
 
-			ResourceFactory factory = _gd.ResourceFactory;
-			ResourceLayout resourceLayout = factory.CreateResourceLayout(
-				new ResourceLayoutDescription(
-					new ResourceLayoutElementDescription("ViewProjection", ResourceKind.UniformBuffer, ShaderStages.Vertex),
-					new ResourceLayoutElementDescription("Transform", ResourceKind.UniformBuffer, ShaderStages.Vertex),
-					new ResourceLayoutElementDescription("Color", ResourceKind.UniformBuffer, ShaderStages.Fragment)));
-			_gd.DisposeWhenIdle(resourceLayout);
-
-			renderable.ResourceSet = factory.CreateResourceSet(new ResourceSetDescription(
-				resourceLayout,
+			renderable.ResourceSet = _gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(
+				Scene.ResourceLayout,
 				Scene.CameraBuffer,
 				renderable.TransformBuffer,
 				renderable.ColorBuffer));
