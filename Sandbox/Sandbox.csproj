@@ -51,6 +51,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="assets\shaders\FlatColor2D.glsl" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="assets\shaders\FlatColor2D.glsl" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
     <PackageReference Include="StbImageSharp" Version="2.22.2" />
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />

@@ -12,15 +12,10 @@ namespace Sandbox.Layers
 {
 	internal sealed class ExampleLayer : LayerBase
 	{
-		public ExampleLayer() : base("Example")
-		{
-			_graphicsDevice = Application.App.Window.GraphicsDevice;
-			float aspectRatio = (float)Application.App.Window.SdlWindow.Width / Application.App.Window.SdlWindow.Height;
-			_cameraController = new OrthoCameraController(aspectRatio, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted, true);
-		}
+		public ExampleLayer() : base("Example") { }
 
-		private readonly GraphicsDevice _graphicsDevice;
-		private readonly OrthoCameraController _cameraController;
+		private GraphicsDevice _graphicsDevice;
+		private OrthoCameraController _cameraController;
 		private CommandList _commandList;
 		private DeviceBuffer _vertexBuffer;
 		private DeviceBuffer _indexBuffer;
@@ -36,6 +31,9 @@ namespace Sandbox.Layers
 
 		public override void OnAttach()
 		{
+			_graphicsDevice = Application.App.Window.GraphicsDevice;
+			float aspectRatio = (float)Application.App.Window.SdlWindow.Width / Application.App.Window.SdlWindow.Height;
+			_cameraController = new OrthoCameraController(aspectRatio, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted, true);
 			CreateResources();
 		}
 

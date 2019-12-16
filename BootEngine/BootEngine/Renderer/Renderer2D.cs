@@ -10,12 +10,12 @@ namespace BootEngine.Renderer
 	public sealed class Renderer2D : Renderer<Renderer2D>, IDisposable
 	{
 		#region Propriedades
-		private static Scene2D Scene { get; }
+		private Scene2D Scene { get; }
 		private readonly static GraphicsDevice _gd = Application.App.Window.GraphicsDevice;
 		#endregion
 
 		#region Construtor
-		static Renderer2D()
+		public Renderer2D()
 		{
 			Scene = new Scene2D();
 
@@ -30,10 +30,6 @@ namespace BootEngine.Renderer
 				new Vector2(.5f, -.5f),
 			};
 
-			VertexLayoutDescription vertexLayout = new VertexLayoutDescription(
-				new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
-				new VertexElementDescription("TexCoord", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2));
-
 			BufferDescription vbDescription = new BufferDescription(
 				32,
 				BufferUsage.VertexBuffer);
@@ -41,14 +37,17 @@ namespace BootEngine.Renderer
 				4 * sizeof(ushort),
 				BufferUsage.IndexBuffer);
 
-			Scene.CameraBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
-
 			Scene.IndexBuffer = factory.CreateBuffer(ibDescription);
 			Scene.VertexBuffer = factory.CreateBuffer(vbDescription);
 			_gd.UpdateBuffer(Scene.IndexBuffer, 0, quadIndices.ToArray());
 			_gd.UpdateBuffer(Scene.VertexBuffer, 0, quadVertices.ToArray());
 
-			Scene.Shaders = AssetManager.GenerateShadersFromFile("FlatColor.glsl");
+			Scene.CameraBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
+
+			VertexLayoutDescription vertexLayout = new VertexLayoutDescription(
+				new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2));
+
+			Scene.Shaders = AssetManager.GenerateShadersFromFile("FlatColor2D.glsl");
 
 			Scene.ResourceLayout = factory.CreateResourceLayout(
 				new ResourceLayoutDescription(
@@ -63,7 +62,7 @@ namespace BootEngine.Renderer
 				depthWriteEnabled: true,
 				comparisonKind: ComparisonKind.Always);
 			pipelineDescription.RasterizerState = new RasterizerStateDescription(
-				cullMode: FaceCullMode.Back,
+				cullMode: FaceCullMode.None,
 				fillMode: PolygonFillMode.Solid,
 				frontFace: FrontFace.Clockwise,
 				depthClipEnabled: false,
@@ -91,12 +90,12 @@ namespace BootEngine.Renderer
 		}
 
 		#region Primitives
-		public void SubmitQuadDraw(Vector2 position, Vector2 size, RgbaFloat color)
+		public void SubmitQuadDraw(Vector2 position, Vector2 size, Vector4 color)
 		{
 			SubmitQuadDraw(new Vector3(position, 0f), size, color);
 		}
 
-		public void SubmitQuadDraw(Vector3 position, Vector2 size, RgbaFloat color)
+		public void SubmitQuadDraw(Vector3 position, Vector2 size, Vector4 color)
 		{
 			Renderable2D renderable = new Renderable2D();
 
@@ -115,6 +114,12 @@ namespace BootEngine.Renderer
 
 			Scene.RenderableList.Add(renderable);
 		}
+		#endregion
+
+		public void Render()
+		{
+			Render(Scene);
+		}
 
 		protected override void BeginRender(CommandList cl)
 		{
@@ -122,15 +127,10 @@ namespace BootEngine.Renderer
 			cl.SetFramebuffer(_gd.SwapchainFramebuffer);
 			cl.SetViewport(0, new Viewport(0, 0, _gd.SwapchainFramebuffer.Width, _gd.SwapchainFramebuffer.Height, 0, 1));
 			cl.SetFullViewports();
-			cl.ClearColorTarget(0, RgbaFloat.Black);
+			cl.ClearColorTarget(0, RgbaFloat.Grey);
 			cl.SetVertexBuffer(0, Scene.VertexBuffer);
 			cl.SetIndexBuffer(Scene.IndexBuffer, IndexFormat.UInt16);
 			cl.SetPipeline(Scene.Pipeline);
-		}
-
-		public void Render()
-		{
-			Render(Scene);
 		}
 
 		protected override void InnerRender(Renderable renderable, CommandList cl)
@@ -159,6 +159,5 @@ namespace BootEngine.Renderer
 		{
 			Scene.Dispose();
 		}
-		#endregion
 	}
 }
