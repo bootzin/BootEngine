@@ -6,7 +6,7 @@ using Utils;
 
 namespace BootEngine.Renderer.Cameras
 {
-	public sealed class OrthoCameraController : IUpdatable
+	public sealed class OrthoCameraController : IUpdatable, ICameraController
 	{
 		private const float CAMERA_MOVE_SPEED = 2f;
 		private const float CAMERA_ROTATION_SPEED = 60f;

@@ -1,12 +1,12 @@
-﻿using BootEngine.AssetManager.Images;
-using BootEngine.AssetManager.Shaders;
+﻿using BootEngine.AssetsManager.Images;
+using BootEngine.AssetsManager.Shaders;
 using StbImageSharp;
 using System;
 using System.Text;
 using Veldrid;
 using Veldrid.SPIRV;
 
-namespace BootEngine.AssetManager
+namespace BootEngine.AssetsManager
 {
 	public static class AssetManager
 	{

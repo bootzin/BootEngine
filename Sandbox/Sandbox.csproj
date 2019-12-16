@@ -56,6 +56,7 @@
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
     <PackageReference Include="Veldrid" Version="4.7.0" />
     <PackageReference Include="Veldrid.SDL2" Version="4.7.0" />
+    <PackageReference Include="Veldrid.SPIRV" Version="1.0.11" />
   </ItemGroup>
 
   <ItemGroup>
@@ -84,10 +85,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>cimgui.dll</TargetPath>
     </ContentWithTargetPath>
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\BootEngine.AssetManager\BootEngine.AssetManager.csproj" />
   </ItemGroup>
 
 </Project>

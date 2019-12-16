@@ -10,8 +10,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sandbox", "Sandbox\Sandbox.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BootEngine", "BootEngine\BootEngine.csproj", "{A4276C87-7F24-4BE7-9EDC-A321AE2F7A3B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BootEngine.AssetManager", "BootEngine.AssetManager\BootEngine.AssetManager.csproj", "{E92BC631-5AED-4F66-82F5-EEEE313FF414}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -43,18 +41,6 @@ Global
 		{A4276C87-7F24-4BE7-9EDC-A321AE2F7A3B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A4276C87-7F24-4BE7-9EDC-A321AE2F7A3B}.Release|x64.ActiveCfg = Release|x64
 		{A4276C87-7F24-4BE7-9EDC-A321AE2F7A3B}.Release|x64.Build.0 = Release|x64
-		{E92BC631-5AED-4F66-82F5-EEEE313FF414}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E92BC631-5AED-4F66-82F5-EEEE313FF414}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E92BC631-5AED-4F66-82F5-EEEE313FF414}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{E92BC631-5AED-4F66-82F5-EEEE313FF414}.Debug|x64.Build.0 = Debug|Any CPU
-		{E92BC631-5AED-4F66-82F5-EEEE313FF414}.Dist|Any CPU.ActiveCfg = Debug|Any CPU
-		{E92BC631-5AED-4F66-82F5-EEEE313FF414}.Dist|Any CPU.Build.0 = Debug|Any CPU
-		{E92BC631-5AED-4F66-82F5-EEEE313FF414}.Dist|x64.ActiveCfg = Debug|Any CPU
-		{E92BC631-5AED-4F66-82F5-EEEE313FF414}.Dist|x64.Build.0 = Debug|Any CPU
-		{E92BC631-5AED-4F66-82F5-EEEE313FF414}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E92BC631-5AED-4F66-82F5-EEEE313FF414}.Release|Any CPU.Build.0 = Release|Any CPU
-		{E92BC631-5AED-4F66-82F5-EEEE313FF414}.Release|x64.ActiveCfg = Release|Any CPU
-		{E92BC631-5AED-4F66-82F5-EEEE313FF414}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

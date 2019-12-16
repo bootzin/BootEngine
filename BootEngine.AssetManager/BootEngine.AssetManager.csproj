@@ -10,8 +10,4 @@
     <PackageReference Include="Veldrid.SPIRV" Version="1.0.11" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\BootEngine\BootEngine.csproj" />
-  </ItemGroup>
-
 </Project>

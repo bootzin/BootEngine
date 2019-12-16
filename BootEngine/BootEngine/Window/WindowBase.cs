@@ -63,9 +63,9 @@ namespace BootEngine.Window
 			return graphicsDevice.SyncToVerticalBlank;
 		}
 
-		public static WindowBase CreateMainWindow<T>(WindowProps props = null, GraphicsBackend backend = GraphicsBackend.Direct3D11)
+		public static WindowBase CreateMainWindow(Type windowType, WindowProps props = null, GraphicsBackend backend = GraphicsBackend.Direct3D11)
 		{
-			if (typeof(T) == typeof(WindowsWindow))
+			if (windowType == typeof(WindowsWindow))
 				return new WindowsWindow(props ?? new WindowProps(), backend);
 			return null;
 		}

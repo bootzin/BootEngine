@@ -1,6 +1,6 @@
 ﻿namespace BootEngine.Renderer
 {
-	public interface ICamera
+	public interface ICameraController
 	{
 	}
 }

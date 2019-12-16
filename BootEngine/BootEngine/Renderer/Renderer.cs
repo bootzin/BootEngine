@@ -1,33 +1,22 @@
-﻿using Veldrid;
+﻿using BootEngine.Utils;
+using Veldrid;
 
 namespace BootEngine.Renderer
 {
-	public abstract class Renderer
+	public abstract class Renderer<T> : Singleton<T> where T : Singleton<T>
 	{
-		protected Scene currentScene;
-		protected CommandList CommandList { get; }
-		protected GraphicsDevice GraphicsDevice { get; }
+		protected abstract void BeginRender(CommandList cl);
+		protected abstract void InnerRender(Renderable renderable, CommandList cl);
+		protected abstract void EndRender(CommandList cl);
 
-		protected Renderer(CommandList cl, GraphicsDevice gd)
+		protected void Render(Scene scene)
 		{
-			CommandList = cl;
-			GraphicsDevice = gd;
+			CommandList cl = Application.App.Window.GraphicsDevice.ResourceFactory.CreateCommandList();
+			BeginRender(cl);
+			for (int i = 0; i < scene.RenderableList.Count; i++)
+				InnerRender(scene.RenderableList[i], cl);
+			EndRender(cl);
+			cl.Dispose();
 		}
-
-		public abstract void Render(Renderable renderable);
-
-		public void Render(Scene scene)
-		{
-			foreach (Renderable renderable in scene.RenderableList)
-			{
-				BeginRender();
-				Render(renderable);
-				EndRender();
-			}
-		}
-
-		protected abstract void BeginRender();
-
-		protected abstract void EndRender();
 	}
 }

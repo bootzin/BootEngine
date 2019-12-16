@@ -1,10 +1,30 @@
-﻿using BootEngine.Renderer.Cameras;
+﻿using System;
+using System.Collections.Generic;
 
 namespace BootEngine.Renderer
 {
-	public abstract class Scene
+	public abstract class Scene : IDisposable
 	{
-		public Renderable[] RenderableList { get; set; }
-		public OrthoCameraController CameraController { get; }
+		public List<Renderable> RenderableList { get; } = new List<Renderable>();
+
+		public void Dispose()
+		{
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (disposing)
+			{
+				for (int i = 0; i < RenderableList.Count; i++)
+					RenderableList[i].Dispose();
+			}
+		}
+
+		~Scene()
+		{
+			Dispose(false);
+		}
 	}
 }

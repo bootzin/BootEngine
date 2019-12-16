@@ -8,27 +8,26 @@ using System.Diagnostics;
 
 namespace BootEngine
 {
-	public abstract class Application<WindowType> : IDisposable
+	public abstract class Application : IDisposable
 	{
 		#region Properties
-		public static Application<WindowType> App { get; private set; }
+		public static Application App { get; private set; }
 
 		public WindowBase Window { get; }
 		protected LayerStack LayerStack { get; }
 
-		private ImGuiLayer<WindowType> ImGuiLayer { get; }
+		private ImGuiLayer ImGuiLayer { get; }
 		private bool disposed;
 		#endregion
 
-		protected Application(Veldrid.GraphicsBackend backend = Veldrid.GraphicsBackend.Direct3D11)
+		protected Application(Type windowType, Veldrid.GraphicsBackend backend = Veldrid.GraphicsBackend.Direct3D11)
 		{
-			Logger.Init();
 			Logger.Assert(App == null, "App already initialized");
 			App = this;
 			LayerStack = new LayerStack();
-			Window = WindowBase.CreateMainWindow<WindowType>(backend: backend);
+			Window = WindowBase.CreateMainWindow(windowType, backend: backend);
 			Window.EventCallback = OnEvent;
-			ImGuiLayer = new ImGuiLayer<WindowType>();
+			ImGuiLayer = new ImGuiLayer();
 			LayerStack.PushOverlay(ImGuiLayer);
 		}
 

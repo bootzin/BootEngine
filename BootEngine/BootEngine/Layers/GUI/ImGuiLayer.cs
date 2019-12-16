@@ -4,7 +4,7 @@ using Veldrid;
 
 namespace BootEngine.Layers.GUI
 {
-	public sealed class ImGuiLayer<WindowType> : LayerBase
+	public sealed class ImGuiLayer : LayerBase
 	{
 		#region Properties
 		private GraphicsDevice gd;
@@ -19,7 +19,7 @@ namespace BootEngine.Layers.GUI
 		#region Methods
 		public override void OnAttach()
 		{
-			var window = Application<WindowType>.App.Window;
+			var window = Application.App.Window;
 			var sdlWindow = window.SdlWindow;
 
 			gd = window.GraphicsDevice;
