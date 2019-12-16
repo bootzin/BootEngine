@@ -13,6 +13,8 @@ namespace Sandbox.Layers
 	{
 		#region Properties
 		private OrthoCameraController _cameraController;
+		private Renderable2D renderable;
+		private Renderable2D renderable2;
 		private Vector4 _squareColor = RgbaFloat.DarkRed.ToVector4();
 		#endregion
 
@@ -22,17 +24,21 @@ namespace Sandbox.Layers
 
 		public override void OnAttach()
 		{
-			var _graphicsDevice = Application.App.Window.GraphicsDevice;
+			GraphicsDevice _graphicsDevice = Application.App.Window.GraphicsDevice;
 			float aspectRatio = (float)Application.App.Window.SdlWindow.Width / Application.App.Window.SdlWindow.Height;
 			_cameraController = new OrthoCameraController(aspectRatio, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted, true);
-			Renderer2D.Instance.SubmitQuadDraw(new Vector3(0, 0, 0), Vector2.One, _squareColor);
-			Renderer2D.Instance.SubmitQuadDraw(new Vector3(0, 0, 0), new Vector2(.5f,.5f), RgbaFloat.Cyan.ToVector4());
+			renderable = Renderer2D.Instance.SubmitQuadDraw(new Vector3(-1, 0, 0), Vector2.One, _squareColor);
+			renderable2 = Renderer2D.Instance.SubmitQuadDraw(new Vector3(0, 0, 0), new Vector2(.5f,.5f), RgbaFloat.Cyan.ToVector4());
+			Renderer2D.Instance.SubmitTexture();
 		}
 
 		public override void OnUpdate(float deltaSeconds)
 		{
 			_cameraController.Update(deltaSeconds);
 			Renderer2D.Instance.BeginScene(_cameraController.Camera);
+			Renderer2D.Instance.UpdateBuffer(renderable.ColorBuffer, _squareColor);
+			Renderer2D.Instance.UpdateBuffer(renderable2.ColorBuffer, _squareColor * .5f);
+			Renderer2D.Instance.UpdateBuffer(renderable2.TransformBuffer, Matrix4x4.CreateTranslation(new Vector3(_squareColor.X, _squareColor.Y, _squareColor.Z)));
 			Renderer2D.Instance.Render();
 			Renderer2D.Instance.EndScene();
 		}

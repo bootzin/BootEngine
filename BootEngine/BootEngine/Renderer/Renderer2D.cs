@@ -10,12 +10,12 @@ namespace BootEngine.Renderer
 	public sealed class Renderer2D : Renderer<Renderer2D>, IDisposable
 	{
 		#region Propriedades
-		private Scene2D Scene { get; }
+		private static Scene2D Scene { get; }
 		private readonly static GraphicsDevice _gd = Application.App.Window.GraphicsDevice;
 		#endregion
 
 		#region Construtor
-		public Renderer2D()
+		static Renderer2D()
 		{
 			Scene = new Scene2D();
 
@@ -56,7 +56,7 @@ namespace BootEngine.Renderer
 					new ResourceLayoutElementDescription("Color", ResourceKind.UniformBuffer, ShaderStages.Fragment)));
 
 			GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription();
-			pipelineDescription.BlendState = BlendStateDescription.SingleOverrideBlend;
+			pipelineDescription.BlendState = BlendStateDescription.SingleAlphaBlend;
 			pipelineDescription.DepthStencilState = new DepthStencilStateDescription(
 				depthTestEnabled: false,
 				depthWriteEnabled: true,
@@ -90,12 +90,12 @@ namespace BootEngine.Renderer
 		}
 
 		#region Primitives
-		public void SubmitQuadDraw(Vector2 position, Vector2 size, Vector4 color)
+		public Renderable2D SubmitQuadDraw(Vector2 position, Vector2 size, Vector4 color)
 		{
-			SubmitQuadDraw(new Vector3(position, 0f), size, color);
+			return SubmitQuadDraw(new Vector3(position, 0f), size, color);
 		}
 
-		public void SubmitQuadDraw(Vector3 position, Vector2 size, Vector4 color)
+		public Renderable2D SubmitQuadDraw(Vector3 position, Vector2 size, Vector4 color)
 		{
 			Renderable2D renderable = new Renderable2D();
 
@@ -113,8 +113,20 @@ namespace BootEngine.Renderer
 				renderable.ColorBuffer));
 
 			Scene.RenderableList.Add(renderable);
+
+			return renderable;
+		}
+
+		public Renderable2D SubmitTexture(Vector3 position, Vector2 size, Texture texture)
+		{
+
 		}
 		#endregion
+
+		public void UpdateBuffer<T>(DeviceBuffer buffer, T value) where T : struct
+		{
+			_gd.UpdateBuffer(buffer, 0, value);
+		}
 
 		public void Render()
 		{
