@@ -49,10 +49,10 @@ namespace BootEngine.Renderer
 				1,  // ArrayLayers
 				PixelFormat.R8_G8_B8_A8_UNorm,
 				TextureUsage.Sampled));
-			uint[] white = { 0xffffffff };
+			uint[] whiteTexture = { 0xffffffff };
 			_gd.UpdateTexture(
 				Scene2D.WhiteTexture,
-				white,
+				whiteTexture,
 				0,  // x
 				0,  // y
 				0,  // z
