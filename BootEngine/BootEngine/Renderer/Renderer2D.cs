@@ -49,13 +49,10 @@ namespace BootEngine.Renderer
 				1,  // ArrayLayers
 				PixelFormat.R8_G8_B8_A8_UNorm,
 				TextureUsage.Sampled));
-			uint white = 0xffffffff;
-			unsafe
-			{
-				_gd.UpdateTexture(
+			uint[] white = { 0xffffffff };
+			_gd.UpdateTexture(
 				Scene2D.WhiteTexture,
-				 (IntPtr)(&white),
-				sizeof(uint),
+				white,
 				0,  // x
 				0,  // y
 				0,  // z
@@ -64,7 +61,6 @@ namespace BootEngine.Renderer
 				1,  // Depth
 				0,  // Miplevel
 				0); // ArrayLayers
-			}
 
 			Scene.CameraBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
 			Scene.Shaders = AssetManager.GenerateShadersFromFile("Texture2D.glsl");
