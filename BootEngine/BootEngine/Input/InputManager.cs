@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using BootEngine.Utils.ProfilingTools;
+using System.Collections.Generic;
 using System.Numerics;
 using Utils;
 using Veldrid;
@@ -29,6 +30,9 @@ namespace BootEngine.Input
 
 		public static T CreateInstance<T>() where T : InputManager, new()
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(InputManager));
+#endif
 			if (Instance == null)
 			{
 				T input = new T();
@@ -68,6 +72,9 @@ namespace BootEngine.Input
 
 		private static void UpdateInputState(InputSnapshot snapshot)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(InputManager));
+#endif
 			newKeysThisFrame.Clear();
 			newMouseButtonsThisFrame.Clear();
 

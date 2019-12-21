@@ -1,5 +1,6 @@
 ﻿using BootEngine.Input;
 using BootEngine.Renderer.Cameras;
+using BootEngine.Utils.ProfilingTools;
 using BootEngine.Window;
 using ImGuiNET;
 using System;
@@ -137,6 +138,9 @@ namespace BootEngine.Layers.GUI
 		/// </summary>
 		public ImGuiController(GraphicsDevice gd, OutputDescription outputDescription, WindowBase window)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			mainWindow = window;
 			Sdl2Window sdlWindow = window.SdlWindow;
 
@@ -171,6 +175,9 @@ namespace BootEngine.Layers.GUI
 
 		public void CreateDeviceResources(GraphicsDevice gd, OutputDescription outputDescription)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			graphicsDevice = gd;
 
 			vertexBuffer = gd.ResourceFactory.CreateBuffer(new BufferDescription(10000, BufferUsage.VertexBuffer | BufferUsage.Dynamic));
@@ -229,6 +236,9 @@ namespace BootEngine.Layers.GUI
 		/// </summary>
 		public IntPtr GetOrCreateImGuiBinding(ResourceFactory factory, TextureView textureView)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			if (!setsByView.TryGetValue(textureView, out ResourceSetInfo rsi))
 			{
 				ResourceSet resourceSet = factory.CreateResourceSet(new ResourceSetDescription(textureLayout, textureView));
@@ -248,6 +258,9 @@ namespace BootEngine.Layers.GUI
 		/// </summary>
 		public IntPtr GetOrCreateImGuiBinding(ResourceFactory factory, Texture texture)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			if (!autoViewsByTexture.TryGetValue(texture, out TextureView textureView))
 			{
 				textureView = factory.CreateTextureView(texture);
@@ -263,6 +276,9 @@ namespace BootEngine.Layers.GUI
 		/// </summary>
 		public ResourceSet GetImageResourceSet(IntPtr imGuiBinding)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			if (!viewsById.TryGetValue(imGuiBinding, out ResourceSetInfo tvi))
 			{
 				throw new InvalidOperationException("No registered ImGui binding with id " + imGuiBinding.ToString());
@@ -273,6 +289,9 @@ namespace BootEngine.Layers.GUI
 
 		public void ClearCachedImageResources()
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			foreach (IDisposable resource in ownedResources)
 			{
 				resource.Dispose();
@@ -287,6 +306,9 @@ namespace BootEngine.Layers.GUI
 
 		private Span<byte> LoadEmbeddedShaderCode(ResourceFactory factory, string name)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			switch (factory.BackendType)
 			{
 				case GraphicsBackend.Direct3D11:
@@ -316,6 +338,9 @@ namespace BootEngine.Layers.GUI
 
 		private Span<byte> GetEmbeddedResourceBytes(string resourceName)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			Assembly assembly = typeof(ImGuiController).Assembly;
 			using (Stream s = assembly.GetManifestResourceStream(resourceName))
 			{
@@ -330,6 +355,9 @@ namespace BootEngine.Layers.GUI
 		/// </summary>
 		public void RecreateFontDeviceTexture(GraphicsDevice gd)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			ImGuiIOPtr io = ImGui.GetIO();
 			// Build
 			io.Fonts.GetTexDataAsRGBA32(out IntPtr pixels, out int width, out int height, out int bytesPerPixel);
@@ -369,6 +397,9 @@ namespace BootEngine.Layers.GUI
 		/// </summary>
 		public void Render(GraphicsDevice gd, CommandList cl)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			if (frameBegun)
 			{
 				frameBegun = false;
@@ -402,6 +433,9 @@ namespace BootEngine.Layers.GUI
 		/// </summary>
 		public void SwapBuffers(GraphicsDevice gd)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			if ((ImGui.GetIO().ConfigFlags & ImGuiConfigFlags.ViewportsEnable) != 0)
 			{
 				ImGuiPlatformIOPtr platformIO = ImGui.GetPlatformIO();
@@ -419,6 +453,9 @@ namespace BootEngine.Layers.GUI
 		/// </summary>
 		public void Update(float deltaSeconds)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			SetPerFrameImGuiData(deltaSeconds);
 			UpdateImGuiInput();
 			UpdateMonitors();
@@ -426,6 +463,9 @@ namespace BootEngine.Layers.GUI
 
 		public void BeginFrame()
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			frameBegun = true;
 			ImGui.NewFrame();
 		}
@@ -436,6 +476,9 @@ namespace BootEngine.Layers.GUI
 		/// </summary>
 		private void SetPerFrameImGuiData(float deltaSeconds)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			ImGuiIOPtr io = ImGui.GetIO();
 			io.DisplaySize = new Vector2(
 				windowWidth / scaleFactor.X,
@@ -451,6 +494,9 @@ namespace BootEngine.Layers.GUI
 
 		private void UpdateImGuiInput()
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			ImGuiIOPtr io = ImGui.GetIO();
 
 			if ((io.ConfigFlags & ImGuiConfigFlags.ViewportsEnable) != 0)
@@ -544,6 +590,9 @@ namespace BootEngine.Layers.GUI
 
 		private static void SetImGuiKeyMappings()
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(ImGuiController));
+#endif
 			ImGuiIOPtr io = ImGui.GetIO();
 			io.KeyMap[(int)ImGuiKey.Tab] = (int)KeyCodes.Tab;
 			io.KeyMap[(int)ImGuiKey.LeftArrow] = (int)KeyCodes.Left;
@@ -571,6 +620,9 @@ namespace BootEngine.Layers.GUI
 
 		private void RenderImDrawData(ImDrawDataPtr draw_data, GraphicsDevice gd, CommandList cl)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			if (draw_data.CmdListsCount == 0)
 			{
 				return;
@@ -693,6 +745,9 @@ namespace BootEngine.Layers.GUI
 		/// </summary>
 		public void Dispose()
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			unsafe
 			{
 				var plIo = ImGui.GetPlatformIO();
@@ -723,6 +778,9 @@ namespace BootEngine.Layers.GUI
 
 		private void SetupImGuiIo(Sdl2Window sdlWindow)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			ImGuiIOPtr io = ImGui.GetIO();
 			unsafe
 			{
@@ -750,6 +808,9 @@ namespace BootEngine.Layers.GUI
 
 		private unsafe void SetupPlatformIo(Sdl2Window sdlWindow)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			ImGuiStylePtr style = ImGui.GetStyle();
 			style.WindowRounding = 0.0f;
 			style.Colors[(int)ImGuiCol.WindowBg].W = 1.0f;
@@ -793,6 +854,9 @@ namespace BootEngine.Layers.GUI
 
 		private unsafe static void UpdateMonitors()
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(ImGuiController));
+#endif
 			ImGuiPlatformIOPtr plIo = ImGui.GetPlatformIO();
 			Marshal.FreeHGlobal(plIo.NativePtr->Monitors.Data);
 			int numMonitors = Sdl_GetNumVideoDisplays();
@@ -813,6 +877,9 @@ namespace BootEngine.Layers.GUI
 
 		private unsafe bool PlatformCreateVkSurface(ImGuiViewportPtr viewport)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			//TODO: Properly avoid memory leak for unreleased Vk surface
 			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
 			SDL_SysWMinfo sysWmInfo;
@@ -900,6 +967,9 @@ namespace BootEngine.Layers.GUI
 
 		private unsafe void PlatformCreateWindow(ImGuiViewportPtr viewport)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			SDL_WindowFlags sdlFlags = (Sdl2Native.SDL_GetWindowFlags(mainWindow.SdlWindow.SdlWindowHandle) & SDL_WindowFlags.AllowHighDpi)
 				| SDL_WindowFlags.Hidden;
 			sdlFlags |= ((viewport.Flags & ImGuiViewportFlags.NoDecoration) != 0) ? SDL_WindowFlags.Borderless : SDL_WindowFlags.Resizable;
@@ -927,6 +997,9 @@ namespace BootEngine.Layers.GUI
 
 		private void PlatformDestroyWindow(ImGuiViewportPtr viewport)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			if (viewport.PlatformUserData != IntPtr.Zero)
 			{
 				WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;

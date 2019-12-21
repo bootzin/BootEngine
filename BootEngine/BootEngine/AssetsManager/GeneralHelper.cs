@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BootEngine.Utils.ProfilingTools;
+using System;
 using System.IO;
 using Utils.Exceptions;
 
@@ -10,6 +11,9 @@ namespace BootEngine.AssetsManager
 
 		public static byte[] ReadFile(string path)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(GeneralHelper));
+#endif
 			if (File.Exists(path))
 			{
 				return File.ReadAllBytes(path);

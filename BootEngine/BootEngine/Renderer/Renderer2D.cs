@@ -4,6 +4,7 @@ using System.Numerics;
 using Veldrid;
 using BootEngine.AssetsManager;
 using BootEngine.Log;
+using BootEngine.Utils.ProfilingTools;
 
 namespace BootEngine.Renderer
 {
@@ -17,6 +18,9 @@ namespace BootEngine.Renderer
 		#region Construtor
 		static Renderer2D()
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(Renderer2D));
+#endif
 			Scene = new Scene2D();
 
 			ResourceFactory factory = _gd.ResourceFactory;

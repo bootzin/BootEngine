@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using BootEngine.Utils.ProfilingTools;
+using System.Collections.Generic;
 
 namespace BootEngine.Layers
 {
@@ -20,18 +21,27 @@ namespace BootEngine.Layers
 		#region Methods
 		public void PushLayer(LayerBase layer)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			Layers.Insert((int)layerInsertIndex++, layer);
 			layer.OnAttach();
 		}
 
 		public void PushOverlay(LayerBase overlay)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			Layers.Add(overlay);
 			overlay.OnAttach();
 		}
 
 		public void PopLayer(LayerBase layer)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			if (Layers.LastIndexOf(layer, (int)layerInsertIndex) > -1)
 			{
 				layer.OnDetach();
@@ -42,6 +52,9 @@ namespace BootEngine.Layers
 
 		public void PopOverlay(LayerBase overlay)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			if (Layers.LastIndexOf(overlay) > layerInsertIndex)
 			{
 				overlay.OnDetach();

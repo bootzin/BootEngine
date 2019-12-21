@@ -1,5 +1,6 @@
 ﻿using BootEngine.AssetsManager.Images;
 using BootEngine.AssetsManager.Shaders;
+using BootEngine.Utils.ProfilingTools;
 using StbImageSharp;
 using System;
 using System.Text;
@@ -23,6 +24,9 @@ namespace BootEngine.AssetsManager
 		/// <returns>The update <see cref="Texture"/></returns>
 		public static Texture LoadTexture2D(string texturePath, TextureUsage usage)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(AssetManager));
+#endif
 			ImageResult texSrc = ImageHelper.LoadImage(texturePath);
 			TextureDescription texDesc = TextureDescription.Texture2D(
 				(uint)texSrc.Width,
@@ -55,6 +59,9 @@ namespace BootEngine.AssetsManager
 		/// <returns>An array containing both the vertex and the fragment shader</returns>
 		public static Shader[] LoadShaders(string path)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(AssetManager));
+#endif
 			(string vs, string fs) = ShaderHelper.LoadShaders(path);
 			Shader[] shaders = new Shader[2];
 			shaders[0] = gd.ResourceFactory.CreateShader(new ShaderDescription(ShaderStages.Vertex, Encoding.UTF8.GetBytes(vs), "main"));
@@ -73,6 +80,9 @@ namespace BootEngine.AssetsManager
 		/// <returns>An array with the created shaders.</returns>
 		public static Shader[] LoadShaders(params (string Path, ShaderStages Stage)[] pathStageList)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(AssetManager));
+#endif
 			Shader[] shaders = new Shader[pathStageList.Length];
 			for (int i = 0; i < pathStageList.Length; i++)
 			{
@@ -91,6 +101,9 @@ namespace BootEngine.AssetsManager
 		/// <returns>An array containing both the vertex and the fragment shader compiled.</returns>
 		public static Shader[] GenerateShadersFromFile(string path)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(AssetManager));
+#endif
 			(string vs, string fs) = ShaderHelper.LoadShaders(path);
 			return GenerateShaders(ExtractNameFromPath(path), vs, fs);
 		}
@@ -105,6 +118,9 @@ namespace BootEngine.AssetsManager
 		/// <returns>An array containing both the vertex and the fragment shader compiled.</returns>
 		public static Shader[] GenerateShaders(string setName, string vertexSrc, string fragmentSrc)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(AssetManager));
+#endif
 			return GenerateShaders(setName, Encoding.UTF8.GetBytes(vertexSrc), Encoding.UTF8.GetBytes(fragmentSrc));
 		}
 
@@ -118,6 +134,9 @@ namespace BootEngine.AssetsManager
 		/// <returns>An array containing both the vertex and the fragment shader compiled.</returns>
 		public static Shader[] GenerateShaders(string setName, byte[] vertexBytecode, byte[] fragmentBytecode)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(AssetManager));
+#endif
 			ShaderDescription vertexShaderDesc = new ShaderDescription(ShaderStages.Vertex, vertexBytecode, "main");
 			ShaderDescription fragmentShaderDesc = new ShaderDescription(ShaderStages.Fragment, fragmentBytecode, "main");
 			Shader[] shaders = gd.ResourceFactory.CreateFromSpirv(vertexShaderDesc, fragmentShaderDesc);
@@ -131,6 +150,9 @@ namespace BootEngine.AssetsManager
 		#region Utils
 		private static string ExtractNameFromPath(ReadOnlySpan<char> path)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(AssetManager));
+#endif
 			return path.Slice(path.LastIndexOfAny("/\\") + 1, path.LastIndexOf(".")).ToString();
 		}
 		#endregion

@@ -2,6 +2,7 @@
 using BootEngine.Layers;
 using BootEngine.Layers.GUI;
 using BootEngine.Log;
+using BootEngine.Utils.ProfilingTools;
 using BootEngine.Window;
 using System;
 using System.Diagnostics;
@@ -22,6 +23,9 @@ namespace BootEngine
 
 		protected Application(Type windowType, Veldrid.GraphicsBackend backend = Veldrid.GraphicsBackend.Direct3D11)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			Logger.Assert(App == null, "App already initialized");
 			App = this;
 			LayerStack = new LayerStack();

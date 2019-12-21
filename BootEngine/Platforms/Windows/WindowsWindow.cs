@@ -1,5 +1,6 @@
 ﻿using BootEngine.Events;
 using BootEngine.Input;
+using BootEngine.Utils.ProfilingTools;
 using BootEngine.Window;
 using System.Runtime.InteropServices;
 using Veldrid;
@@ -30,6 +31,9 @@ namespace Platforms.Windows
 		#region Public
 		public override void OnUpdate(bool updateSnapshot = true)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			InputSnapshot snapshot = window.PumpEvents();
 			if (updateSnapshot)
 				InputManager.Snapshot = snapshot;

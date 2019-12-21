@@ -1,4 +1,5 @@
 ﻿using BootEngine.Log;
+using BootEngine.Utils.ProfilingTools;
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -36,6 +37,9 @@ namespace BootEngine.Window
 			out Sdl2Window window,
 			out GraphicsDevice gd)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(WindowStartup));
+#endif
 			Sdl2Native.SDL_Init(SDLInitFlags.Video);
 
 			window = CreateWindow(ref windowProps, preferredBackend);
@@ -48,6 +52,9 @@ namespace BootEngine.Window
 			ref WindowProps windowProps,
 			GraphicsBackend preferredBackend)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(WindowStartup));
+#endif
 			SDL_WindowFlags flags = SDL_WindowFlags.Resizable
 					| GetWindowFlags(windowProps.WindowInitialState);
 
@@ -87,6 +94,9 @@ namespace BootEngine.Window
 			GraphicsDeviceOptions options,
 			GraphicsBackend preferredBackend)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(WindowStartup));
+#endif
 			switch (preferredBackend)
 			{
 				case GraphicsBackend.Direct3D11:

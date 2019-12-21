@@ -1,4 +1,5 @@
 ﻿using BootEngine.Events;
+using BootEngine.Utils.ProfilingTools;
 using Platforms.Windows;
 using System;
 using System.Runtime.InteropServices;
@@ -65,6 +66,9 @@ namespace BootEngine.Window
 
 		public static WindowBase CreateMainWindow(Type windowType, WindowProps props = null, GraphicsBackend backend = GraphicsBackend.Direct3D11)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(WindowBase));
+#endif
 			if (windowType == typeof(WindowsWindow))
 				return new WindowsWindow(props ?? new WindowProps(), backend);
 			return null;
@@ -72,6 +76,9 @@ namespace BootEngine.Window
 
 		public static WindowBase CreateSubWindow(GraphicsDevice gd, Sdl2Window sdlWindow, Type windowType)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(WindowBase));
+#endif
 			if (windowType == typeof(WindowsWindow))
 				return new WindowsWindow(gd, sdlWindow);
 			return null;
@@ -80,6 +87,9 @@ namespace BootEngine.Window
 		#region Dispose
 		public void Dispose()
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			Dispose(true);
 			GC.SuppressFinalize(this);
 		}

@@ -1,5 +1,5 @@
 ﻿using BootEngine.Events;
-using ImGuiNET;
+using BootEngine.Utils.ProfilingTools;
 using Veldrid;
 
 namespace BootEngine.Layers.GUI
@@ -19,6 +19,9 @@ namespace BootEngine.Layers.GUI
 		#region Methods
 		public override void OnAttach()
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			var window = Application.App.Window;
 			var sdlWindow = window.SdlWindow;
 
@@ -32,12 +35,18 @@ namespace BootEngine.Layers.GUI
 
 		public override void OnDetach()
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			controller.Dispose();
 			cl.Dispose();
 		}
 
 		public void Begin(float deltaSeconds)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			controller.Update(deltaSeconds);
 			controller.BeginFrame();
 			cl.Begin();
@@ -45,7 +54,9 @@ namespace BootEngine.Layers.GUI
 
 		public void End()
 		{
-
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			cl.SetFramebuffer(gd.SwapchainFramebuffer);
 			controller.Render(gd, cl);
 
@@ -58,11 +69,6 @@ namespace BootEngine.Layers.GUI
 		public override void OnEvent(EventBase @event)
 		{
 			//
-		}
-
-		public override void OnGuiRender()
-		{
-			ImGui.ShowDemoWindow();
 		}
 		#endregion
 	}

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BootEngine.Utils.ProfilingTools;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Utils.Exceptions;
@@ -17,6 +18,9 @@ namespace BootEngine.AssetsManager
 
 		public static Shader GetShader(string shaderName)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(ResourceCache));
+#endif
 			if (ShaderCache.TryGetValue(shaderName, out Shader shader))
 				return shader;
 			return null;
@@ -24,6 +28,9 @@ namespace BootEngine.AssetsManager
 
 		public static void AddShader(Shader shader)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(ResourceCache));
+#endif
 			if (!ShaderCache.TryAdd(shader.Name, shader))
 				throw new BootEngineException($"A Shader name {shader.Name} has already been loaded!");
 		}
@@ -38,6 +45,9 @@ namespace BootEngine.AssetsManager
 
 		public static void ClearCache()
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(ResourceCache));
+#endif
 			foreach (KeyValuePair<string, Shader> keyValuePair in ShaderCache)
 			{
 				keyValuePair.Value.Dispose();

@@ -1,5 +1,6 @@
 ﻿using BootEngine.Events;
 using BootEngine.Input;
+using BootEngine.Utils.ProfilingTools;
 using System;
 using System.Numerics;
 using Utils;
@@ -19,6 +20,9 @@ namespace BootEngine.Renderer.Cameras
 
 		public OrthoCameraController(OrthoCamera camera, float aspectRatio, bool enableRotation = false)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			Camera = camera;
 			this.enableRotation = enableRotation;
 			this.aspectRatio = aspectRatio;
@@ -26,6 +30,9 @@ namespace BootEngine.Renderer.Cameras
 
 		public OrthoCameraController(float aspectRatio, bool useReverseDepth = false, bool swapYAxis = false, bool enableRotation = false)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			Camera = new OrthoCamera(-aspectRatio * zoomLevel, aspectRatio * zoomLevel, -zoomLevel, zoomLevel, useReverseDepth, swapYAxis);
 			this.aspectRatio = aspectRatio;
 			this.enableRotation = enableRotation;
@@ -40,24 +47,31 @@ namespace BootEngine.Renderer.Cameras
 
 		public void Update(float deltaSeconds)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			InputManager inputManager = InputManager.Instance;
 
 			Vector3 dir = Vector3.Zero;
 			if (inputManager.GetKeyDown(KeyCodes.A))
 			{
 				dir -= Vector3.UnitX;
+				Camera.Position += dir * CAMERA_MOVE_SPEED * deltaSeconds * zoomLevel;
 			}
 			else if (inputManager.GetKeyDown(KeyCodes.D))
 			{
 				dir += Vector3.UnitX;
+				Camera.Position += dir * CAMERA_MOVE_SPEED * deltaSeconds * zoomLevel;
 			}
 			if (inputManager.GetKeyDown(KeyCodes.S))
 			{
 				dir -= Vector3.UnitY;
+				Camera.Position += dir * CAMERA_MOVE_SPEED * deltaSeconds * zoomLevel;
 			}
 			else if (inputManager.GetKeyDown(KeyCodes.W))
 			{
 				dir += Vector3.UnitY;
+				Camera.Position += dir * CAMERA_MOVE_SPEED * deltaSeconds * zoomLevel;
 			}
 
 			if (enableRotation)
@@ -66,15 +80,14 @@ namespace BootEngine.Renderer.Cameras
 				if (inputManager.GetKeyDown(KeyCodes.Q))
 				{
 					rot += (float)Util.Deg2Rad(CAMERA_ROTATION_SPEED);
+					Camera.Rotation += rot * deltaSeconds;
 				}
 				else if (inputManager.GetKeyDown(KeyCodes.E))
 				{
 					rot -= (float)Util.Deg2Rad(CAMERA_ROTATION_SPEED);
+					Camera.Rotation += rot * deltaSeconds;
 				}
-				Camera.Rotation += rot * deltaSeconds;
 			}
-
-			Camera.Position += dir * CAMERA_MOVE_SPEED * deltaSeconds * zoomLevel;
 		}
 
 		private bool OnMouseScrolled(MouseScrolledEvent e)

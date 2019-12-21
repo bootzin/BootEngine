@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using BootEngine.Utils.ProfilingTools;
+using System.Numerics;
 
 namespace BootEngine.Renderer.Cameras
 {
@@ -29,6 +30,9 @@ namespace BootEngine.Renderer.Cameras
 
 		public void SetProjectionMatrix(float left, float right, float bottom, float top)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			if (useReverseDepth)
 			{
 				projectionMatrix = Matrix4x4.CreateOrthographicOffCenter(left, right, bottom, top, 1f, -1f);
@@ -50,6 +54,9 @@ namespace BootEngine.Renderer.Cameras
 
 		private void UpdateViewMatrix()
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			Matrix4x4 transform = Matrix4x4.CreateTranslation(Position) * Matrix4x4.CreateRotationZ(Rotation);
 			Matrix4x4.Invert(transform, out viewMatrix);
 			viewProjectionMatrix = ViewMatrix * ProjectionMatrix;

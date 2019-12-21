@@ -1,4 +1,5 @@
-﻿using Veldrid;
+﻿using BootEngine.Utils.ProfilingTools;
+using Veldrid;
 
 namespace BootEngine.Renderer
 {
@@ -14,6 +15,9 @@ namespace BootEngine.Renderer
 
 		protected override void Dispose(bool disposing)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			if (disposing)
 			{
 				IndexBuffer.Dispose();
