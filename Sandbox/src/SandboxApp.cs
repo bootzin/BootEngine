@@ -18,7 +18,7 @@ namespace Sandbox
 		public static void Main()
 		{
 			Logger.Init();
-			var app = new SandboxApp(GraphicsBackend.Direct3D11);
+			var app = new SandboxApp(GraphicsBackend.OpenGL);
 			app.Run();
 			app.Dispose();
 		}

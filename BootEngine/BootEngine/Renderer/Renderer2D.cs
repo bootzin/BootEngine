@@ -19,19 +19,19 @@ namespace BootEngine.Renderer
 		{
 			Scene = new Scene2D();
 
-			var factory = _gd.ResourceFactory;
+			ResourceFactory factory = _gd.ResourceFactory;
 
 			Span<ushort> quadIndices = stackalloc ushort[] { 0, 1, 2, 3 };
-			Span<Vector2> quadVertices = stackalloc Vector2[]
+			Span<VertexPositionTexture> quadVertices = stackalloc VertexPositionTexture[]
 			{
-				new Vector2(-.5f, .5f),
-				new Vector2(.5f, .5f),
-				new Vector2(-.5f, -.5f),
-				new Vector2(.5f, -.5f),
+				new VertexPositionTexture(new Vector3(-.5f, .5f, 0f), new Vector2(0.0f, 1.0f)),
+				new VertexPositionTexture(new Vector3(.5f, .5f, 0f), new Vector2(1.0f, 1.0f)),
+				new VertexPositionTexture(new Vector3(-.5f, -.5f, 0f), new Vector2(0.0f, 0.0f)),
+				new VertexPositionTexture(new Vector3(.5f, -.5f, 0f), new Vector2(1.0f, 0.0f))
 			};
 
 			BufferDescription vbDescription = new BufferDescription(
-				32,
+				VertexPositionTexture.SizeInBytes * 4,
 				BufferUsage.VertexBuffer);
 			BufferDescription ibDescription = new BufferDescription(
 				4 * sizeof(ushort),
@@ -42,37 +42,63 @@ namespace BootEngine.Renderer
 			_gd.UpdateBuffer(Scene.IndexBuffer, 0, quadIndices.ToArray());
 			_gd.UpdateBuffer(Scene.VertexBuffer, 0, quadVertices.ToArray());
 
+			Scene2D.WhiteTexture = factory.CreateTexture(TextureDescription.Texture2D(
+				1u, // Width
+				1u, // Height
+				1,  // Miplevel
+				1,  // ArrayLayers
+				PixelFormat.R8_G8_B8_A8_UNorm,
+				TextureUsage.Sampled));
+			uint white = 0xffffffff;
+			unsafe
+			{
+				_gd.UpdateTexture(
+				Scene2D.WhiteTexture,
+				 (IntPtr)(&white),
+				sizeof(uint),
+				0,  // x
+				0,  // y
+				0,  // z
+				1u, // Width
+				1u, // Height
+				1,  // Depth
+				0,  // Miplevel
+				0); // ArrayLayers
+			}
+
 			Scene.CameraBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
+			Scene.Shaders = AssetManager.GenerateShadersFromFile("Texture2D.glsl");
 
 			VertexLayoutDescription vertexLayout = new VertexLayoutDescription(
-				new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2));
-
-			Scene.Shaders = AssetManager.GenerateShadersFromFile("FlatColor2D.glsl");
+				new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
+				new VertexElementDescription("TexCoord", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2));
 
 			Scene.ResourceLayout = factory.CreateResourceLayout(
 				new ResourceLayoutDescription(
 					new ResourceLayoutElementDescription("ViewProjection", ResourceKind.UniformBuffer, ShaderStages.Vertex),
 					new ResourceLayoutElementDescription("Transform", ResourceKind.UniformBuffer, ShaderStages.Vertex),
-					new ResourceLayoutElementDescription("Color", ResourceKind.UniformBuffer, ShaderStages.Fragment)));
+					new ResourceLayoutElementDescription("Color", ResourceKind.UniformBuffer, ShaderStages.Fragment),
+					new ResourceLayoutElementDescription("Texture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+					new ResourceLayoutElementDescription("Sampler", ResourceKind.Sampler, ShaderStages.Fragment)));
 
 			GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription();
 			pipelineDescription.BlendState = BlendStateDescription.SingleAlphaBlend;
 			pipelineDescription.DepthStencilState = new DepthStencilStateDescription(
-				depthTestEnabled: false,
+				depthTestEnabled: true,
 				depthWriteEnabled: true,
-				comparisonKind: ComparisonKind.Always);
+				comparisonKind: ComparisonKind.LessEqual);
 			pipelineDescription.RasterizerState = new RasterizerStateDescription(
-				cullMode: FaceCullMode.None,
+				cullMode: FaceCullMode.Back,
 				fillMode: PolygonFillMode.Solid,
 				frontFace: FrontFace.Clockwise,
-				depthClipEnabled: false,
+				depthClipEnabled: true,
 				scissorTestEnabled: false);
 			pipelineDescription.PrimitiveTopology = PrimitiveTopology.TriangleStrip;
 			pipelineDescription.ResourceLayouts = new ResourceLayout[] { Scene.ResourceLayout };
 			pipelineDescription.ShaderSet = new ShaderSetDescription(
 				vertexLayouts: new VertexLayoutDescription[] { vertexLayout },
 				shaders: Scene.Shaders);
-			pipelineDescription.Outputs = _gd.SwapchainFramebuffer.OutputDescription;
+			pipelineDescription.Outputs = _gd.MainSwapchain.Framebuffer.OutputDescription;
 
 			Scene.Pipeline = factory.CreateGraphicsPipeline(pipelineDescription);
 
@@ -95,6 +121,11 @@ namespace BootEngine.Renderer
 			return SubmitQuadDraw(new Vector3(position, 0f), size, color);
 		}
 
+		public Renderable2D SubmitQuadDraw(Rectangle rect, Vector4 color)
+		{
+			return SubmitQuadDraw(new Vector2(rect.X, rect.Y), new Vector2(rect.Width, rect.Height), color);
+		}
+
 		public Renderable2D SubmitQuadDraw(Vector3 position, Vector2 size, Vector4 color)
 		{
 			Renderable2D renderable = new Renderable2D();
@@ -110,7 +141,9 @@ namespace BootEngine.Renderer
 				Scene.ResourceLayout,
 				Scene.CameraBuffer,
 				renderable.TransformBuffer,
-				renderable.ColorBuffer));
+				renderable.ColorBuffer,
+				Scene2D.WhiteTexture,
+				_gd.LinearSampler));
 
 			Scene.RenderableList.Add(renderable);
 
@@ -119,7 +152,28 @@ namespace BootEngine.Renderer
 
 		public Renderable2D SubmitTexture(Vector3 position, Vector2 size, Texture texture)
 		{
+			Renderable2D renderable = new Renderable2D();
 
+			renderable.ColorBuffer = _gd.ResourceFactory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
+			_gd.UpdateBuffer(renderable.ColorBuffer, 0, RgbaFloat.White);
+
+			renderable.TransformBuffer = _gd.ResourceFactory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
+			Matrix4x4 translation = Matrix4x4.CreateTranslation(position) * Matrix4x4.CreateScale(new Vector3(size, 1f));
+			_gd.UpdateBuffer(renderable.TransformBuffer, 0, translation);
+
+			renderable.Texture = texture;
+
+			renderable.ResourceSet = _gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(
+				Scene.ResourceLayout,
+				Scene.CameraBuffer,
+				renderable.TransformBuffer,
+				renderable.ColorBuffer,
+				renderable.Texture,
+				_gd.LinearSampler));
+
+			Scene.RenderableList.Add(renderable);
+
+			return renderable;
 		}
 		#endregion
 
@@ -140,6 +194,7 @@ namespace BootEngine.Renderer
 			cl.SetViewport(0, new Viewport(0, 0, _gd.SwapchainFramebuffer.Width, _gd.SwapchainFramebuffer.Height, 0, 1));
 			cl.SetFullViewports();
 			cl.ClearColorTarget(0, RgbaFloat.Grey);
+			cl.ClearDepthStencil(1f);
 			cl.SetVertexBuffer(0, Scene.VertexBuffer);
 			cl.SetIndexBuffer(Scene.IndexBuffer, IndexFormat.UInt16);
 			cl.SetPipeline(Scene.Pipeline);
@@ -171,5 +226,20 @@ namespace BootEngine.Renderer
 		{
 			Scene.Dispose();
 		}
+
+		#region Struct
+		private readonly struct VertexPositionTexture
+		{
+			public const uint SizeInBytes = 20;
+			public readonly Vector3 Position;
+			public readonly Vector2 TexCoord;
+
+			public VertexPositionTexture(Vector3 position, Vector2 texCoord)
+			{
+				this.Position = position;
+				this.TexCoord = texCoord;
+			}
+		}
+		#endregion
 	}
 }

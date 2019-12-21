@@ -1,4 +1,5 @@
 ﻿using BootEngine;
+using BootEngine.AssetsManager;
 using BootEngine.Events;
 using BootEngine.Layers;
 using BootEngine.Renderer;
@@ -27,9 +28,9 @@ namespace Sandbox.Layers
 			GraphicsDevice _graphicsDevice = Application.App.Window.GraphicsDevice;
 			float aspectRatio = (float)Application.App.Window.SdlWindow.Width / Application.App.Window.SdlWindow.Height;
 			_cameraController = new OrthoCameraController(aspectRatio, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted, true);
-			renderable = Renderer2D.Instance.SubmitQuadDraw(new Vector3(-1, 0, 0), Vector2.One, _squareColor);
-			renderable2 = Renderer2D.Instance.SubmitQuadDraw(new Vector3(0, 0, 0), new Vector2(.5f,.5f), RgbaFloat.Cyan.ToVector4());
-			Renderer2D.Instance.SubmitTexture();
+			renderable = Renderer2D.Instance.SubmitQuadDraw(new Vector3(-2, 0, .5f), new Vector2(.5f, .5f), _squareColor);
+			renderable2 = Renderer2D.Instance.SubmitQuadDraw(new Vector3(-1, 0, .5f), Vector2.One, RgbaFloat.Cyan.ToVector4());
+			Renderer2D.Instance.SubmitTexture(new Vector3(0, 0, .4f), new Vector2(.25f,.25f), AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled));
 		}
 
 		public override void OnUpdate(float deltaSeconds)
@@ -37,7 +38,7 @@ namespace Sandbox.Layers
 			_cameraController.Update(deltaSeconds);
 			Renderer2D.Instance.BeginScene(_cameraController.Camera);
 			Renderer2D.Instance.UpdateBuffer(renderable.ColorBuffer, _squareColor);
-			Renderer2D.Instance.UpdateBuffer(renderable2.ColorBuffer, _squareColor * .5f);
+			//Renderer2D.Instance.UpdateBuffer(renderable2.ColorBuffer, _squareColor * .5f);
 			Renderer2D.Instance.UpdateBuffer(renderable2.TransformBuffer, Matrix4x4.CreateTranslation(new Vector3(_squareColor.X, _squareColor.Y, _squareColor.Z)));
 			Renderer2D.Instance.Render();
 			Renderer2D.Instance.EndScene();

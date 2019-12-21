@@ -4,6 +4,7 @@ namespace BootEngine.Renderer
 {
 	public sealed class Scene2D : Scene
 	{
+		public static Texture WhiteTexture { get; set; }
 		public DeviceBuffer IndexBuffer { get; set; }
 		public DeviceBuffer VertexBuffer { get; set; }
 		public DeviceBuffer CameraBuffer { get; set; }
@@ -20,6 +21,7 @@ namespace BootEngine.Renderer
 				CameraBuffer.Dispose();
 				Pipeline.Dispose();
 				ResourceLayout.Dispose();
+				WhiteTexture.Dispose();
 				for (int i = 0; i < Shaders.Length; i++)
 					Shaders[i].Dispose();
 			}
