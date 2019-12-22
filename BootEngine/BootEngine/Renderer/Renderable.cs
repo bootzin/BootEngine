@@ -4,6 +4,8 @@ namespace BootEngine.Renderer
 {
 	public abstract class Renderable : IDisposable
 	{
+		public string Name { get; set; }
+
 		public void Dispose()
 		{
 			Dispose(true);

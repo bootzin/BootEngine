@@ -8,7 +8,7 @@ namespace BootEngine.Utils
 		protected static readonly ThreadLocal<T> Lazy = new ThreadLocal<T>(() =>
 		{
 			if (Lazy.IsValueCreated)
-				throw new InvalidOperationException(typeof(T).Name + " has already been initialized.");
+				throw new InvalidOperationException(nameof(T) + " has already been initialized. Please use " + nameof(T) + ".Instance instead.");
 			return Activator.CreateInstance(typeof(T)) as T;
 		});
 

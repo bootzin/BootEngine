@@ -6,40 +6,51 @@ namespace BootEngine.Utils.ProfilingTools
 	{
 		private static int ProfileCount;
 		private static StreamWriter file;
+		private static readonly object fileLock = new object();
 
 		public static string CurrentSession { get; private set; }
 
 		public static void BeginSession(string name, string filePath = "results.json")
 		{
-			file = new StreamWriter(filePath);
-			WriteHeader();
-			CurrentSession = name;
+			lock (fileLock)
+			{
+				file = new StreamWriter(filePath);
+				WriteHeader();
+				CurrentSession = name;
+			}
 		}
 
 		public static void WriteProfile(Profiler profiler)
 		{
-			if (ProfileCount++ > 0)
-				file.Write(",");
+			lock (fileLock)
+			{
+				if (ProfileCount++ > 0)
+					file.Write(",");
 
-			file.Write("{");
-			file.Write("\"cat\":\"function\",");
-			file.Write("\"dur\":" + profiler.Sw.Elapsed.TotalMilliseconds * 1000 + ",");
-			file.Write("\"name\":\"" + profiler.Name + "\",");
-			file.Write("\"ph\":\"X\",");
-			file.Write("\"pid\":0,");
-			file.Write("\"tid\":" + profiler.ThreadID + ",");
-			file.Write("\"ts\":" + profiler.StartTime);
-			file.Write("}");
+				file.Write("{");
+				file.Write("\"cat\":\"function\",");
+				file.Write("\"dur\":" + (profiler.Sw.Elapsed.TotalMilliseconds * 1000) + ",");
+				file.Write("\"name\":\"" + profiler.Name + "\",");
+				file.Write("\"ph\":\"X\",");
+				file.Write("\"pid\":0,");
+				file.Write("\"tid\":" + profiler.ThreadID + ",");
+				file.Write("\"ts\":" + profiler.StartTime);
+				file.Write("}");
 
-			file.Flush();
+				file.Flush();
+			}
 		}
 
 		public static void EndSesison()
 		{
-			WriteFooter();
-			file.Close();
-			CurrentSession = null;
-			ProfileCount = 0;
+			lock (fileLock)
+			{
+				WriteFooter();
+				file.Close();
+				file.Dispose();
+				CurrentSession = null;
+				ProfileCount = 0;
+			}
 		}
 
 		private static void WriteHeader()

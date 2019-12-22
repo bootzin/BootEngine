@@ -6,6 +6,7 @@ using BootEngine.Renderer;
 using BootEngine.Renderer.Cameras;
 using BootEngine.Utils.ProfilingTools;
 using ImGuiNET;
+using System.Linq;
 using System.Numerics;
 using Veldrid;
 
@@ -15,9 +16,9 @@ namespace Sandbox.Layers
 	{
 		#region Properties
 		private OrthoCameraController _cameraController;
-		private Renderable2D renderable;
-		private Renderable2D renderable2;
 		private Vector4 _squareColor = RgbaFloat.DarkRed.ToVector4();
+		private float temp = 0;
+		private readonly float[] _frametime = new float[100];
 		#endregion
 
 		#region Constructor
@@ -32,11 +33,36 @@ namespace Sandbox.Layers
 			GraphicsDevice _graphicsDevice = Application.App.Window.GraphicsDevice;
 			float aspectRatio = (float)Application.App.Window.SdlWindow.Width / Application.App.Window.SdlWindow.Height;
 			_cameraController = new OrthoCameraController(aspectRatio, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted, true);
-			renderable = Renderer2D.Instance.SubmitQuadDraw(new Vector3(-2, 0, .5f), new Vector2(.5f, .5f), _squareColor);
+
+			Renderable2DParameters param = new Renderable2DParameters();
+			param.Position = new Vector3(-2, 0, .5f);
+			param.Size = new Vector2(.5f, .5f);
+			param.Color = _squareColor;
+			param.Name = "Quad";
+			Renderer2D.Instance.SubmitQuadDraw(ref param);
+
+			param.Name = null;
+			param.Size = new Vector2(.1f, .1f);
+			param.Rotation = (float)Utils.Util.Deg2Rad(45);
 			for (int i = 0; i < 1000; i++)
-				renderable = Renderer2D.Instance.SubmitQuadDraw(new Vector3(-.11f * i, 0, .5f), new Vector2(.1f, .1f), _squareColor);
-			renderable2 = Renderer2D.Instance.SubmitQuadDraw(new Vector3(-1, 0, .5f), Vector2.One, RgbaFloat.Cyan.ToVector4());
-			Renderer2D.Instance.SubmitTexture(new Vector3(0, 0, .4f), new Vector2(.25f,.25f), AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled));
+			{
+				param.Position = new Vector3(-.11f * i, 0, .5f);
+				Renderer2D.Instance.SubmitQuadDraw(ref param);
+			}
+
+			param.Position = new Vector3(-1, 0, .5f);
+			param.Size = Vector2.One;
+			param.Color = RgbaFloat.Cyan.ToVector4();
+			param.Name = "Quad2";
+			Renderer2D.Instance.SubmitQuadDraw(ref param);
+
+			param.Name = null;
+			param.Rotation = 0f;
+			param.Color = RgbaFloat.White.ToVector4();
+			param.Position = new Vector3(0, 0, .4f);
+			param.Size = new Vector2(.25f, .25f);
+			param.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
+			Renderer2D.Instance.SubmitQuadDraw(ref param);
 		}
 
 		public override void OnUpdate(float deltaSeconds)
@@ -44,15 +70,23 @@ namespace Sandbox.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
+			_frametime[99] = deltaSeconds * 1000;
+			for (int i = 0; i < 99;)
+			{
+				_frametime[i] = _frametime[++i];
+			}
+
 			_cameraController.Update(deltaSeconds);
-			Renderer2D.Instance.BeginScene(_cameraController.Camera);
-			Renderer2D.Instance.UpdateBuffer(renderable.ColorBuffer, _squareColor);
-			Renderer2D.Instance.UpdateBuffer(renderable2.TransformBuffer, Matrix4x4.CreateTranslation(new Vector3(_squareColor.X, _squareColor.Y, _squareColor.Z)));
+			Renderer2D renderer = Renderer2D.Instance;
+			renderer.BeginScene(_cameraController.Camera);
+			renderer.UpdateColor("Quad", _squareColor);
+			renderer.UpdatePosition("Quad2", new Vector3(_squareColor.X, _squareColor.Y, _squareColor.Z));
+			renderer.UpdateRotation("Quad2", (float)Utils.Util.Deg2Rad(temp++));
 #if DEBUG
 			using (Profiler camProfiler = new Profiler("Rendering"))
 #endif
-				Renderer2D.Instance.Render();
-			Renderer2D.Instance.EndScene();
+				renderer.Render();
+			renderer.EndScene();
 		}
 
 		public override void OnGuiRender()
@@ -62,6 +96,11 @@ namespace Sandbox.Layers
 #endif
 			ImGui.Begin("Settings 2D");
 			ImGui.ColorEdit4("Square Color 2D", ref _squareColor);
+			ImGui.End();
+
+			ImGui.Begin("FPS Counter");
+			ImGui.PlotLines("", ref _frametime[0], 100, 0, "Frametime (ms)", 0, 60, new Vector2(250, 50));
+			ImGui.Text("FPS: " + (1000f / _frametime.Average()));
 			ImGui.End();
 		}
 
