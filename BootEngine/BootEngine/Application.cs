@@ -35,41 +35,64 @@ namespace BootEngine
 			LayerStack.PushOverlay(ImGuiLayer);
 		}
 
-		~Application()
-		{
-			Dispose(false);
-		}
-
 		#region Public Methods
 		public void Run()
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			long previousFrameTicks = 0;
 			Stopwatch sw = new Stopwatch();
 			sw.Start();
 
 			while (Window.Exists)
 			{
-				long currentFrameTicks = sw.ElapsedTicks;
-				float deltaSeconds = (currentFrameTicks - previousFrameTicks) / (float)Stopwatch.Frequency;
+#if DEBUG
+				using (Profiler runLoopProfiler = new Profiler("RunLoop"))
+				{
+#endif
+					long currentFrameTicks = sw.ElapsedTicks;
+					float deltaSeconds = (currentFrameTicks - previousFrameTicks) / (float)Stopwatch.Frequency;
 
-				Logger.Info(deltaSeconds);
+					previousFrameTicks = currentFrameTicks;
 
-				previousFrameTicks = currentFrameTicks;
+					if (!Window.Minimized)
+					{
+#if DEBUG
+						using (Profiler layerUpdateProfiler = new Profiler("LayersUpdate"))
+#endif
+							LayerStack.Layers.ForEach(layer => layer.OnUpdate(deltaSeconds));
+					}
 
-				if (!Window.Minimized)
-					LayerStack.Layers.ForEach(layer => layer.OnUpdate(deltaSeconds));
+#if DEBUG
+					using (Profiler imguiProfiler = new Profiler("ImGuiFlow"))
+					{
+#endif
+						ImGuiLayer.Begin(deltaSeconds); //Window is updated in here
+						LayerStack.Layers.ForEach(layer => layer.OnGuiRender());
+						ImGuiLayer.End();
+#if DEBUG
+					}
+#endif
 
-				ImGuiLayer.Begin(deltaSeconds); //Window is updated in here
-				LayerStack.Layers.ForEach(layer => layer.OnGuiRender());
-				ImGuiLayer.End();
-
-				if (Window.Exists)
-					Window.GraphicsDevice.SwapBuffers();
+					if (Window.Exists)
+					{
+#if DEBUG
+						using (Profiler swapBuffersProfiler = new Profiler("SwapBuffers"))
+#endif
+							Window.GraphicsDevice.SwapBuffers();
+					}
+#if DEBUG
+				}
+#endif
 			}
 		}
 
 		public void OnEvent(EventBase @event)
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			Logger.CoreInfo(@event);
 			for (int index = LayerStack.Layers.Count; index > 0;)
 			{
@@ -83,6 +106,9 @@ namespace BootEngine
 		#region IDisposable Methods
 		public void Dispose()
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			Dispose(true);
 			GC.SuppressFinalize(this);
 		}

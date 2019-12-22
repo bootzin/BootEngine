@@ -11,10 +11,5 @@ namespace BootEngine.Renderer
 		}
 
 		protected abstract void Dispose(bool disposing);
-
-		~Renderable()
-		{
-			Dispose(false);
-		}
 	}
 }

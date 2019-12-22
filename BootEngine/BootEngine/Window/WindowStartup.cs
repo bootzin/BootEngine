@@ -39,8 +39,9 @@ namespace BootEngine.Window
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(typeof(WindowStartup));
+			using (Profiler sdlProfiler = new Profiler("SDL_Init"))
 #endif
-			Sdl2Native.SDL_Init(SDLInitFlags.Video);
+				Sdl2Native.SDL_Init(SDLInitFlags.Video);
 
 			window = CreateWindow(ref windowProps, preferredBackend);
 			gd = CreateGraphicsDevice(window, deviceOptions, preferredBackend);

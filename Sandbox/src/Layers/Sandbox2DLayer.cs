@@ -33,8 +33,8 @@ namespace Sandbox.Layers
 			float aspectRatio = (float)Application.App.Window.SdlWindow.Width / Application.App.Window.SdlWindow.Height;
 			_cameraController = new OrthoCameraController(aspectRatio, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted, true);
 			renderable = Renderer2D.Instance.SubmitQuadDraw(new Vector3(-2, 0, .5f), new Vector2(.5f, .5f), _squareColor);
-			//for (int i = 0; i < 10000; i++)
-			//	renderable = Renderer2D.Instance.SubmitQuadDraw(new Vector3(-.11f * i, 0, .5f), new Vector2(.1f, .1f), _squareColor);
+			for (int i = 0; i < 1000; i++)
+				renderable = Renderer2D.Instance.SubmitQuadDraw(new Vector3(-.11f * i, 0, .5f), new Vector2(.1f, .1f), _squareColor);
 			renderable2 = Renderer2D.Instance.SubmitQuadDraw(new Vector3(-1, 0, .5f), Vector2.One, RgbaFloat.Cyan.ToVector4());
 			Renderer2D.Instance.SubmitTexture(new Vector3(0, 0, .4f), new Vector2(.25f,.25f), AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled));
 		}

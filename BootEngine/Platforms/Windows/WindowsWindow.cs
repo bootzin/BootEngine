@@ -20,11 +20,6 @@ namespace Platforms.Windows
 		{
 			Initialize(props, backend);
 		}
-
-		~WindowsWindow()
-		{
-			Shutdown();
-		}
 		#endregion
 
 		#region Methods
@@ -100,11 +95,6 @@ namespace Platforms.Windows
 			window.MouseUp += (mouseEvent) => EventCallback(new MouseButtonReleasedEvent((int)mouseEvent.MouseButton));
 			window.MouseWheel += (mouseEvent) => EventCallback(new MouseScrolledEvent(mouseEvent.WheelDelta));
 			window.MouseMove += (mouseEvent) => EventCallback(new MouseMovedEvent(mouseEvent.MousePosition.X, mouseEvent.MousePosition.Y));
-		}
-
-		private void Shutdown()
-		{
-			//Dispose
 		}
 		#endregion
 		#endregion

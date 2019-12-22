@@ -37,7 +37,7 @@ namespace BootEngine.Utils.ProfilingTools
 		public void Dispose()
 		{
 			Sw.Stop();
-			ProfileWriter.Instance.WriteProfile(this);
+			ProfileWriter.WriteProfile(this);
 		}
 
 		private void Init()

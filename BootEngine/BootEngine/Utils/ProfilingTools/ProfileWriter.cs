@@ -2,21 +2,21 @@
 
 namespace BootEngine.Utils.ProfilingTools
 {
-	public class ProfileWriter : Singleton<ProfileWriter>
+	public static class ProfileWriter
 	{
-		private int ProfileCount;
-		private StreamWriter file;
+		private static int ProfileCount;
+		private static StreamWriter file;
 
-		public string CurrentSession { get; private set; }
+		public static string CurrentSession { get; private set; }
 
-		public void BeginSession(string name, string filePath = "results.json")
+		public static void BeginSession(string name, string filePath = "results.json")
 		{
 			file = new StreamWriter(filePath);
 			WriteHeader();
 			CurrentSession = name;
 		}
 
-		public void WriteProfile(Profiler profiler)
+		public static void WriteProfile(Profiler profiler)
 		{
 			if (ProfileCount++ > 0)
 				file.Write(",");
@@ -34,7 +34,7 @@ namespace BootEngine.Utils.ProfilingTools
 			file.Flush();
 		}
 
-		public void EndSesison()
+		public static void EndSesison()
 		{
 			WriteFooter();
 			file.Close();
@@ -42,13 +42,13 @@ namespace BootEngine.Utils.ProfilingTools
 			ProfileCount = 0;
 		}
 
-		private void WriteHeader()
+		private static void WriteHeader()
 		{
 			file.Write("{\"otherData\": {},\"traceEvents\":[");
 			file.Flush();
 		}
 
-		private void WriteFooter()
+		private static void WriteFooter()
 		{
 			file.Write("]}");
 			file.Flush();

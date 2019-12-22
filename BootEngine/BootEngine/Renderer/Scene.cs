@@ -21,10 +21,5 @@ namespace BootEngine.Renderer
 					RenderableList[i].Dispose();
 			}
 		}
-
-		~Scene()
-		{
-			Dispose(false);
-		}
 	}
 }
