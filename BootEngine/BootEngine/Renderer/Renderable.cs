@@ -6,6 +6,7 @@ namespace BootEngine.Renderer
 	{
 		public string Name { get; set; }
 
+		#region IDisposable
 		public void Dispose()
 		{
 			Dispose(true);
@@ -13,5 +14,6 @@ namespace BootEngine.Renderer
 		}
 
 		protected abstract void Dispose(bool disposing);
+		#endregion
 	}
 }

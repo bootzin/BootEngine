@@ -13,8 +13,8 @@ namespace BootEngine.Renderer
 		{
 			CommandList cl = Application.App.Window.GraphicsDevice.ResourceFactory.CreateCommandList();
 			BeginRender(cl);
-			for (int i = 0; i < scene.RenderableList.Count; i++)
-				InnerRender(scene.RenderableList[i], cl);
+			for (int i = scene.RenderableList.Count; i > 0;)
+				InnerRender(scene.RenderableList[--i], cl);
 			EndRender(cl);
 			cl.Dispose();
 		}

@@ -10,12 +10,14 @@ namespace BootEngine.Renderer
 {
 	public sealed class Renderer2D : Renderer<Renderer2D>, IDisposable
 	{
-		#region Propriedades
+		#region Properties
 		private static Scene2D CurrentScene { get; set; }
 		private readonly static GraphicsDevice _gd = Application.App.Window.GraphicsDevice;
+
+		public int InstanceCount => CurrentScene.RenderableList.Count;
 		#endregion
 
-		#region Construtor
+		#region Constructor
 		static Renderer2D()
 		{
 #if DEBUG
@@ -128,16 +130,18 @@ namespace BootEngine.Renderer
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			Renderable2D ret;
+			Renderable2D renderable;
 			if (parameters.Texture == null)
-				ret =  SubmitQuadDraw(parameters.Position, parameters.Size, parameters.Rotation, parameters.Color);
+				renderable =  SetupQuad(parameters.Position, parameters.Size, parameters.Rotation, parameters.Color);
 			else
-				ret =  SubmitTexture(parameters.Position, parameters.Size, parameters.Rotation, parameters.Color, parameters.Texture);
-			ret.SetParameters(ref parameters);
-			return ret;
+				renderable =  SetupTextureQuad(parameters.Position, parameters.Size, parameters.Rotation, parameters.Color, parameters.Texture);
+
+			renderable.SetParameters(ref parameters);
+			CurrentScene.RenderableList.Add(renderable);
+			return renderable;
 		}
 
-		internal Renderable2D SubmitQuadDraw(Vector3 position, Vector2 size, float rotation, Vector4 color)
+		internal Renderable2D SetupQuad(Vector3 position, Vector2 size, float rotation, Vector4 color)
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
@@ -161,12 +165,10 @@ namespace BootEngine.Renderer
 				Scene2D.WhiteTexture,
 				_gd.LinearSampler));
 
-			CurrentScene.RenderableList.Add(renderable);
-
 			return renderable;
 		}
 
-		internal Renderable2D SubmitTexture(Vector3 position, Vector2 size, float rotation, Vector4 color, Texture texture)
+		internal Renderable2D SetupTextureQuad(Vector3 position, Vector2 size, float rotation, Vector4 color, Texture texture)
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
@@ -192,9 +194,13 @@ namespace BootEngine.Renderer
 				renderable.Texture,
 				_gd.LinearSampler));
 
-			CurrentScene.RenderableList.Add(renderable);
-
 			return renderable;
+		}
+
+		public void RemoveQuadDraw(int index)
+		{
+			GetRenderableByIndex(index).Dispose();
+			CurrentScene.RenderableList.RemoveAt(index);
 		}
 		#endregion
 
@@ -204,12 +210,18 @@ namespace BootEngine.Renderer
 		}
 
 		public void UpdatePosition(string renderableName, Vector3 position) => UpdateTransform(renderableName, position, null, null);
+		public void UpdatePosition(int index, Vector3 position) => UpdateTransform(index, position, null, null);
 		public void UpdateSize(string renderableName, Vector2 size) => UpdateTransform(renderableName, null, size, null);
+		public void UpdateSize(int index, Vector2 size) => UpdateTransform(index, null, size, null);
 		public void UpdateRotation(string renderableName, float rotation) => UpdateTransform(renderableName, null, null, rotation);
+		public void UpdateRotation(int index, float rotation) => UpdateTransform(index, null, null, rotation);
 
-		public void UpdateTransform(string renderableName, Vector3? position = null, Vector2? size = null, float? rotation = null)
+		public void UpdateTransform(string renderableName, Vector3? position = null, Vector2? size = null, float? rotation = null) => UpdateTransform(GetRenderableByName(renderableName), position, size, rotation);
+
+		public void UpdateTransform(int index, Vector3? position = null, Vector2? size = null, float? rotation = null) => UpdateTransform(GetRenderableByIndex(index), position, size, rotation);
+
+		public void UpdateTransform(Renderable2D renderable, Vector3? position = null, Vector2? size = null, float? rotation = null)
 		{
-			Renderable2D renderable = GetRenderableByName(renderableName);
 			if (position.HasValue)
 				renderable.Position = position.Value;
 			if (size.HasValue)
@@ -231,12 +243,26 @@ namespace BootEngine.Renderer
 			UpdateBuffer(renderable.ColorBuffer, value);
 		}
 
+		public void UpdateColor(int index, Vector4 value)
+		{
+			Renderable2D renderable = GetRenderableByIndex(index);
+			UpdateBuffer(renderable.ColorBuffer, value);
+		}
+
 		public Renderable2D GetRenderableByName(string name)
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
 			return CurrentScene.RenderableList.Find(r => r.Name == name) as Renderable2D;
+		}
+
+		public Renderable2D GetRenderableByIndex(int index)
+		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
+			return CurrentScene.RenderableList[index] as Renderable2D;
 		}
 
 		public void Render()
@@ -281,6 +307,9 @@ namespace BootEngine.Renderer
 
 		public void Dispose()
 		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
 			CurrentScene.Dispose();
 		}
 
