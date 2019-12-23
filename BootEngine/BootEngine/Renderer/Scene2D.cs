@@ -1,4 +1,5 @@
 ﻿using BootEngine.Utils.ProfilingTools;
+using System.Collections.Generic;
 using Veldrid;
 
 namespace BootEngine.Renderer
@@ -8,8 +9,11 @@ namespace BootEngine.Renderer
 		public static Texture WhiteTexture { get; set; }
 		public DeviceBuffer IndexBuffer { get; set; }
 		public DeviceBuffer VertexBuffer { get; set; }
+		public DeviceBuffer InstancesVertexBuffer { get; set; }
 		public DeviceBuffer CameraBuffer { get; set; }
 		public ResourceLayout ResourceLayout { get; set; }
+		public Dictionary<Texture, ResourceSet> ResourceSetsPerTexture { get; set; } = new Dictionary<Texture, ResourceSet>();
+		public Dictionary<Texture, uint> InstancesPerTexture { get; set; } = new Dictionary<Texture, uint>();
 		public Pipeline Pipeline { get; set; }
 		public Shader[] Shaders { get; set; }
 
