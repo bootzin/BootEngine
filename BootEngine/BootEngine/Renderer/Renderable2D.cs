@@ -27,7 +27,7 @@ namespace BootEngine.Renderer
 			Rotation = parameters.Rotation;
 			Color = parameters.Color;
 			Texture = parameters.Texture;
-			InstaceIndex = instanceIndex;
+			InstanceIndex = instanceIndex;
 		}
 
 		public Renderable2D(Vector3 pos, Vector2 scale, float rot, Vector4 col)
@@ -72,10 +72,7 @@ namespace BootEngine.Renderer
 		public float Rotation { get; set; }
 		public Vector4 Color { get; set; }
 		public Texture Texture { get; set; }
-		public int? InstaceIndex { get; set; }
-
-		internal DeviceBuffer ColorBuffer { get; set; }
-		internal DeviceBuffer TransformBuffer { get; set; }
+		public int InstanceIndex { get; set; }
 
 		public void SetParameters(ref Renderable2DParameters parameters)
 		{
@@ -97,8 +94,6 @@ namespace BootEngine.Renderer
 			if (disposing)
 			{
 				Texture?.Dispose();
-				ColorBuffer?.Dispose();
-				TransformBuffer?.Dispose();
 			}
 		}
 	}
