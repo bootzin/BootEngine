@@ -19,7 +19,8 @@ namespace Sandbox.Layers
 		private Vector4 _squareColor = RgbaFloat.DarkRed.ToVector4();
 		private float temp = 0;
 		private readonly float[] _frametime = new float[100];
-		private int _instanceCount = 100000;
+		private int _instanceCount = 10;
+		private static readonly object _lock = new object();
 		#endregion
 
 		#region Constructor
@@ -65,9 +66,10 @@ namespace Sandbox.Layers
 			Renderable2DParameters param3 = new Renderable2DParameters();
 			param3.Name = null;
 			param3.Size = new Vector2(.1f, .1f);
-			param3.Rotation = (float)Utils.Util.Deg2Rad(45);
+			param3.Rotation = 0;
 			param3.Color = _squareColor;
-			param3.Texture = null;
+			//param3.Texture = null;
+			param3.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
 			for (int i = 0; i < _instanceCount; i++)
 			{
 				param3.Position = new Vector3(-.11f * i, 0, .5f);
@@ -91,35 +93,41 @@ namespace Sandbox.Layers
 			_cameraController.Update(deltaSeconds);
 			Renderer2D renderer = Renderer2D.Instance;
 			renderer.BeginScene(_cameraController.Camera);
-			//renderer.UpdateColor("Quad", _squareColor);
 			//renderer.UpdatePosition("Quad2", new Vector3(_squareColor.X, _squareColor.Y, _squareColor.Z));
-			//renderer.UpdateRotation("Quad2", (float)Utils.Util.Deg2Rad(temp++));
 
-				System.Threading.Tasks.Task.Run(() =>
+			for (int i = 0; i < renderer.InstanceCount; i++)
+			{
+				renderer.UpdateColor(i, _squareColor);
+				renderer.UpdateRotation(i, (float)Utils.Util.Deg2Rad(temp));
+			}
+			temp++;
+
+			System.Threading.Tasks.Task.Run(() =>
+			{
+				lock (_lock)
 				{
-					lock (Scene2D.WhiteTexture)
+					if (renderer.InstanceCount < _instanceCount)
 					{
-						if (renderer.InstanceCount < _instanceCount)
+						var param = new Renderable2DParameters();
+						param.Size = new Vector2(.1f, .1f);
+						param.Rotation = 0;
+						param.Color = _squareColor;
+						param.Texture = AssetManager.LoadTexture2D("assets/textures/sampleDog.png", TextureUsage.Sampled);
+						for (int i = renderer.InstanceCount; i < _instanceCount; i++)
 						{
-							var param = new Renderable2DParameters();
-							param.Size = new Vector2(.1f, .1f);
-							param.Rotation = (float)Utils.Util.Deg2Rad(45);
-							param.Color = _squareColor;
-							for (int i = renderer.InstanceCount; i < _instanceCount; i++)
-							{
-								param.Position = new Vector3(-.11f * i, 0, .5f);
+								param.Position = new Vector3(-.11f * (i % 1000), -.11f * (i / 1000), .5f);
 								renderer.SubmitQuadDraw(ref param);
-							}
-							renderer.Flush();
 						}
-						else if (renderer.InstanceCount > _instanceCount)
-						{
-							for (int i = renderer.InstanceCount; i > _instanceCount;)
-								renderer.RemoveQuadDraw(--i);
-							renderer.Flush();
-						}
+						renderer.Flush();
 					}
-				});
+					else if (renderer.InstanceCount > _instanceCount)
+					{
+						for (int i = renderer.InstanceCount; i > _instanceCount;)
+							renderer.RemoveQuadDraw(--i);
+						renderer.Flush();
+					}
+				}
+			});
 
 #if DEBUG
 			using (Profiler camProfiler = new Profiler("Rendering"))

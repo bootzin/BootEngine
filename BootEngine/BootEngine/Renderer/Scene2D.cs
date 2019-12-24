@@ -26,14 +26,19 @@ namespace BootEngine.Renderer
 			{
 				IndexBuffer.Dispose();
 				VertexBuffer.Dispose();
+				InstancesVertexBuffer.Dispose();
 				CameraBuffer.Dispose();
 				Pipeline.Dispose();
 				ResourceLayout.Dispose();
 				WhiteTexture.Dispose();
 				for (int i = 0; i < Shaders.Length; i++)
 					Shaders[i].Dispose();
+				foreach (var kv in ResourceSetsPerTexture)
+				{
+					kv.Value.Dispose();
+					kv.Key.Dispose();
+				}
 			}
-			base.Dispose(disposing);
 		}
 	}
 }

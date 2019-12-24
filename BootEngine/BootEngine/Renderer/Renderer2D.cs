@@ -21,9 +21,8 @@ namespace BootEngine.Renderer
 		private static Scene2D CurrentScene { get; set; }
 		private readonly static GraphicsDevice _gd = Application.App.Window.GraphicsDevice;
 		private readonly InstanceVertexInfo[] _instanceList = new InstanceVertexInfo[MAX_QUADS];
-		private int instanceCount;
 
-		public int InstanceCount => CurrentScene.RenderableList.Count;
+		public int InstanceCount { get; private set; }
 		#endregion
 
 		#region Constructor
@@ -76,6 +75,7 @@ namespace BootEngine.Renderer
 				1,  // Depth
 				0,  // Miplevel
 				0); // ArrayLayers
+			Scene2D.WhiteTexture.Name = "WhiteTex";
 
 			CurrentScene.InstancesVertexBuffer = factory.CreateBuffer(new BufferDescription(InstanceVertexInfo.SizeInBytes * MAX_QUADS, BufferUsage.VertexBuffer));
 			CurrentScene.CameraBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
@@ -173,8 +173,7 @@ namespace BootEngine.Renderer
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
 			CurrentScene.InstancesPerTexture[Scene2D.WhiteTexture]++;
-			lock (this)
-				return new Renderable2D(ref parameters, instanceCount++);
+			return new Renderable2D(ref parameters, InstanceCount++);
 		}
 
 		internal Renderable2D SetupInstancedTextureQuad(ref Renderable2DParameters parameters)
@@ -182,7 +181,7 @@ namespace BootEngine.Renderer
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			Renderable2D renderable = new Renderable2D(ref parameters, instanceCount++);
+			Renderable2D renderable = new Renderable2D(ref parameters, InstanceCount++);
 
 			if (!CurrentScene.ResourceSetsPerTexture.ContainsKey(parameters.Texture))
 			{
@@ -209,10 +208,10 @@ namespace BootEngine.Renderer
 			Renderable2D renderable = GetRenderableByInstanceIndex(instanceIndex);
 			CurrentScene.InstancesPerTexture[renderable.Texture ?? Scene2D.WhiteTexture]--;
 			_instanceList[instanceIndex] = new InstanceVertexInfo();
+			InstanceCount--;
 			CurrentScene.RenderableList.RemoveAt(instanceIndex);
 			if (flush)
 				Flush();
-			renderable.Dispose();
 		}
 		#endregion
 
@@ -271,7 +270,7 @@ namespace BootEngine.Renderer
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			return CurrentScene.RenderableList.Find(r => ((Renderable2D)r).InstanceIndex == instanceIndex) as Renderable2D;
+			return CurrentScene.RenderableList[instanceIndex] as Renderable2D;
 		}
 
 		public void Flush()
@@ -279,7 +278,7 @@ namespace BootEngine.Renderer
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			CurrentScene.RenderableList = CurrentScene.RenderableList.OrderBy(r => ((Renderable2D)r).Texture).ToList();
+			CurrentScene.RenderableList = CurrentScene.RenderableList.OrderBy(r => ((Renderable2D)r).Texture?.Name).ToList();
 			for (int index = 0; index < CurrentScene.RenderableList.Count; index++)
 			{
 				Renderable2D renderable = (Renderable2D)CurrentScene.RenderableList[index];

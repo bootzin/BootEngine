@@ -37,8 +37,8 @@ layout(location = 0) in vec2 fsTexCoord;
 layout(location = 1) in vec4 fsColor;
 layout(location = 0) out vec4 outColor;
 
-layout(set = 0, binding = 3) uniform texture2D Texture;
-layout(set = 0, binding = 4) uniform sampler Sampler;
+layout(set = 0, binding = 1) uniform texture2D Texture;
+layout(set = 0, binding = 2) uniform sampler Sampler;
 
 void main()
 {

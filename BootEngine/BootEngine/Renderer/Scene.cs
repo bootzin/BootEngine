@@ -15,11 +15,7 @@ namespace BootEngine.Renderer
 
 		protected virtual void Dispose(bool disposing)
 		{
-			if (disposing)
-			{
-				for (int i = 0; i < RenderableList.Count; i++)
-					RenderableList[i].Dispose();
-			}
+			//
 		}
 	}
 }
