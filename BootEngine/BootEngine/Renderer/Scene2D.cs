@@ -12,10 +12,10 @@ namespace BootEngine.Renderer
 		public DeviceBuffer InstancesVertexBuffer { get; set; }
 		public DeviceBuffer CameraBuffer { get; set; }
 		public ResourceLayout ResourceLayout { get; set; }
-		public Dictionary<Texture, ResourceSet> ResourceSetsPerTexture { get; set; } = new Dictionary<Texture, ResourceSet>();
-		public Dictionary<Texture, uint> InstancesPerTexture { get; set; } = new Dictionary<Texture, uint>();
+		public Dictionary<Texture, InstanceDataPerTexture> InstanceDataPerTexture { get; set; } = new Dictionary<Texture, InstanceDataPerTexture>();
 		public Pipeline Pipeline { get; set; }
 		public Shader[] Shaders { get; set; }
+		public List<Renderable2D> RenderableList { get; internal set; } = new List<Renderable2D>();
 
 		protected override void Dispose(bool disposing)
 		{
@@ -33,12 +33,29 @@ namespace BootEngine.Renderer
 				WhiteTexture.Dispose();
 				for (int i = 0; i < Shaders.Length; i++)
 					Shaders[i].Dispose();
-				foreach (var kv in ResourceSetsPerTexture)
+				foreach (var kv in InstanceDataPerTexture)
 				{
-					kv.Value.Dispose();
+					kv.Value.ResourceSet.Dispose();
 					kv.Key.Dispose();
 				}
 			}
 		}
+	}
+
+	public class InstanceDataPerTexture
+	{
+		public InstanceDataPerTexture() { }
+
+		public InstanceDataPerTexture(ResourceSet resourceSet, uint count, uint indexStart)
+		{
+			ResourceSet = resourceSet;
+			Count = count;
+			IndexStart = indexStart;
+		}
+
+		public ResourceSet ResourceSet { get; set; }
+		public uint Count { get; set; }
+		public uint IndexStart { get; set; }
+		public uint LastInstanceIndex => IndexStart + Count;
 	}
 }

@@ -36,32 +36,32 @@ namespace Sandbox.Layers
 			float aspectRatio = (float)Application.App.Window.SdlWindow.Width / Application.App.Window.SdlWindow.Height;
 			_cameraController = new OrthoCameraController(aspectRatio, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted, true);
 
-			//Renderable2DParameters param = new Renderable2DParameters();
-			//param.Name = "Quad";
-			//param.Position = new Vector3(-1, 0, .5f);
-			//param.Size = new Vector2(.5f, .5f);
-			//param.Rotation = 0;
-			//param.Color = _squareColor;
-			//param.Texture = null;
-			//Renderer2D.Instance.SubmitQuadDraw(ref param);
+			Renderable2DParameters param = new Renderable2DParameters();
+			param.Name = "Quad";
+			param.Position = new Vector3(-1, 0, .5f);
+			param.Size = new Vector2(.5f, .5f);
+			param.Rotation = 0;
+			param.Color = _squareColor;
+			param.Texture = null;
+			Renderer2D.Instance.SubmitQuadDraw(ref param);
 
-			//Renderable2DParameters param1 = new Renderable2DParameters();
-			//param1.Name = "Tex";
-			//param1.Position = new Vector3(0, 0, .4f);
-			//param1.Size = new Vector2(.25f, .25f);
-			//param1.Rotation = 0f;
-			//param1.Color = RgbaFloat.White.ToVector4();
-			//param1.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
-			//Renderer2D.Instance.SubmitQuadDraw(ref param1);
+			Renderable2DParameters param1 = new Renderable2DParameters();
+			param1.Name = "Tex";
+			param1.Position = new Vector3(0, 0, .4f);
+			param1.Size = new Vector2(.25f, .25f);
+			param1.Rotation = 0f;
+			param1.Color = RgbaFloat.White.ToVector4();
+			param1.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
+			Renderer2D.Instance.SubmitQuadDraw(ref param1);
 
-			//Renderable2DParameters param2 = new Renderable2DParameters();
-			//param2.Name = "Quad2";
-			//param2.Position = new Vector3(1, 0, .5f);
-			//param2.Size = Vector2.One;
-			//param2.Rotation = 0f;
-			//param2.Color = RgbaFloat.Cyan.ToVector4();
-			//param2.Texture = null;
-			//Renderer2D.Instance.SubmitQuadDraw(ref param2);
+			Renderable2DParameters param2 = new Renderable2DParameters();
+			param2.Name = "Quad2";
+			param2.Position = new Vector3(1, 0, .5f);
+			param2.Size = Vector2.One;
+			param2.Rotation = 0f;
+			param2.Color = RgbaFloat.Cyan.ToVector4();
+			param2.Texture = null;
+			Renderer2D.Instance.SubmitQuadDraw(ref param2);
 
 			Renderable2DParameters param3 = new Renderable2DParameters();
 			param3.Name = null;
@@ -72,7 +72,7 @@ namespace Sandbox.Layers
 			param3.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
 			for (int i = 0; i < _instanceCount; i++)
 			{
-				param3.Position = new Vector3(-.11f * i, 0, .5f);
+				param3.Position = new Vector3(-.11f * (i % 1000), -.11f * (i / 1000), .5f);
 				Renderer2D.Instance.SubmitQuadDraw(ref param3);
 			}
 
@@ -93,13 +93,16 @@ namespace Sandbox.Layers
 			_cameraController.Update(deltaSeconds);
 			Renderer2D renderer = Renderer2D.Instance;
 			renderer.BeginScene(_cameraController.Camera);
-			//renderer.UpdatePosition("Quad2", new Vector3(_squareColor.X, _squareColor.Y, _squareColor.Z));
+			renderer.UpdatePosition("Quad2", new Vector3(_squareColor.X, _squareColor.Y, _squareColor.Z));
 
-			for (int i = 0; i < renderer.InstanceCount; i++)
-			{
-				renderer.UpdateColor(i, _squareColor);
-				renderer.UpdateRotation(i, (float)Utils.Util.Deg2Rad(temp));
-			}
+#if DEBUG
+			using (Profiler updateProfiler = new Profiler("Update"))
+#endif
+				for (int i = 0; i < renderer.InstanceCount; i++)
+				{
+					renderer.UpdateColor(i, _squareColor);
+					renderer.UpdateRotation(i, (float)Utils.Util.Deg2Rad(temp));
+				}
 			temp++;
 
 			System.Threading.Tasks.Task.Run(() =>

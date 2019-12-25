@@ -9,6 +9,8 @@ namespace BootEngine.Utils.ProfilingTools
 {
 	public sealed class Profiler : IDisposable
 	{
+		private const long MS_FREQUENCY = TimeSpan.TicksPerMillisecond / 1000L;
+
 		#region Properties
 		public Stopwatch Sw { get; private set; }
 		public int ThreadID { get; private set; }
@@ -50,7 +52,7 @@ namespace BootEngine.Utils.ProfilingTools
 
 			ThreadID = Thread.CurrentThread.ManagedThreadId;
 
-			StartTime = DateTime.Now.Ticks / (TimeSpan.TicksPerMillisecond / 1000);
+			StartTime = DateTime.Now.Ticks / MS_FREQUENCY;
 
 			Sw = Stopwatch.StartNew();
 		}

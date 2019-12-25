@@ -1,12 +1,9 @@
 ﻿using BootEngine.AssetsManager;
-using BootEngine.Log;
 using BootEngine.Renderer.Cameras;
 using BootEngine.Utils.ProfilingTools;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using Utils.Exceptions;
 using Veldrid;
 
 namespace BootEngine.Renderer
@@ -119,13 +116,18 @@ namespace BootEngine.Renderer
 
 			CurrentScene.Pipeline = factory.CreateGraphicsPipeline(pipelineDescription);
 
-			CurrentScene.ResourceSetsPerTexture.Add(Scene2D.WhiteTexture, _gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(
-				CurrentScene.ResourceLayout,
-				CurrentScene.CameraBuffer,
-				Scene2D.WhiteTexture,
-				_gd.LinearSampler)));
+			InstanceDataPerTexture data = new InstanceDataPerTexture()
+			{
+				ResourceSet = _gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(
+					CurrentScene.ResourceLayout,
+					CurrentScene.CameraBuffer,
+					Scene2D.WhiteTexture,
+					_gd.LinearSampler)),
+				IndexStart = 0,
+				Count = 0
+			};
 
-			CurrentScene.InstancesPerTexture.Add(Scene2D.WhiteTexture, 0);
+			CurrentScene.InstanceDataPerTexture.Add(Scene2D.WhiteTexture, data);
 		}
 		#endregion
 
@@ -155,11 +157,17 @@ namespace BootEngine.Renderer
 #endif
 			Renderable2D renderable;
 			if (parameters.Texture == null)
+			{
 				renderable = SetupInstancedQuad(ref parameters);
+				CurrentScene.RenderableList.Insert((int)CurrentScene.InstanceDataPerTexture[Scene2D.WhiteTexture].LastInstanceIndex - 1, renderable);
+			}
 			else
+			{
 				renderable = SetupInstancedTextureQuad(ref parameters);
+				CurrentScene.RenderableList.Insert((int)CurrentScene.InstanceDataPerTexture[parameters.Texture].LastInstanceIndex - 1, renderable);
+			}
 
-			CurrentScene.RenderableList.Add(renderable);
+			InstanceCount++;
 
 			if (flush)
 				Flush();
@@ -172,8 +180,8 @@ namespace BootEngine.Renderer
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			CurrentScene.InstancesPerTexture[Scene2D.WhiteTexture]++;
-			return new Renderable2D(ref parameters, InstanceCount++);
+			CurrentScene.InstanceDataPerTexture[Scene2D.WhiteTexture].Count++;
+			return new Renderable2D(ref parameters, InstanceCount);
 		}
 
 		internal Renderable2D SetupInstancedTextureQuad(ref Renderable2DParameters parameters)
@@ -181,20 +189,24 @@ namespace BootEngine.Renderer
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			Renderable2D renderable = new Renderable2D(ref parameters, InstanceCount++);
+			Renderable2D renderable = new Renderable2D(ref parameters, InstanceCount);
 
-			if (!CurrentScene.ResourceSetsPerTexture.ContainsKey(parameters.Texture))
+			if (!CurrentScene.InstanceDataPerTexture.ContainsKey(parameters.Texture))
 			{
-				CurrentScene.ResourceSetsPerTexture.Add(renderable.Texture, _gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(
-					CurrentScene.ResourceLayout,
-					CurrentScene.CameraBuffer,
-					renderable.Texture,
-					_gd.LinearSampler)));
-				CurrentScene.InstancesPerTexture.Add(renderable.Texture, 1);
+				CurrentScene.InstanceDataPerTexture.Add(renderable.Texture, new InstanceDataPerTexture()
+				{
+					ResourceSet = _gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(
+						CurrentScene.ResourceLayout,
+						CurrentScene.CameraBuffer,
+						renderable.Texture,
+						_gd.LinearSampler)),
+					Count = 1,
+					IndexStart = CurrentScene.InstanceDataPerTexture.Values.Max((data) => data.LastInstanceIndex)
+				});
 			}
 			else
 			{
-				CurrentScene.InstancesPerTexture[renderable.Texture]++;
+				CurrentScene.InstanceDataPerTexture[renderable.Texture].Count++;
 			}
 
 			return renderable;
@@ -206,7 +218,10 @@ namespace BootEngine.Renderer
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
 			Renderable2D renderable = GetRenderableByInstanceIndex(instanceIndex);
-			CurrentScene.InstancesPerTexture[renderable.Texture ?? Scene2D.WhiteTexture]--;
+			if (--CurrentScene.InstanceDataPerTexture[renderable.Texture ?? Scene2D.WhiteTexture].Count == 0 && renderable.Texture != null)
+			{
+				CurrentScene.InstanceDataPerTexture.Remove(renderable.Texture);
+			}
 			_instanceList[instanceIndex] = new InstanceVertexInfo();
 			InstanceCount--;
 			CurrentScene.RenderableList.RemoveAt(instanceIndex);
@@ -222,7 +237,13 @@ namespace BootEngine.Renderer
 		public void UpdateSize(int instanceIndex, Vector2 size) => UpdateTransform(instanceIndex, null, size, null);
 		public void UpdateRotation(string renderableName, float rotation) => UpdateTransform(renderableName, null, null, rotation);
 		public void UpdateRotation(int instanceIndex, float rotation) => UpdateTransform(instanceIndex, null, null, rotation);
-		public void UpdateTransform(string renderableName, Vector3? position = null, Vector2? size = null, float? rotation = null) => UpdateTransform(GetRenderableByName(renderableName), position, size, rotation);
+		public void UpdateTransform(string renderableName, Vector3? position = null, Vector2? size = null, float? rotation = null)
+		{
+			Renderable2D renderable = GetRenderableByName(renderableName);
+			if (renderable != null)
+				UpdateTransform(renderable, position, size, rotation);
+		}
+
 		public void UpdateTransform(int instanceIndex, Vector3? position = null, Vector2? size = null, float? rotation = null) => UpdateTransform(GetRenderableByInstanceIndex(instanceIndex), position, size, rotation);
 
 		public void UpdateTransform(Renderable2D renderable, Vector3? position = null, Vector2? size = null, float? rotation = null)
@@ -245,7 +266,12 @@ namespace BootEngine.Renderer
 			}
 		}
 
-		public void UpdateColor(string renderableName, Vector4 value) => UpdateColor(GetRenderableByName(renderableName), value);
+		public void UpdateColor(string renderableName, Vector4 value)
+		{
+			Renderable2D renderable = GetRenderableByName(renderableName);
+			if (renderable != null)
+				UpdateColor(renderable, value);
+		}
 
 		public void UpdateColor(int instanceIndex, Vector4 value) => UpdateColor(GetRenderableByInstanceIndex(instanceIndex), value);
 
@@ -259,18 +285,12 @@ namespace BootEngine.Renderer
 		#region Helpers
 		public Renderable2D GetRenderableByName(string name)
 		{
-#if DEBUG
-			using Profiler fullProfiler = new Profiler(GetType());
-#endif
-			return CurrentScene.RenderableList.Find(r => r.Name == name) as Renderable2D;
+			return CurrentScene.RenderableList.Find(r => r.Name == name);
 		}
 
 		public Renderable2D GetRenderableByInstanceIndex(int instanceIndex)
 		{
-#if DEBUG
-			using Profiler fullProfiler = new Profiler(GetType());
-#endif
-			return CurrentScene.RenderableList[instanceIndex] as Renderable2D;
+			return CurrentScene.RenderableList[instanceIndex];
 		}
 
 		public void Flush()
@@ -278,10 +298,10 @@ namespace BootEngine.Renderer
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			CurrentScene.RenderableList = CurrentScene.RenderableList.OrderBy(r => ((Renderable2D)r).Texture?.Name).ToList();
+			CurrentScene.RenderableList = CurrentScene.RenderableList.OrderBy(r => r.Texture?.Name).ToList();
 			for (int index = 0; index < CurrentScene.RenderableList.Count; index++)
 			{
-				Renderable2D renderable = (Renderable2D)CurrentScene.RenderableList[index];
+				Renderable2D renderable = CurrentScene.RenderableList[index];
 				renderable.InstanceIndex = index;
 				_instanceList[index].Position = renderable.Position;
 				_instanceList[index].Scale = renderable.Size;
@@ -313,10 +333,10 @@ namespace BootEngine.Renderer
 			cl.UpdateBuffer(CurrentScene.InstancesVertexBuffer, 0, _instanceList);
 			cl.SetVertexBuffer(1, CurrentScene.InstancesVertexBuffer);
 			uint instanceStart = 0;
-			foreach (var entry in CurrentScene.ResourceSetsPerTexture)
+			foreach (var entry in CurrentScene.InstanceDataPerTexture)
 			{
-				uint instancePerTexCount = CurrentScene.InstancesPerTexture[entry.Key];
-				cl.SetGraphicsResourceSet(0, entry.Value);
+				uint instancePerTexCount = entry.Value.Count;
+				cl.SetGraphicsResourceSet(0, entry.Value.ResourceSet);
 				cl.DrawIndexed(
 					indexCount: 4,
 					instanceCount: instancePerTexCount,
