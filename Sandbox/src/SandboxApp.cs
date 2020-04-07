@@ -20,7 +20,7 @@ namespace Sandbox
 		{
 			ProfileWriter.BeginSession("Startup", "BootProfile-Startup.json");
 			Logger.Init();
-			var app = new SandboxApp(GraphicsBackend.Direct3D11);
+			var app = new SandboxApp(GraphicsBackend.Vulkan);
 			ProfileWriter.EndSesison();
 
 			ProfileWriter.BeginSession("Runtime", "BootProfile-Runtime.json");
