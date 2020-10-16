@@ -8,6 +8,7 @@ using BootEngine.Utils.ProfilingTools;
 using ImGuiNET;
 using System.Linq;
 using System.Numerics;
+using System.Threading.Tasks;
 using Veldrid;
 
 namespace Sandbox.Layers
@@ -98,11 +99,16 @@ namespace Sandbox.Layers
 #if DEBUG
 			using (Profiler updateProfiler = new Profiler("Update"))
 #endif
-				for (int i = 0; i < renderer.InstanceCount; i++)
+				Parallel.For(0, renderer.InstanceCount, (i) =>
 				{
 					renderer.UpdateColor(i, _squareColor);
 					renderer.UpdateRotation(i, (float)Utils.Util.Deg2Rad(temp));
-				}
+				});
+				//for (int i = 0; i < renderer.InstanceCount; i++)
+				//{
+				//	renderer.UpdateColor(i, _squareColor);
+				//	renderer.UpdateRotation(i, (float)Utils.Util.Deg2Rad(temp));
+				//}
 			temp++;
 
 			System.Threading.Tasks.Task.Run(() =>

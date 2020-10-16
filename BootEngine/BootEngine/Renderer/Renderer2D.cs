@@ -11,7 +11,7 @@ namespace BootEngine.Renderer
 	public sealed class Renderer2D : Renderer<Renderer2D>, IDisposable
 	{
 		#region Constants
-		private const int MAX_QUADS = 1000000;
+		private const int MAX_QUADS = 2000000;
 		#endregion
 
 		#region Properties
