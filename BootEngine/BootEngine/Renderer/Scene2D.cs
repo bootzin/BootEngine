@@ -12,7 +12,7 @@ namespace BootEngine.Renderer
 		public DeviceBuffer InstancesVertexBuffer { get; set; }
 		public DeviceBuffer CameraBuffer { get; set; }
 		public ResourceLayout ResourceLayout { get; set; }
-		public Dictionary<Texture, InstanceDataPerTexture> InstanceDataPerTexture { get; set; } = new Dictionary<Texture, InstanceDataPerTexture>();
+		public Dictionary<Texture, InstanceDataPerTexture> InstanceDataPerTexture { get; internal set; } = new Dictionary<Texture, InstanceDataPerTexture>();
 		public Pipeline Pipeline { get; set; }
 		public Shader[] Shaders { get; set; }
 		public List<Renderable2D> RenderableList { get; internal set; } = new List<Renderable2D>();
@@ -30,7 +30,6 @@ namespace BootEngine.Renderer
 				CameraBuffer.Dispose();
 				Pipeline.Dispose();
 				ResourceLayout.Dispose();
-				WhiteTexture.Dispose();
 				for (int i = 0; i < Shaders.Length; i++)
 					Shaders[i].Dispose();
 				foreach (var kv in InstanceDataPerTexture)

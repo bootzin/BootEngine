@@ -10,12 +10,19 @@ namespace BootEngine.AssetsManager
 	public static class ResourceCache
 	{
 		private static readonly Lazy<ConcurrentDictionary<string, Shader>> shaderCache = new Lazy<ConcurrentDictionary<string, Shader>>();
+		private static readonly Lazy<ConcurrentDictionary<string, Texture>> textureCache = new Lazy<ConcurrentDictionary<string, Texture>>();
 
 		private static ConcurrentDictionary<string, Shader> ShaderCache
 		{
 			get { return shaderCache.Value; }
 		}
 
+		private static ConcurrentDictionary<string, Texture> TextureCache
+		{
+			get { return textureCache.Value; }
+		}
+
+		#region Shaders
 		public static Shader GetShader(string shaderName)
 		{
 #if DEBUG
@@ -42,6 +49,28 @@ namespace BootEngine.AssetsManager
 				AddShader(shaders[i]);
 			}
 		}
+		#endregion
+
+		#region Textures
+		public static Texture GetTexture(string texturePath)
+		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(ResourceCache));
+#endif
+			if (TextureCache.TryGetValue(texturePath, out Texture tex))
+				return tex;
+			return null;
+		}
+
+		public static void AddTexture(Texture tex, string texturePath)
+		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(ResourceCache));
+#endif
+			if (!TextureCache.TryAdd(texturePath, tex))
+				throw new BootEngineException($"A Texture with path {texturePath} has already been loaded!");
+		}
+		#endregion
 
 		public static void ClearCache()
 		{

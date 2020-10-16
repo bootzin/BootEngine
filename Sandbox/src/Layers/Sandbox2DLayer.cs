@@ -21,7 +21,7 @@ namespace Sandbox.Layers
 		private float temp = 0;
 		private readonly float[] _frametime = new float[100];
 		private int _instanceCount = 10;
-		private static readonly object _lock = new object();
+		private static readonly object _instanceCountLock = new object();
 		#endregion
 
 		#region Constructor
@@ -44,7 +44,7 @@ namespace Sandbox.Layers
 			param.Rotation = 0;
 			param.Color = _squareColor;
 			param.Texture = null;
-			Renderer2D.Instance.SubmitQuadDraw(ref param);
+			Renderer2D.Instance.SetupQuadDraw(ref param);
 
 			Renderable2DParameters param1 = new Renderable2DParameters();
 			param1.Name = "Tex";
@@ -53,7 +53,7 @@ namespace Sandbox.Layers
 			param1.Rotation = 0f;
 			param1.Color = RgbaFloat.White.ToVector4();
 			param1.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
-			Renderer2D.Instance.SubmitQuadDraw(ref param1);
+			Renderer2D.Instance.SetupQuadDraw(ref param1);
 
 			Renderable2DParameters param2 = new Renderable2DParameters();
 			param2.Name = "Quad2";
@@ -62,7 +62,7 @@ namespace Sandbox.Layers
 			param2.Rotation = 0f;
 			param2.Color = RgbaFloat.Cyan.ToVector4();
 			param2.Texture = null;
-			Renderer2D.Instance.SubmitQuadDraw(ref param2);
+			Renderer2D.Instance.SetupQuadDraw(ref param2);
 
 			Renderable2DParameters param3 = new Renderable2DParameters();
 			param3.Name = null;
@@ -74,7 +74,7 @@ namespace Sandbox.Layers
 			for (int i = 0; i < _instanceCount; i++)
 			{
 				param3.Position = new Vector3(-.11f * (i % 1000), -.11f * (i / 1000), .5f);
-				Renderer2D.Instance.SubmitQuadDraw(ref param3);
+				Renderer2D.Instance.SetupQuadDraw(ref param3);
 			}
 
 			Renderer2D.Instance.Flush();
@@ -113,7 +113,7 @@ namespace Sandbox.Layers
 
 			System.Threading.Tasks.Task.Run(() =>
 			{
-				lock (_lock)
+				lock (_instanceCountLock)
 				{
 					if (renderer.InstanceCount < _instanceCount)
 					{
@@ -125,7 +125,7 @@ namespace Sandbox.Layers
 						for (int i = renderer.InstanceCount; i < _instanceCount; i++)
 						{
 								param.Position = new Vector3(-.11f * (i % 1000), -.11f * (i / 1000), .5f);
-								renderer.SubmitQuadDraw(ref param);
+								renderer.SetupQuadDraw(ref param);
 						}
 						renderer.Flush();
 					}
