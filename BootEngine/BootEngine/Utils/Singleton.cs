@@ -12,6 +12,8 @@ namespace BootEngine.Utils
 			return Activator.CreateInstance(typeof(T)) as T;
 		});
 
+		protected Singleton() { }
+
 		public static T Instance => Lazy.Value;
 	}
 }

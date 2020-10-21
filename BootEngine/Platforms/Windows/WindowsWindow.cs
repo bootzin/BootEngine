@@ -82,7 +82,6 @@ namespace Platforms.Windows
 			//#TODO treat it here or hope for Veldrid to be updated with this (Maybe clone and alter source code myself)
 			window.Resized += () =>
 			{
-				graphicsDevice.ResizeMainWindow((uint)window.Width, (uint)window.Height);
 				EventCallback(new WindowResizeEvent((uint)window.Width, (uint)window.Height));
 			};
 

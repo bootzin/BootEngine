@@ -14,6 +14,7 @@ namespace BootEngine.Renderer
 
 		internal DeviceBuffer ColorBuffer { get; set; }
 		internal DeviceBuffer TransformBuffer { get; set; }
+		internal DeviceBuffer TilingFactor { get; set; }
 		internal ResourceSet ResourceSet { get; set; }
 
 		public void SetParameters(ref Renderable2DParameters parameters)
@@ -38,6 +39,7 @@ namespace BootEngine.Renderer
 				Texture?.Dispose();
 				ColorBuffer.Dispose();
 				TransformBuffer.Dispose();
+				TilingFactor.Dispose();
 				ResourceSet.Dispose();
 			}
 		}

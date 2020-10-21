@@ -35,8 +35,12 @@ layout(set = 0, binding = 2) uniform Color
 
 layout(set = 0, binding = 3) uniform texture2D Texture;
 layout(set = 0, binding = 4) uniform sampler Sampler;
+layout(set = 0, binding = 5) uniform TilingFactor 
+{
+	float tilingFactor;
+};
 
 void main()
 {
-	outColor = texture(sampler2D(Texture, Sampler), fsTexCoord) * fsin_Color;
+	outColor = texture(sampler2D(Texture, Sampler), fsTexCoord * tilingFactor) * fsin_Color;
 }

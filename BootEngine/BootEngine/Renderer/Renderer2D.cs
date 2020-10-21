@@ -13,7 +13,7 @@ namespace BootEngine.Renderer
 		#region Properties
 		private static Scene2D CurrentScene { get; set; }
 		private readonly static GraphicsDevice _gd = Application.App.Window.GraphicsDevice;
-
+		private readonly static CommandList CommandList = _gd.ResourceFactory.CreateCommandList();
 		public int InstanceCount => CurrentScene.RenderableList.Count;
 		#endregion
 
@@ -81,6 +81,7 @@ namespace BootEngine.Renderer
 					new ResourceLayoutElementDescription("Transform", ResourceKind.UniformBuffer, ShaderStages.Vertex),
 					new ResourceLayoutElementDescription("Color", ResourceKind.UniformBuffer, ShaderStages.Fragment),
 					new ResourceLayoutElementDescription("Texture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+					new ResourceLayoutElementDescription("TilingFactor", ResourceKind.UniformBuffer, ShaderStages.Fragment),
 					new ResourceLayoutElementDescription("Sampler", ResourceKind.Sampler, ShaderStages.Fragment)));
 
 			GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription();
@@ -103,7 +104,6 @@ namespace BootEngine.Renderer
 			pipelineDescription.Outputs = _gd.MainSwapchain.Framebuffer.OutputDescription;
 
 			CurrentScene.Pipeline = factory.CreateGraphicsPipeline(pipelineDescription);
-
 		}
 		#endregion
 
@@ -148,6 +148,9 @@ namespace BootEngine.Renderer
 #endif
 			Renderable2D renderable = new Renderable2D();
 
+			renderable.TilingFactor = _gd.ResourceFactory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
+			_gd.UpdateBuffer(renderable.TilingFactor, 0, 1f);
+
 			renderable.ColorBuffer = _gd.ResourceFactory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
 			_gd.UpdateBuffer(renderable.ColorBuffer, 0, color);
 
@@ -163,6 +166,7 @@ namespace BootEngine.Renderer
 				renderable.TransformBuffer,
 				renderable.ColorBuffer,
 				Scene2D.WhiteTexture,
+				renderable.TilingFactor,
 				_gd.LinearSampler));
 
 			return renderable;
@@ -184,6 +188,9 @@ namespace BootEngine.Renderer
 				translation *= Matrix4x4.CreateRotationZ(rotation);
 			_gd.UpdateBuffer(renderable.TransformBuffer, 0, translation);
 
+			renderable.TilingFactor = _gd.ResourceFactory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
+			_gd.UpdateBuffer(renderable.TilingFactor, 0, 1f);
+
 			renderable.Texture = texture;
 
 			renderable.ResourceSet = _gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(
@@ -192,6 +199,7 @@ namespace BootEngine.Renderer
 				renderable.TransformBuffer,
 				renderable.ColorBuffer,
 				renderable.Texture,
+				renderable.TilingFactor,
 				_gd.LinearSampler));
 
 			return renderable;
@@ -229,12 +237,12 @@ namespace BootEngine.Renderer
 			if (rotation.HasValue)
 				renderable.Rotation = rotation.Value;
 
-			Matrix4x4 translation = Matrix4x4.CreateTranslation(renderable.Position)
-				* Matrix4x4.CreateScale(new Vector3(renderable.Size, 1f));
+			Matrix4x4 model = Matrix4x4.CreateScale(new Vector3(renderable.Size, 1f));
 			if (renderable.Rotation != 0)
-				translation *= Matrix4x4.CreateRotationZ(renderable.Rotation);
+				model *= Matrix4x4.CreateRotationZ(renderable.Rotation);
+			model *= Matrix4x4.CreateTranslation(renderable.Position);
 
-			UpdateBuffer(renderable.TransformBuffer, translation);
+			UpdateBuffer(renderable.TransformBuffer, model);
 		}
 
 		public void UpdateColor(string renderableName, Vector4 value)
@@ -267,15 +275,14 @@ namespace BootEngine.Renderer
 
 		public void Render()
 		{
-			Render(CurrentScene);
+			Render(CurrentScene, CommandList);
 		}
 
 		protected override void BeginRender(CommandList cl)
 		{
 			cl.Begin();
 			cl.SetFramebuffer(_gd.SwapchainFramebuffer);
-			cl.SetViewport(0, new Viewport(0, 0, _gd.SwapchainFramebuffer.Width, _gd.SwapchainFramebuffer.Height, 0, 1));
-			cl.SetFullViewports();
+			cl.SetFullViewport(0);
 			cl.ClearColorTarget(0, RgbaFloat.Grey);
 			cl.ClearDepthStencil(1f);
 			cl.SetVertexBuffer(0, CurrentScene.VertexBuffer);
@@ -297,7 +304,6 @@ namespace BootEngine.Renderer
 				vertexOffset: 0,
 				instanceStart: 0);
 		}
-
 
 		protected override void EndRender(CommandList cl)
 		{

@@ -37,7 +37,7 @@ namespace BootEngine.Window
 		public Action<EventBase> EventCallback { get; set; }
 		public ResourceFactory ResourceFactory { get; set; }
 		public GCHandle GcHandle { get; set; }
-		protected bool VSync { get { return GraphicsDevice.SyncToVerticalBlank; } set { SetVSync(in value); } }
+		protected bool VSync { get { return GraphicsDevice.SyncToVerticalBlank; } set { SetVSync(value); } }
 		public ref GraphicsDevice GraphicsDevice => ref graphicsDevice;
 		public Swapchain Swapchain => swapchain;
 		public Sdl2Window SdlWindow => window;
@@ -54,7 +54,7 @@ namespace BootEngine.Window
 		#region Methods
 		public abstract void OnUpdate(bool updateSnapshot = true);
 
-		public virtual void SetVSync(in bool enabled)
+		public virtual void SetVSync(bool enabled)
 		{
 			graphicsDevice.SyncToVerticalBlank = enabled;
 		}

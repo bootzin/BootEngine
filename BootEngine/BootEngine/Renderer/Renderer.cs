@@ -9,14 +9,12 @@ namespace BootEngine.Renderer
 		protected abstract void InnerRender(Renderable renderable, CommandList cl);
 		protected abstract void EndRender(CommandList cl);
 
-		protected void Render(Scene scene)
+		protected void Render(Scene scene, CommandList cl)
 		{
-			CommandList cl = Application.App.Window.GraphicsDevice.ResourceFactory.CreateCommandList();
 			BeginRender(cl);
 			for (int i = scene.RenderableList.Count; i > 0;)
 				InnerRender(scene.RenderableList[--i], cl);
 			EndRender(cl);
-			cl.Dispose();
 		}
 	}
 }
