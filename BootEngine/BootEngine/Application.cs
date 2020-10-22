@@ -21,7 +21,7 @@ namespace BootEngine
 		private bool disposed;
 		#endregion
 
-		protected Application(Type windowType, Veldrid.GraphicsBackend backend = Veldrid.GraphicsBackend.Direct3D11)
+		protected Application(Type windowType, Veldrid.GraphicsBackend backend)
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
@@ -30,6 +30,20 @@ namespace BootEngine
 			App = this;
 			LayerStack = new LayerStack();
 			Window = WindowBase.CreateMainWindow(windowType, backend: backend);
+			Window.EventCallback = OnEvent;
+			ImGuiLayer = new ImGuiLayer();
+			LayerStack.PushOverlay(ImGuiLayer);
+		}
+
+		protected Application(Type windowType)
+		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
+			Logger.Assert(App == null, "App already initialized");
+			App = this;
+			LayerStack = new LayerStack();
+			Window = WindowBase.CreateMainWindow(windowType);
 			Window.EventCallback = OnEvent;
 			ImGuiLayer = new ImGuiLayer();
 			LayerStack.PushOverlay(ImGuiLayer);
