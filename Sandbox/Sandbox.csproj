@@ -53,12 +53,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="assets\shaders\Batch2D.glsl" />
     <None Remove="assets\shaders\FlatColor2D.glsl" />
     <None Remove="assets\shaders\Texture2D.glsl" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="assets\shaders\FlatColor2D.glsl" />
+    <Content Include="assets\shaders\Batch2D.glsl" />
     <Content Include="assets\shaders\Texture2D.glsl" />
   </ItemGroup>
 

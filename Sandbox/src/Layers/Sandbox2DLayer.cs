@@ -17,7 +17,6 @@ namespace Sandbox.Layers
 		#region Properties
 		private OrthoCameraController _cameraController;
 		private Vector4 _squareColor = RgbaFloat.DarkRed.ToVector4();
-		private float temp = 0;
 		private readonly float[] _frametime = new float[100];
 		private int _instanceCount = 10;
 		#endregion
@@ -44,13 +43,13 @@ namespace Sandbox.Layers
 			param.Texture = null;
 			Renderer2D.Instance.SubmitQuadDraw(ref param);
 
-			param.Name = null;
-			param.Position = new Vector3(0, 0, .4f);
-			param.Size = new Vector2(.25f, .25f);
-			param.Rotation = 0f;
-			param.Color = RgbaFloat.White.ToVector4();
-			param.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
-			Renderer2D.Instance.SubmitQuadDraw(ref param);
+			//param.Name = null;
+			//param.Position = new Vector3(0, 0, .4f);
+			//param.Size = new Vector2(.25f, .25f);
+			//param.Rotation = 0f;
+			//param.Color = RgbaFloat.White.ToVector4();
+			//param.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
+			//Renderer2D.Instance.SubmitQuadDraw(ref param);
 
 			param.Name = "Quad2";
 			param.Position = new Vector3(-1, 0, .5f);
@@ -86,9 +85,9 @@ namespace Sandbox.Layers
 			_cameraController.Update(deltaSeconds);
 			Renderer2D renderer = Renderer2D.Instance;
 			renderer.BeginScene(_cameraController.Camera);
-			renderer.UpdateColor("Quad", _squareColor);
-			renderer.UpdatePosition("Quad2", new Vector3(_squareColor.X, _squareColor.Y, _squareColor.Z));
-			renderer.UpdateRotation("Quad2", (float)Utils.Util.Deg2Rad(temp++));
+			//renderer.UpdateColor("Quad", _squareColor);
+			//renderer.UpdatePosition("Quad2", new Vector3(_squareColor.X, _squareColor.Y, _squareColor.Z));
+			//renderer.UpdateRotation("Quad2", (float)Utils.Util.Deg2Rad(temp++));
 
 			if (renderer.InstanceCount - 3 < _instanceCount)
 			{

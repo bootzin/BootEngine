@@ -27,26 +27,42 @@ namespace BootEngine.Renderer
 
 			ResourceFactory factory = _gd.ResourceFactory;
 
-			Span<ushort> quadIndices = stackalloc ushort[] { 0, 1, 2, 3 };
-			Span<VertexPositionTexture> quadVertices = stackalloc VertexPositionTexture[]
-			{
-				new VertexPositionTexture(new Vector3(-.5f, .5f, 0f), new Vector2(0.0f, 1.0f)),
-				new VertexPositionTexture(new Vector3(.5f, .5f, 0f), new Vector2(1.0f, 1.0f)),
-				new VertexPositionTexture(new Vector3(-.5f, -.5f, 0f), new Vector2(0.0f, 0.0f)),
-				new VertexPositionTexture(new Vector3(.5f, -.5f, 0f), new Vector2(1.0f, 0.0f))
-			};
-
-			BufferDescription vbDescription = new BufferDescription(
-				VertexPositionTexture.SizeInBytes * 4,
-				BufferUsage.VertexBuffer);
-			BufferDescription ibDescription = new BufferDescription(
-				4 * sizeof(ushort),
+			BufferDescription quadVb = new BufferDescription(
+				QuadVertex.SizeInBytes * Scene2D.MaxVertices,
+				BufferUsage.VertexBuffer | BufferUsage.Dynamic);
+			BufferDescription quadIb = new BufferDescription(
+				sizeof(ushort) * Scene2D.MaxIndices,
 				BufferUsage.IndexBuffer);
 
-			CurrentScene.IndexBuffer = factory.CreateBuffer(ibDescription);
-			CurrentScene.VertexBuffer = factory.CreateBuffer(vbDescription);
+			CurrentScene.IndexBuffer = factory.CreateBuffer(quadIb);
+			CurrentScene.VertexBuffer = factory.CreateBuffer(quadVb);
+
+			CurrentScene.QuadVertexPositions = new Vector3[]
+			{
+				new Vector3(-.5f, .5f, 0f),
+				new Vector3(.5f, .5f, 0f),
+				new Vector3(-.5f, -.5f, 0f),
+				new Vector3(.5f, -.5f, 0f)
+			};
+
+			CurrentScene.QuadVertexBufferBase = new QuadVertex[Scene2D.MaxVertices];
+			Span<ushort> quadIndices = stackalloc ushort[Scene2D.MaxIndices];
+
+			ushort offset = 0;
+			for (int i = 0; i < Scene2D.MaxIndices; i+=6)
+			{
+				quadIndices[i] = offset;
+				quadIndices[i + 1] = (ushort)(offset + 1);
+				quadIndices[i + 2] = (ushort)(offset + 2);
+
+				quadIndices[i + 3] = (ushort)(offset + 1);
+				quadIndices[i + 4] = (ushort)(offset + 3);
+				quadIndices[i + 5] = (ushort)(offset + 2);
+
+				offset += 4;
+			}
+
 			_gd.UpdateBuffer(CurrentScene.IndexBuffer, 0, quadIndices.ToArray());
-			_gd.UpdateBuffer(CurrentScene.VertexBuffer, 0, quadVertices.ToArray());
 
 			Scene2D.WhiteTexture = factory.CreateTexture(TextureDescription.Texture2D(
 				1u, // Width
@@ -69,19 +85,19 @@ namespace BootEngine.Renderer
 				0); // ArrayLayers
 
 			CurrentScene.CameraBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
-			CurrentScene.Shaders = AssetManager.GenerateShadersFromFile("Texture2D.glsl");
+			CurrentScene.Shaders = AssetManager.GenerateShadersFromFile("Batch2D.glsl");
 
 			VertexLayoutDescription vertexLayout = new VertexLayoutDescription(
 				new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
-				new VertexElementDescription("TexCoord", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2));
+				new VertexElementDescription("TexCoord", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
+				new VertexElementDescription("Color", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float4),
+				new VertexElementDescription("TexIndex", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float1),
+				new VertexElementDescription("TilingFactor", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float1));
 
 			CurrentScene.ResourceLayout = factory.CreateResourceLayout(
 				new ResourceLayoutDescription(
 					new ResourceLayoutElementDescription("ViewProjection", ResourceKind.UniformBuffer, ShaderStages.Vertex),
-					new ResourceLayoutElementDescription("Transform", ResourceKind.UniformBuffer, ShaderStages.Vertex),
-					new ResourceLayoutElementDescription("Color", ResourceKind.UniformBuffer, ShaderStages.Fragment),
 					new ResourceLayoutElementDescription("Texture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
-					new ResourceLayoutElementDescription("TilingFactor", ResourceKind.UniformBuffer, ShaderStages.Fragment),
 					new ResourceLayoutElementDescription("Sampler", ResourceKind.Sampler, ShaderStages.Fragment)));
 
 			GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription();
@@ -96,7 +112,7 @@ namespace BootEngine.Renderer
 				frontFace: FrontFace.Clockwise,
 				depthClipEnabled: true,
 				scissorTestEnabled: false);
-			pipelineDescription.PrimitiveTopology = PrimitiveTopology.TriangleStrip;
+			pipelineDescription.PrimitiveTopology = PrimitiveTopology.TriangleList;
 			pipelineDescription.ResourceLayouts = new ResourceLayout[] { CurrentScene.ResourceLayout };
 			pipelineDescription.ShaderSet = new ShaderSetDescription(
 				vertexLayouts: new VertexLayoutDescription[] { vertexLayout },
@@ -115,11 +131,33 @@ namespace BootEngine.Renderer
 		public void BeginScene(OrthoCamera camera)
 		{
 			_gd.UpdateBuffer(CurrentScene.CameraBuffer, 0, camera.ViewProjectionMatrix);
+
+			StartBatch();
+		}
+
+		private void StartBatch()
+		{
+			CurrentScene.IndexCount = (uint)(InstanceCount * 6);
+			CurrentScene.CurrentQuadVertex = InstanceCount * 4;
 		}
 
 		public void EndScene()
 		{
 			//
+		}
+
+		private void Flush()
+		{
+			if (CurrentScene.IndexCount == 0)
+				return;
+
+			_gd.UpdateBuffer(CurrentScene.VertexBuffer, 0, CurrentScene.QuadVertexBufferBase);
+		}
+
+		private void NextBatch()
+		{
+			Flush();
+			StartBatch();
 		}
 
 		#region Primitives
@@ -148,25 +186,31 @@ namespace BootEngine.Renderer
 #endif
 			Renderable2D renderable = new Renderable2D();
 
-			renderable.TilingFactor = _gd.ResourceFactory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
-			_gd.UpdateBuffer(renderable.TilingFactor, 0, 1f);
+			Vector2[] texCoords = new Vector2[] { new Vector2(0, 1), new Vector2(1, 1), new Vector2(1, 0), new Vector2(0, 0) };
 
-			renderable.ColorBuffer = _gd.ResourceFactory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
-			_gd.UpdateBuffer(renderable.ColorBuffer, 0, color);
+			if (CurrentScene.IndexCount >= Scene2D.MaxIndices)
+				NextBatch();
 
-			renderable.TransformBuffer = _gd.ResourceFactory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
 			Matrix4x4 translation = Matrix4x4.CreateTranslation(position) * Matrix4x4.CreateScale(new Vector3(size, 1f));
 			if (rotation != 0)
 				translation *= Matrix4x4.CreateRotationZ(rotation);
-			_gd.UpdateBuffer(renderable.TransformBuffer, 0, translation);
+
+			for (int i = 0; i < 4; i++)
+			{
+				CurrentScene.QuadVertexBufferBase[CurrentScene.CurrentQuadVertex++] = new QuadVertex(
+					Vector3.Transform(CurrentScene.QuadVertexPositions[i], translation),
+					texCoords[i],
+					color,
+					0,
+					1);
+			}
+
+			CurrentScene.IndexCount += 6;
 
 			renderable.ResourceSet = _gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(
 				CurrentScene.ResourceLayout,
 				CurrentScene.CameraBuffer,
-				renderable.TransformBuffer,
-				renderable.ColorBuffer,
 				Scene2D.WhiteTexture,
-				renderable.TilingFactor,
 				_gd.LinearSampler));
 
 			return renderable;
@@ -179,27 +223,16 @@ namespace BootEngine.Renderer
 #endif
 			Renderable2D renderable = new Renderable2D();
 
-			renderable.ColorBuffer = _gd.ResourceFactory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
-			_gd.UpdateBuffer(renderable.ColorBuffer, 0, color);
-
-			renderable.TransformBuffer = _gd.ResourceFactory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
 			Matrix4x4 translation = Matrix4x4.CreateTranslation(position) * Matrix4x4.CreateScale(new Vector3(size, 1f));
 			if (rotation != 0)
 				translation *= Matrix4x4.CreateRotationZ(rotation);
-			_gd.UpdateBuffer(renderable.TransformBuffer, 0, translation);
-
-			renderable.TilingFactor = _gd.ResourceFactory.CreateBuffer(new BufferDescription(16, BufferUsage.UniformBuffer));
-			_gd.UpdateBuffer(renderable.TilingFactor, 0, 1f);
 
 			renderable.Texture = texture;
 
 			renderable.ResourceSet = _gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(
 				CurrentScene.ResourceLayout,
 				CurrentScene.CameraBuffer,
-				renderable.TransformBuffer,
-				renderable.ColorBuffer,
 				renderable.Texture,
-				renderable.TilingFactor,
 				_gd.LinearSampler));
 
 			return renderable;
@@ -242,19 +275,19 @@ namespace BootEngine.Renderer
 				model *= Matrix4x4.CreateRotationZ(renderable.Rotation);
 			model *= Matrix4x4.CreateTranslation(renderable.Position);
 
-			UpdateBuffer(renderable.TransformBuffer, model);
+			//UpdateBuffer(renderable.TransformBuffer, model);
 		}
 
 		public void UpdateColor(string renderableName, Vector4 value)
 		{
 			Renderable2D renderable = GetRenderableByName(renderableName);
-			UpdateBuffer(renderable.ColorBuffer, value);
+			//UpdateBuffer(renderable.ColorBuffer, value);
 		}
 
 		public void UpdateColor(int index, Vector4 value)
 		{
 			Renderable2D renderable = GetRenderableByIndex(index);
-			UpdateBuffer(renderable.ColorBuffer, value);
+			//UpdateBuffer(renderable.ColorBuffer, value);
 		}
 
 		public Renderable2D GetRenderableByName(string name)
@@ -280,6 +313,7 @@ namespace BootEngine.Renderer
 
 		protected override void BeginRender(CommandList cl)
 		{
+			Flush();
 			cl.Begin();
 			cl.SetFramebuffer(_gd.SwapchainFramebuffer);
 			cl.SetFullViewport(0);
@@ -298,7 +332,7 @@ namespace BootEngine.Renderer
 
 			cl.SetGraphicsResourceSet(0, renderable2d.ResourceSet);
 			cl.DrawIndexed(
-				indexCount: 4,
+				indexCount: CurrentScene.IndexCount,
 				instanceCount: 1,
 				indexStart: 0,
 				vertexOffset: 0,
@@ -318,18 +352,24 @@ namespace BootEngine.Renderer
 #endif
 			CurrentScene.Dispose();
 		}
+	}
 
-		private readonly struct VertexPositionTexture
+	public readonly struct QuadVertex
+	{
+		public const uint SizeInBytes = 44;
+		public readonly Vector3 Position { get; }
+		public readonly Vector2 TexCoord { get; }
+		public readonly Vector4 Color { get; }
+		public readonly float TexIndex { get; }
+		public float TilingFactor { get; }
+
+		public QuadVertex(Vector3 position, Vector2 texCoord, Vector4 color, float texIndex, float tilingFactor)
 		{
-			public const uint SizeInBytes = 20;
-			public readonly Vector3 Position { get; }
-			public readonly Vector2 TexCoord { get; }
-
-			public VertexPositionTexture(Vector3 position, Vector2 texCoord)
-			{
-				this.Position = position;
-				this.TexCoord = texCoord;
-			}
+			Position = position;
+			TexCoord = texCoord;
+			Color = color;
+			TexIndex = texIndex;
+			TilingFactor = tilingFactor;
 		}
 	}
 

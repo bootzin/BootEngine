@@ -1,4 +1,5 @@
 ﻿using BootEngine.Utils.ProfilingTools;
+using System.Numerics;
 using Veldrid;
 
 namespace BootEngine.Renderer
@@ -12,6 +13,15 @@ namespace BootEngine.Renderer
 		public ResourceLayout ResourceLayout { get; set; }
 		public Pipeline Pipeline { get; set; }
 		public Shader[] Shaders { get; set; }
+
+		public const int MaxQuads = 10_000;
+		public const int MaxVertices = MaxQuads * 4;
+		public const int MaxIndices = MaxQuads * 6;
+
+		public uint IndexCount { get; set; }
+		public QuadVertex[] QuadVertexBufferBase { get; set; }
+		public int CurrentQuadVertex { get; set; }
+		public Vector3[] QuadVertexPositions { get; set; }
 
 		protected override void Dispose(bool disposing)
 		{
