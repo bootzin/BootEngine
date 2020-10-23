@@ -11,7 +11,7 @@ namespace BootEngine.Renderer
 		public Vector3 Position { get; set; }
 		public Vector2 Size { get; set; }
 		public float Rotation { get; set; }
-
+		public Matrix4x4 Translation { get; set; }
 		internal ResourceSet ResourceSet { get; set; }
 
 		public void SetParameters(ref Renderable2DParameters parameters)

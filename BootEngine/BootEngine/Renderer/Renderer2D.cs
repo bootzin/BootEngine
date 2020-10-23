@@ -45,7 +45,14 @@ namespace BootEngine.Renderer
 				new Vector3(.5f, -.5f, 0f)
 			};
 
-			CurrentScene.QuadVertexBufferBase = new QuadVertex[Scene2D.MaxVertices];
+			CurrentScene.QuadTexCoords = new Vector2[]
+			{
+				new Vector2(0, 1),
+				new Vector2(1, 1),
+				new Vector2(1, 0),
+				new Vector2(0, 0)
+			};
+
 			Span<ushort> quadIndices = stackalloc ushort[Scene2D.MaxIndices];
 
 			ushort offset = 0;
@@ -137,8 +144,9 @@ namespace BootEngine.Renderer
 
 		private void StartBatch()
 		{
-			CurrentScene.IndexCount = (uint)(InstanceCount * 6);
-			CurrentScene.CurrentQuadVertex = InstanceCount * 4;
+			CurrentScene.IndexCount = 0;
+			CurrentScene.CurrentQuadVertex = 0;
+			CurrentScene.QuadVertexBufferBase = new QuadVertex[Scene2D.MaxVertices];
 		}
 
 		public void EndScene()
@@ -146,17 +154,9 @@ namespace BootEngine.Renderer
 			//
 		}
 
-		private void Flush()
-		{
-			if (CurrentScene.IndexCount == 0)
-				return;
-
-			_gd.UpdateBuffer(CurrentScene.VertexBuffer, 0, CurrentScene.QuadVertexBufferBase);
-		}
-
 		private void NextBatch()
 		{
-			Flush();
+			BatchRender(CommandList);
 			StartBatch();
 		}
 
@@ -186,26 +186,13 @@ namespace BootEngine.Renderer
 #endif
 			Renderable2D renderable = new Renderable2D();
 
-			Vector2[] texCoords = new Vector2[] { new Vector2(0, 1), new Vector2(1, 1), new Vector2(1, 0), new Vector2(0, 0) };
-
-			if (CurrentScene.IndexCount >= Scene2D.MaxIndices)
-				NextBatch();
-
 			Matrix4x4 translation = Matrix4x4.CreateTranslation(position) * Matrix4x4.CreateScale(new Vector3(size, 1f));
 			if (rotation != 0)
 				translation *= Matrix4x4.CreateRotationZ(rotation);
 
-			for (int i = 0; i < 4; i++)
-			{
-				CurrentScene.QuadVertexBufferBase[CurrentScene.CurrentQuadVertex++] = new QuadVertex(
-					Vector3.Transform(CurrentScene.QuadVertexPositions[i], translation),
-					texCoords[i],
-					color,
-					0,
-					1);
-			}
+			renderable.Translation = translation;
 
-			CurrentScene.IndexCount += 6;
+			renderable.Color = color;
 
 			renderable.ResourceSet = _gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(
 				CurrentScene.ResourceLayout,
@@ -226,6 +213,10 @@ namespace BootEngine.Renderer
 			Matrix4x4 translation = Matrix4x4.CreateTranslation(position) * Matrix4x4.CreateScale(new Vector3(size, 1f));
 			if (rotation != 0)
 				translation *= Matrix4x4.CreateRotationZ(rotation);
+
+			renderable.Translation = translation;
+
+			renderable.Color = color;
 
 			renderable.Texture = texture;
 
@@ -313,7 +304,6 @@ namespace BootEngine.Renderer
 
 		protected override void BeginRender(CommandList cl)
 		{
-			Flush();
 			cl.Begin();
 			cl.SetFramebuffer(_gd.SwapchainFramebuffer);
 			cl.SetFullViewport(0);
@@ -322,15 +312,39 @@ namespace BootEngine.Renderer
 			cl.SetVertexBuffer(0, CurrentScene.VertexBuffer);
 			cl.SetIndexBuffer(CurrentScene.IndexBuffer, IndexFormat.UInt16);
 			cl.SetPipeline(CurrentScene.Pipeline);
+
+			StartBatch();
+
+			CurrentScene.RenderableList.ForEach(renderable =>
+			{
+				var r2d = renderable as Renderable2D;
+				for (int i = 0; i < 4; i++)
+				{
+					CurrentScene.QuadVertexBufferBase[CurrentScene.CurrentQuadVertex++] = new QuadVertex(
+						Vector3.Transform(CurrentScene.QuadVertexPositions[i], r2d.Translation),
+						CurrentScene.QuadTexCoords[i],
+						r2d.Color,
+						0,
+						1);
+				}
+
+				CurrentScene.IndexCount += 6;
+
+				if (CurrentScene.IndexCount >= Scene2D.MaxIndices)
+				{
+					NextBatch();
+				}
+			});
 		}
 
-		protected override void InnerRender(Renderable renderable, CommandList cl)
+		protected override void BatchRender(CommandList cl)
 		{
-			Logger.Assert(renderable is Renderable2D, "Renderable object should be of type " + nameof(Renderable2D));
+			if (CurrentScene.IndexCount == 0)
+				return;
 
-			Renderable2D renderable2d = renderable as Renderable2D;
+			_gd.UpdateBuffer(CurrentScene.VertexBuffer, 0, CurrentScene.QuadVertexBufferBase);
 
-			cl.SetGraphicsResourceSet(0, renderable2d.ResourceSet);
+			cl.SetGraphicsResourceSet(0, (CurrentScene.RenderableList[0] as Renderable2D).ResourceSet);
 			cl.DrawIndexed(
 				indexCount: CurrentScene.IndexCount,
 				instanceCount: 1,

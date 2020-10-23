@@ -14,14 +14,16 @@ namespace BootEngine.Renderer
 		public Pipeline Pipeline { get; set; }
 		public Shader[] Shaders { get; set; }
 
-		public const int MaxQuads = 10_000;
+		public const int MaxQuads = 8;
 		public const int MaxVertices = MaxQuads * 4;
 		public const int MaxIndices = MaxQuads * 6;
+		public const int MaxTextureSlots = 32;
 
 		public uint IndexCount { get; set; }
 		public QuadVertex[] QuadVertexBufferBase { get; set; }
 		public int CurrentQuadVertex { get; set; }
 		public Vector3[] QuadVertexPositions { get; set; }
+		public Vector2[] QuadTexCoords { get; set; }
 
 		protected override void Dispose(bool disposing)
 		{
