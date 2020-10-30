@@ -129,7 +129,7 @@ namespace Sandbox.Layers
 			ImGui.End();
 
 			ImGui.Begin("QuadDraw Config");
-			ImGui.DragInt("QuadCount", ref _instanceCount, 1, 10, 1000);
+			ImGui.DragInt("QuadCount", ref _instanceCount, 1, 10, 200000);
 			ImGui.End();
 		}
 

@@ -342,7 +342,7 @@ namespace BootEngine.Renderer
 			if (CurrentScene.IndexCount == 0)
 				return;
 
-			_gd.UpdateBuffer(CurrentScene.VertexBuffer, 0, CurrentScene.QuadVertexBufferBase);
+			cl.UpdateBuffer(CurrentScene.VertexBuffer, 0, CurrentScene.QuadVertexBufferBase);
 
 			cl.SetGraphicsResourceSet(0, (CurrentScene.RenderableList[0] as Renderable2D).ResourceSet);
 			cl.DrawIndexed(
