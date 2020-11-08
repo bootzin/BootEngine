@@ -9,15 +9,11 @@ namespace BootEngine.Renderer
 		protected abstract void BatchRender(CommandList cl);
 		protected abstract void EndRender(CommandList cl);
 
-		public void Render()
+		public void Render(CommandList cl)
 		{
-			CommandList cl = Application.App.Window.GraphicsDevice.ResourceFactory.CreateCommandList();
-
 			BeginRender(cl);
 			BatchRender(cl);
 			EndRender(cl);
-
-			cl.Dispose();
 		}
 	}
 }

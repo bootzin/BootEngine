@@ -21,6 +21,7 @@ namespace BootEngine.Renderer
 		private readonly InstanceVertexInfo[] _instanceList = new InstanceVertexInfo[MAX_QUADS];
 
 		public int InstanceCount { get; private set; }
+		private readonly static CommandList CommandList = _gd.ResourceFactory.CreateCommandList();
 		#endregion
 
 		#region Constructor
@@ -94,6 +95,7 @@ namespace BootEngine.Renderer
 				new ResourceLayoutDescription(
 					new ResourceLayoutElementDescription("ViewProjection", ResourceKind.UniformBuffer, ShaderStages.Vertex),
 					new ResourceLayoutElementDescription("Texture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+					new ResourceLayoutElementDescription("TilingFactor", ResourceKind.UniformBuffer, ShaderStages.Fragment),
 					new ResourceLayoutElementDescription("Sampler", ResourceKind.Sampler, ShaderStages.Fragment)));
 
 			GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription();
@@ -329,8 +331,7 @@ namespace BootEngine.Renderer
 		{
 			cl.Begin();
 			cl.SetFramebuffer(_gd.SwapchainFramebuffer);
-			cl.SetViewport(0, new Viewport(0, 0, _gd.SwapchainFramebuffer.Width, _gd.SwapchainFramebuffer.Height, 0, 1));
-			cl.SetFullViewports();
+			cl.SetFullViewport(0);
 			cl.ClearColorTarget(0, RgbaFloat.Grey);
 			cl.ClearDepthStencil(1f);
 			cl.SetVertexBuffer(0, CurrentScene.VertexBuffer);

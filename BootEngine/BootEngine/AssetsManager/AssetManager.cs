@@ -79,7 +79,7 @@ namespace BootEngine.AssetsManager
 		}
 
 		/// <summary>
-		/// Loads every shader specified in <paramref name="pathStageList"/>. 
+		/// Loads every shader specified in <paramref name="pathStageList"/>.
 		/// Does not generate equivalents for other backends.
 		/// </summary>
 		/// <param name="pathStageList">Array of path-stage tuple arguments for the shader</param>
@@ -100,7 +100,7 @@ namespace BootEngine.AssetsManager
 		}
 
 		/// <summary>
-		/// Loads both the vertex and the fragment shader and generates necessary 
+		/// Loads both the vertex and the fragment shader and generates necessary
 		/// files for other backends using Veldrid.SPIRV
 		/// </summary>
 		/// <param name="path">The path to the file in which the shaders are.</param>
@@ -115,7 +115,7 @@ namespace BootEngine.AssetsManager
 		}
 
 		/// <summary>
-		/// Loads both the vertex and the fragment shader and generates necessary 
+		/// Loads both the vertex and the fragment shader and generates necessary
 		/// files for other backends using Veldrid.SPIRV
 		/// </summary>
 		/// <param name="setName">The name of the shader set. Should be unique.</param>
@@ -131,7 +131,7 @@ namespace BootEngine.AssetsManager
 		}
 
 		/// <summary>
-		/// Loads both the vertex and the fragment shader and generates necessary 
+		/// Loads both the vertex and the fragment shader and generates necessary
 		/// files for other backends using Veldrid.SPIRV
 		/// </summary>
 		/// <param name="setName">The name of the shader set. Should be unique.</param>
