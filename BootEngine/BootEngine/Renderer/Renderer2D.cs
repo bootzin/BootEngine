@@ -1,10 +1,9 @@
-﻿using BootEngine.Renderer.Cameras;
+﻿using BootEngine.AssetsManager;
+using BootEngine.Renderer.Cameras;
+using BootEngine.Utils.ProfilingTools;
 using System;
 using System.Numerics;
 using Veldrid;
-using BootEngine.AssetsManager;
-using BootEngine.Log;
-using BootEngine.Utils.ProfilingTools;
 
 namespace BootEngine.Renderer
 {
@@ -89,7 +88,8 @@ namespace BootEngine.Renderer
 				1u, // Height
 				1,  // Depth
 				0,  // Miplevel
-				0); // ArrayLayers
+				0); // ArrayLayer
+			CurrentScene.TextureSlots.Add(Scene2D.WhiteTexture);
 
 			CurrentScene.CameraBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
 			CurrentScene.Shaders = AssetManager.GenerateShadersFromFile("Batch2D.glsl");
@@ -109,16 +109,8 @@ namespace BootEngine.Renderer
 
 			GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription();
 			pipelineDescription.BlendState = BlendStateDescription.SingleAlphaBlend;
-			pipelineDescription.DepthStencilState = new DepthStencilStateDescription(
-				depthTestEnabled: true,
-				depthWriteEnabled: true,
-				comparisonKind: ComparisonKind.LessEqual);
-			pipelineDescription.RasterizerState = new RasterizerStateDescription(
-				cullMode: FaceCullMode.Back,
-				fillMode: PolygonFillMode.Solid,
-				frontFace: FrontFace.Clockwise,
-				depthClipEnabled: true,
-				scissorTestEnabled: false);
+			pipelineDescription.DepthStencilState = DepthStencilStateDescription.DepthOnlyLessEqual;
+			pipelineDescription.RasterizerState = RasterizerStateDescription.Default;
 			pipelineDescription.PrimitiveTopology = PrimitiveTopology.TriangleList;
 			pipelineDescription.ResourceLayouts = new ResourceLayout[] { CurrentScene.ResourceLayout };
 			pipelineDescription.ShaderSet = new ShaderSetDescription(
@@ -146,7 +138,8 @@ namespace BootEngine.Renderer
 		{
 			CurrentScene.IndexCount = 0;
 			CurrentScene.CurrentQuadVertex = 0;
-			CurrentScene.QuadVertexBufferBase = new QuadVertex[Scene2D.MaxVertices];
+			Array.Clear(CurrentScene.QuadVertexBufferBase, 0, Scene2D.MaxVertices);
+			CurrentScene.TextureIndex = 1;
 		}
 
 		public void EndScene()
