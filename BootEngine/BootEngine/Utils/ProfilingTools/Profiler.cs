@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
 #if !DEBUG
 using Utils.Exceptions;
 #endif
@@ -40,7 +39,7 @@ namespace BootEngine.Utils.ProfilingTools
 		public void Dispose()
 		{
 			Sw.Stop();
-			Task.Run(() => ProfileWriter.WriteProfile(this));
+			ProfileWriter.WriteProfile(this);
 		}
 
 		private void Init()

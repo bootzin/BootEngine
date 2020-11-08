@@ -21,7 +21,6 @@ namespace Sandbox.Layers
 		private float temp = 0;
 		private readonly float[] _frametime = new float[100];
 		private int _instanceCount = 10;
-		private static readonly object _instanceCountLock = new object();
 		#endregion
 
 		#region Constructor
@@ -111,32 +110,26 @@ namespace Sandbox.Layers
 				//}
 			temp++;
 
-			System.Threading.Tasks.Task.Run(() =>
+			if (renderer.InstanceCount < _instanceCount)
 			{
-				lock (_instanceCountLock)
+				var param = new Renderable2DParameters();
+				param.Size = new Vector2(.1f, .1f);
+				param.Rotation = 0;
+				param.Color = _squareColor;
+				param.Texture = AssetManager.LoadTexture2D("assets/textures/sampleDog.png", TextureUsage.Sampled);
+				for (int i = renderer.InstanceCount; i < _instanceCount; i++)
 				{
-					if (renderer.InstanceCount < _instanceCount)
-					{
-						var param = new Renderable2DParameters();
-						param.Size = new Vector2(.1f, .1f);
-						param.Rotation = 0;
-						param.Color = _squareColor;
-						param.Texture = AssetManager.LoadTexture2D("assets/textures/sampleDog.png", TextureUsage.Sampled);
-						for (int i = renderer.InstanceCount; i < _instanceCount; i++)
-						{
-								param.Position = new Vector3(-.11f * (i % 1000), -.11f * (i / 1000), .5f);
-								renderer.SetupQuadDraw(ref param);
-						}
-						renderer.Flush();
-					}
-					else if (renderer.InstanceCount > _instanceCount)
-					{
-						for (int i = renderer.InstanceCount; i > _instanceCount;)
-							renderer.RemoveQuadDraw(--i);
-						renderer.Flush();
-					}
+						param.Position = new Vector3(-.11f * (i % 1000), -.11f * (i / 1000), .5f);
+						renderer.SetupQuadDraw(ref param);
 				}
-			});
+				renderer.Flush();
+			}
+			else if (renderer.InstanceCount > _instanceCount)
+			{
+				for (int i = renderer.InstanceCount; i > _instanceCount;)
+					renderer.RemoveQuadDraw(--i);
+				renderer.Flush();
+			}
 
 #if DEBUG
 			using (Profiler camProfiler = new Profiler("Rendering"))

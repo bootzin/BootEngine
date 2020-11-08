@@ -49,7 +49,7 @@ namespace BootEngine.AssetsManager
 					(uint)texSrc.Height,
 					1,  // Depth
 					0,  // Miplevel
-					0); // ArrayLayers
+					0); // ArrayLayer
 				if (cached)
 					ResourceCache.AddTexture(tex, texturePath);
 			}
