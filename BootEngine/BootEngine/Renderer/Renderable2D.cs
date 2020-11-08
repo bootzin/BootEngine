@@ -85,20 +85,5 @@ namespace BootEngine.Renderer
 			Size = parameters.Size;
 			Name = parameters.Name;
 		}
-
-		protected override void Dispose(bool disposing)
-		{
-#if DEBUG
-			using Profiler fullProfiler = new Profiler(GetType());
-#endif
-			if (disposing)
-			{
-				Texture?.Dispose();
-				ColorBuffer.Dispose();
-				TransformBuffer.Dispose();
-				TilingFactor.Dispose();
-				ResourceSet.Dispose();
-			}
-		}
 	}
 }

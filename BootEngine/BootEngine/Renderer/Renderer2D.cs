@@ -95,7 +95,6 @@ namespace BootEngine.Renderer
 				new ResourceLayoutDescription(
 					new ResourceLayoutElementDescription("ViewProjection", ResourceKind.UniformBuffer, ShaderStages.Vertex),
 					new ResourceLayoutElementDescription("Texture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
-					new ResourceLayoutElementDescription("TilingFactor", ResourceKind.UniformBuffer, ShaderStages.Fragment),
 					new ResourceLayoutElementDescription("Sampler", ResourceKind.Sampler, ShaderStages.Fragment)));
 
 			GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription();
@@ -327,6 +326,10 @@ namespace BootEngine.Renderer
 		#endregion
 
 		#region Renderer
+		public void Render()
+		{
+			Render(CommandList);
+		}
 		protected override void BeginRender(CommandList cl)
 		{
 			cl.Begin();
