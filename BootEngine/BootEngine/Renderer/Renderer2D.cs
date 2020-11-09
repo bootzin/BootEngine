@@ -124,6 +124,12 @@ namespace BootEngine.Renderer
 
 			CurrentScene.DataPerTexture.Add(Scene2D.WhiteTexture, data);
 		}
+
+		public void ResetStats()
+		{
+			Logger.CoreInfo("Currently issuing " + CurrentScene.Stats.DrawCalls + " draw calls");
+			CurrentScene.Stats.DrawCalls = 0;
+		}
 		#endregion
 
 		public static void SetCurrentScene(Scene2D scene)
@@ -200,7 +206,7 @@ namespace BootEngine.Renderer
 			}
 			else
 			{
-				CurrentScene.DataPerTexture[renderable.Texture].Count++;
+				CurrentScene.DataPerTexture[parameters.Texture].Count++;
 			}
 
 			return renderable;
@@ -215,8 +221,8 @@ namespace BootEngine.Renderer
 			if (--CurrentScene.DataPerTexture[renderable.Texture ?? Scene2D.WhiteTexture].Count == 0 && renderable.Texture != null)
 			{
 				CurrentScene.DataPerTexture.Remove(renderable.Texture, out InstancingTextureData data);
-				renderable.Texture.Dispose();
-				data.ResourceSet.Dispose();
+				_gd.DisposeWhenIdle(renderable.Texture);
+				_gd.DisposeWhenIdle(data.ResourceSet);
 			}
 
 			InstanceCount--;
@@ -315,6 +321,7 @@ namespace BootEngine.Renderer
 				instanceList[index].Rotation = renderable.Rotation;
 				instanceList[index].Color = renderable.Color;
 			}
+			_gd.UpdateBuffer(CurrentScene.InstancesVertexBuffer, 0, instanceList);
 		}
 		#endregion
 
@@ -340,11 +347,11 @@ namespace BootEngine.Renderer
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			cl.UpdateBuffer(CurrentScene.InstancesVertexBuffer, 0, instanceList);
 			cl.SetVertexBuffer(1, CurrentScene.InstancesVertexBuffer);
 			uint instanceStart = 0;
 			foreach (var entry in CurrentScene.DataPerTexture)
 			{
+				CurrentScene.Stats.DrawCalls++;
 				uint instancePerTexCount = entry.Value.Count;
 				cl.SetGraphicsResourceSet(0, entry.Value.ResourceSet);
 				cl.DrawIndexed(

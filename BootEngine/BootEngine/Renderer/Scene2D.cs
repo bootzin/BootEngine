@@ -16,6 +16,7 @@ namespace BootEngine.Renderer
 		public Pipeline Pipeline { get; set; }
 		public Shader[] Shaders { get; set; }
 		public List<Renderable2D> RenderableList { get; internal set; } = new List<Renderable2D>();
+		public RenderStats Stats { get; } = new RenderStats();
 
 		protected override void Dispose(bool disposing)
 		{
@@ -56,5 +57,10 @@ namespace BootEngine.Renderer
 		public uint Count { get; set; }
 		public uint IndexStart { get; set; }
 		public uint LastInstanceIndex => IndexStart + Count;
+	}
+
+	public class RenderStats
+	{
+		public int DrawCalls { get; set; }
 	}
 }

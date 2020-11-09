@@ -84,6 +84,7 @@ namespace Sandbox.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
+			Renderer2D.Instance.ResetStats();
 			_frametime[99] = deltaSeconds * 1000;
 			for (int i = 0; i < 99;)
 			{
@@ -98,11 +99,11 @@ namespace Sandbox.Layers
 #if DEBUG
 			using (Profiler updateProfiler = new Profiler("Update"))
 #endif
-				Parallel.For(0, renderer.InstanceCount, (i) =>
-				{
-					renderer.UpdateColor(i, squareColor);
-					renderer.UpdateRotation(i, Utils.Util.Deg2Rad(temp));
-				});
+				//Parallel.For(0, renderer.InstanceCount, (i) =>
+				//{
+				//	renderer.UpdateColor(i, squareColor);
+				//	renderer.UpdateRotation(i, Utils.Util.Deg2Rad(temp));
+				//});
 				//for (int i = 0; i < renderer.InstanceCount; i++)
 				//{
 				//	renderer.UpdateColor(i, _squareColor);
