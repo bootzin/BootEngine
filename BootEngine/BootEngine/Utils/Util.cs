@@ -4,9 +4,9 @@ namespace Utils
 {
 	public static class Util
 	{
-		public static double Deg2Rad(double angle)
+		public static float Deg2Rad(float angle)
 		{
-			return Math.PI * angle / 180.0;
+			return MathF.PI * angle / 180.0f;
 		}
 	}
 }

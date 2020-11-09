@@ -79,12 +79,12 @@ namespace BootEngine.Renderer.Cameras
 				float rot = 0f;
 				if (inputManager.GetKeyDown(KeyCodes.Q))
 				{
-					rot += (float)Util.Deg2Rad(CAMERA_ROTATION_SPEED);
+					rot += Util.Deg2Rad(CAMERA_ROTATION_SPEED);
 					Camera.Rotation += rot * deltaSeconds;
 				}
 				else if (inputManager.GetKeyDown(KeyCodes.E))
 				{
-					rot -= (float)Util.Deg2Rad(CAMERA_ROTATION_SPEED);
+					rot -= Util.Deg2Rad(CAMERA_ROTATION_SPEED);
 					Camera.Rotation += rot * deltaSeconds;
 				}
 			}

@@ -1,4 +1,5 @@
 ﻿using BootEngine.AssetsManager;
+using BootEngine.Log;
 using BootEngine.Renderer.Cameras;
 using BootEngine.Utils.ProfilingTools;
 using System;
@@ -140,8 +141,7 @@ namespace BootEngine.Renderer
 		}
 
 		#region Primitives
-		public Renderable2D SetupQuadDraw(Renderable2DParameters parameters, bool flush = false)
-			=> SetupQuadDraw(ref parameters, flush);
+		public Renderable2D SetupQuadDraw(Renderable2DParameters parameters, bool flush = false) => SetupQuadDraw(ref parameters, flush);
 
 		public Renderable2D SetupQuadDraw(ref Renderable2DParameters parameters, bool flush = false)
 		{
@@ -194,7 +194,7 @@ namespace BootEngine.Renderer
 						renderable.Texture,
 						_gd.LinearSampler)),
 					Count = 1,
-					IndexStart = CurrentScene.DataPerTexture.Values.Max((data) => data.LastInstanceIndex)
+					IndexStart = CurrentScene.DataPerTexture.Values.Max(data => data.LastInstanceIndex)
 				});
 			}
 			else
@@ -214,8 +214,8 @@ namespace BootEngine.Renderer
 			if (--CurrentScene.DataPerTexture[renderable.Texture ?? Scene2D.WhiteTexture].Count == 0 && renderable.Texture != null)
 			{
 				CurrentScene.DataPerTexture.Remove(renderable.Texture, out InstancingTextureData data);
-				_gd.DisposeWhenIdle(renderable.Texture);
-				_gd.DisposeWhenIdle(data.ResourceSet);
+				renderable.Texture.Dispose();
+				data.ResourceSet.Dispose();
 			}
 
 			InstanceCount--;
@@ -237,6 +237,8 @@ namespace BootEngine.Renderer
 			Renderable2D renderable = GetRenderableByName(renderableName);
 			if (renderable != null)
 				UpdateTransform(renderable, position, size, rotation);
+			else
+				Logger.CoreWarn("Renderable with name '" + renderableName + "' not found!");
 		}
 
 		public void UpdateTransform(int instanceIndex, Vector3? position = null, Vector2? size = null, float? rotation = null) => UpdateTransform(GetRenderableByInstanceIndex(instanceIndex), position, size, rotation);
