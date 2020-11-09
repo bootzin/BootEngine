@@ -17,6 +17,7 @@ namespace BootEngine.Renderer
 		#endregion
 
 		#region Properties
+		private bool shouldFlush;
 		private static Scene2D CurrentScene { get; set; }
 		public int InstanceCount { get; private set; }
 
@@ -148,9 +149,9 @@ namespace BootEngine.Renderer
 		}
 
 		#region Primitives
-		public Renderable2D SetupQuadDraw(Renderable2DParameters parameters, bool flush = false) => SetupQuadDraw(ref parameters, flush);
+		public Renderable2D SetupQuadDraw(Renderable2DParameters parameters, bool flush = true) => SetupQuadDraw(ref parameters, flush);
 
-		public Renderable2D SetupQuadDraw(ref Renderable2DParameters parameters, bool flush = false)
+		public Renderable2D SetupQuadDraw(ref Renderable2DParameters parameters, bool flush = true)
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
@@ -169,8 +170,7 @@ namespace BootEngine.Renderer
 
 			InstanceCount++;
 
-			if (flush)
-				Flush();
+			shouldFlush |= flush;
 
 			return renderable;
 		}
@@ -212,7 +212,7 @@ namespace BootEngine.Renderer
 			return renderable;
 		}
 
-		public void RemoveQuadDraw(int instanceIndex, bool flush = false)
+		public void RemoveQuadDraw(int instanceIndex, bool flush = true)
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
@@ -227,8 +227,7 @@ namespace BootEngine.Renderer
 
 			InstanceCount--;
 			CurrentScene.RenderableList.RemoveAt(instanceIndex);
-			if (flush)
-				Flush();
+			shouldFlush |= flush;
 		}
 		#endregion
 
@@ -244,8 +243,6 @@ namespace BootEngine.Renderer
 			Renderable2D renderable = GetRenderableByName(renderableName);
 			if (renderable != null)
 				UpdateTransform(renderable, position, size, rotation);
-			else
-				Logger.CoreWarn("Renderable with name '" + renderableName + "' not found!");
 		}
 
 		public void UpdateTransform(int instanceIndex, Vector3? position = null, Vector2? size = null, float? rotation = null) => UpdateTransform(GetRenderableByInstanceIndex(instanceIndex), position, size, rotation);
@@ -253,20 +250,23 @@ namespace BootEngine.Renderer
 		public void UpdateTransform(Renderable2D renderable, Vector3? position = null, Vector2? size = null, float? rotation = null)
 		{
 			int index = renderable.InstanceIndex;
-			if (position.HasValue)
+			if (position.HasValue && instanceList[index].Position != position.Value)
 			{
 				instanceList[index].Position = position.Value;
 				renderable.Position = position.Value;
+				shouldFlush = true;
 			}
-			if (size.HasValue)
+			if (size.HasValue && instanceList[index].Scale != size.Value)
 			{
 				instanceList[index].Scale = size.Value;
 				renderable.Size = size.Value;
+				shouldFlush = true;
 			}
-			if (rotation.HasValue)
+			if (rotation.HasValue && instanceList[index].Rotation != rotation.Value)
 			{
 				instanceList[index].Rotation = rotation.Value;
 				renderable.Rotation = rotation.Value;
+				shouldFlush = true;
 			}
 		}
 
@@ -283,6 +283,7 @@ namespace BootEngine.Renderer
 		{
 			renderable.Color = value;
 			instanceList[renderable.InstanceIndex].Color = value;
+			shouldFlush = true;
 		}
 		#endregion
 
@@ -302,7 +303,7 @@ namespace BootEngine.Renderer
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			CurrentScene.RenderableList = CurrentScene.RenderableList.OrderBy(r => r.Texture?.Name).ToList();
+			shouldFlush = false;
 
 			if (instanceList.Length < CurrentScene.RenderableList.Count)
 			{
@@ -332,6 +333,8 @@ namespace BootEngine.Renderer
 		}
 		protected override void BeginRender(CommandList cl)
 		{
+			if (shouldFlush)
+				Flush();
 			cl.Begin();
 			cl.SetFramebuffer(_gd.SwapchainFramebuffer);
 			cl.SetFullViewport(0);
@@ -351,16 +354,19 @@ namespace BootEngine.Renderer
 			uint instanceStart = 0;
 			foreach (var entry in CurrentScene.DataPerTexture)
 			{
-				CurrentScene.Stats.DrawCalls++;
 				uint instancePerTexCount = entry.Value.Count;
-				cl.SetGraphicsResourceSet(0, entry.Value.ResourceSet);
-				cl.DrawIndexed(
-					indexCount: 4,
-					instanceCount: instancePerTexCount,
-					indexStart: 0,
-					vertexOffset: 0,
-					instanceStart: instanceStart);
-				instanceStart += instancePerTexCount;
+				if (instancePerTexCount > 0)
+				{
+					CurrentScene.Stats.DrawCalls++;
+					cl.SetGraphicsResourceSet(0, entry.Value.ResourceSet);
+					cl.DrawIndexed(
+						indexCount: 4,
+						instanceCount: instancePerTexCount,
+						indexStart: 0,
+						vertexOffset: 0,
+						instanceStart: instanceStart);
+					instanceStart += instancePerTexCount;
+				}
 			}
 		}
 

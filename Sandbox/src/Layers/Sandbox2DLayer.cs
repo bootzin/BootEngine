@@ -18,7 +18,7 @@ namespace Sandbox.Layers
 		#region Properties
 		private OrthoCameraController cameraController;
 		private Vector4 squareColor = RgbaFloat.DarkRed.ToVector4();
-		private float temp;
+		private float rot;
 		private int instanceCount = 10;
 		private readonly float[] _frametime = new float[100];
 		#endregion
@@ -75,8 +75,6 @@ namespace Sandbox.Layers
 				param3.Position = new Vector3(-.11f * (i % 1000), -.11f * (i / 1000), .5f);
 				Renderer2D.Instance.SetupQuadDraw(ref param3);
 			}
-
-			Renderer2D.Instance.Flush();
 		}
 
 		public override void OnUpdate(float deltaSeconds)
@@ -99,17 +97,17 @@ namespace Sandbox.Layers
 #if DEBUG
 			using (Profiler updateProfiler = new Profiler("Update"))
 #endif
-				//Parallel.For(0, renderer.InstanceCount, (i) =>
-				//{
-				//	renderer.UpdateColor(i, squareColor);
-				//	renderer.UpdateRotation(i, Utils.Util.Deg2Rad(temp));
-				//});
-				//for (int i = 0; i < renderer.InstanceCount; i++)
-				//{
-				//	renderer.UpdateColor(i, _squareColor);
-				//	renderer.UpdateRotation(i, (float)Utils.Util.Deg2Rad(temp));
-				//}
-			temp++;
+			Parallel.For(0, renderer.InstanceCount, (i) =>
+			{
+				renderer.UpdateColor(i, squareColor);
+				renderer.UpdateRotation(i, Utils.Util.Deg2Rad(rot));
+			});
+			//for (int i = 0; i < renderer.InstanceCount; i++)
+			//{
+			//	renderer.UpdateColor(i, _squareColor);
+			//	renderer.UpdateRotation(i, (float)Utils.Util.Deg2Rad(temp));
+			//}
+			rot++;
 
 			if (renderer.InstanceCount < instanceCount)
 			{
@@ -123,13 +121,11 @@ namespace Sandbox.Layers
 						param.Position = new Vector3(-.11f * (i % 1000), -.11f * (i / 1000), .5f);
 						renderer.SetupQuadDraw(ref param);
 				}
-				renderer.Flush();
 			}
 			else if (renderer.InstanceCount > instanceCount)
 			{
 				for (int i = renderer.InstanceCount; i > instanceCount;)
 					renderer.RemoveQuadDraw(--i);
-				renderer.Flush();
 			}
 
 #if DEBUG
