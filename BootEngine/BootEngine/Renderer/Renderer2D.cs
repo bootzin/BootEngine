@@ -3,6 +3,7 @@ using BootEngine.Log;
 using BootEngine.Renderer.Cameras;
 using BootEngine.Utils.ProfilingTools;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Veldrid;
@@ -12,16 +13,16 @@ namespace BootEngine.Renderer
 	public sealed class Renderer2D : Renderer<Renderer2D>, IDisposable
 	{
 		#region Constants
-		private const int MAX_QUADS = 2_000_000;
+		private const int MAX_QUADS = 512;
 		#endregion
 
 		#region Properties
 		private static Scene2D CurrentScene { get; set; }
-		private readonly static GraphicsDevice _gd = Application.App.Window.GraphicsDevice;
-		private readonly InstanceVertexInfo[] _instanceList = new InstanceVertexInfo[MAX_QUADS];
-
 		public int InstanceCount { get; private set; }
-		private readonly static CommandList CommandList = _gd.ResourceFactory.CreateCommandList();
+
+		private InstanceVertexInfo[] instanceList = new InstanceVertexInfo[MAX_QUADS];
+		private readonly static GraphicsDevice _gd = Application.App.Window.GraphicsDevice;
+		private readonly static CommandList _commandList = _gd.ResourceFactory.CreateCommandList();
 		#endregion
 
 		#region Constructor
@@ -248,17 +249,17 @@ namespace BootEngine.Renderer
 			int index = renderable.InstanceIndex;
 			if (position.HasValue)
 			{
-				_instanceList[index].Position = position.Value;
+				instanceList[index].Position = position.Value;
 				renderable.Position = position.Value;
 			}
 			if (size.HasValue)
 			{
-				_instanceList[index].Scale = size.Value;
+				instanceList[index].Scale = size.Value;
 				renderable.Size = size.Value;
 			}
 			if (rotation.HasValue)
 			{
-				_instanceList[index].Rotation = rotation.Value;
+				instanceList[index].Rotation = rotation.Value;
 				renderable.Rotation = rotation.Value;
 			}
 		}
@@ -275,7 +276,7 @@ namespace BootEngine.Renderer
 		public void UpdateColor(Renderable2D renderable, Vector4 value)
 		{
 			renderable.Color = value;
-			_instanceList[renderable.InstanceIndex].Color = value;
+			instanceList[renderable.InstanceIndex].Color = value;
 		}
 		#endregion
 
@@ -296,14 +297,23 @@ namespace BootEngine.Renderer
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
 			CurrentScene.RenderableList = CurrentScene.RenderableList.OrderBy(r => r.Texture?.Name).ToList();
+
+			if (instanceList.Length < CurrentScene.RenderableList.Count)
+			{
+				var tmp = new InstanceVertexInfo[CurrentScene.RenderableList.Count * 2];
+				Array.Copy(instanceList, tmp, instanceList.Length);
+				instanceList = tmp;
+				CurrentScene.InstancesVertexBuffer = _gd.ResourceFactory.CreateBuffer(new BufferDescription((uint)(instanceList.Length * InstanceVertexInfo.SizeInBytes), BufferUsage.VertexBuffer));
+			}
+
 			for (int index = 0; index < CurrentScene.RenderableList.Count; index++)
 			{
 				Renderable2D renderable = CurrentScene.RenderableList[index];
 				renderable.InstanceIndex = index;
-				_instanceList[index].Position = renderable.Position;
-				_instanceList[index].Scale = renderable.Size;
-				_instanceList[index].Rotation = renderable.Rotation;
-				_instanceList[index].Color = renderable.Color;
+				instanceList[index].Position = renderable.Position;
+				instanceList[index].Scale = renderable.Size;
+				instanceList[index].Rotation = renderable.Rotation;
+				instanceList[index].Color = renderable.Color;
 			}
 		}
 		#endregion
@@ -311,7 +321,7 @@ namespace BootEngine.Renderer
 		#region Renderer
 		public void Render()
 		{
-			Render(CommandList);
+			Render(_commandList);
 		}
 		protected override void BeginRender(CommandList cl)
 		{
@@ -330,7 +340,7 @@ namespace BootEngine.Renderer
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			cl.UpdateBuffer(CurrentScene.InstancesVertexBuffer, 0, _instanceList);
+			cl.UpdateBuffer(CurrentScene.InstancesVertexBuffer, 0, instanceList);
 			cl.SetVertexBuffer(1, CurrentScene.InstancesVertexBuffer);
 			uint instanceStart = 0;
 			foreach (var entry in CurrentScene.DataPerTexture)

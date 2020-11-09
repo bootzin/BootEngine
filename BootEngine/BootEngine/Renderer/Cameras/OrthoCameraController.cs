@@ -12,7 +12,7 @@ namespace BootEngine.Renderer.Cameras
 		private const float CAMERA_MOVE_SPEED = 2f;
 		private const float CAMERA_ROTATION_SPEED = 60f;
 
-		private readonly bool enableRotation;
+		private readonly bool _enableRotation;
 		private float aspectRatio;
 		private float zoomLevel = 1f;
 
@@ -24,7 +24,7 @@ namespace BootEngine.Renderer.Cameras
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
 			Camera = camera;
-			this.enableRotation = enableRotation;
+			this._enableRotation = enableRotation;
 			this.aspectRatio = aspectRatio;
 		}
 
@@ -35,7 +35,7 @@ namespace BootEngine.Renderer.Cameras
 #endif
 			Camera = new OrthoCamera(-aspectRatio * zoomLevel, aspectRatio * zoomLevel, -zoomLevel, zoomLevel, useReverseDepth, swapYAxis);
 			this.aspectRatio = aspectRatio;
-			this.enableRotation = enableRotation;
+			this._enableRotation = enableRotation;
 		}
 
 		public void OnEvent(EventBase @event)
@@ -74,7 +74,7 @@ namespace BootEngine.Renderer.Cameras
 				Camera.Position += dir * CAMERA_MOVE_SPEED * deltaSeconds * zoomLevel;
 			}
 
-			if (enableRotation)
+			if (_enableRotation)
 			{
 				float rot = 0f;
 				if (inputManager.GetKeyDown(KeyCodes.Q))
