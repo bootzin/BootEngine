@@ -281,9 +281,12 @@ namespace BootEngine.Renderer
 
 		public void UpdateColor(Renderable2D renderable, Vector4 value)
 		{
-			renderable.Color = value;
-			instanceList[renderable.InstanceIndex].Color = value;
-			shouldFlush = true;
+			if (instanceList[renderable.InstanceIndex].Color != value)
+			{
+				renderable.Color = value;
+				instanceList[renderable.InstanceIndex].Color = value;
+				shouldFlush = true;
+			}
 		}
 		#endregion
 
