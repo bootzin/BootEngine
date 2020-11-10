@@ -28,12 +28,13 @@ namespace BootEngine.Renderer.Cameras
 			this.aspectRatio = aspectRatio;
 		}
 
-		public OrthoCameraController(float aspectRatio, bool useReverseDepth = false, bool swapYAxis = false, bool enableRotation = false)
+		public OrthoCameraController(float aspectRatio, bool enableRotation = false)
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			Camera = new OrthoCamera(-aspectRatio * zoomLevel, aspectRatio * zoomLevel, -zoomLevel, zoomLevel, useReverseDepth, swapYAxis);
+			Camera = new OrthoCamera(-aspectRatio * zoomLevel, aspectRatio * zoomLevel, -zoomLevel, zoomLevel,
+				Application.App.Window.GraphicsDevice.IsDepthRangeZeroToOne, Application.App.Window.GraphicsDevice.IsClipSpaceYInverted);
 			this.aspectRatio = aspectRatio;
 			this._enableRotation = enableRotation;
 		}

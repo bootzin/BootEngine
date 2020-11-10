@@ -16,7 +16,7 @@ namespace Platforms.Windows
 			InitializeSubWindow(gd, sdlWindow);
 		}
 
-		public WindowsWindow(WindowProps props, GraphicsBackend backend)
+		public WindowsWindow(WindowProps props, BootEngine.Utils.GraphicsBackend backend)
 		{
 			Initialize(props, backend);
 		}
@@ -52,7 +52,7 @@ namespace Platforms.Windows
 			window.Resized += () => swapchain.Resize((uint)window.Width, (uint)window.Height);
 		}
 
-		private void Initialize(WindowProps props, GraphicsBackend backend)
+		private void Initialize(WindowProps props, BootEngine.Utils.GraphicsBackend backend)
 		{
 			InputManager.CreateInstance<WindowsInput>();
 
@@ -72,7 +72,7 @@ namespace Platforms.Windows
 #if DEBUG
 			options.Debug = true;
 #endif
-			WindowStartup.CreateWindowAndGraphicsDevice(props, options, backend, out window, out graphicsDevice);
+			WindowStartup.CreateWindowAndGraphicsDevice(props, options, (Veldrid.GraphicsBackend)backend, out window, out graphicsDevice);
 
 			VSync = props.VSync;
 			ResourceFactory = graphicsDevice.ResourceFactory;

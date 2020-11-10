@@ -1,4 +1,5 @@
 ﻿using BootEngine;
+using BootEngine.Utils;
 using BootEngine.AssetsManager;
 using BootEngine.Events;
 using BootEngine.Layers;
@@ -9,7 +10,6 @@ using ImGuiNET;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
-using Veldrid;
 
 namespace Sandbox.Layers
 {
@@ -17,7 +17,7 @@ namespace Sandbox.Layers
 	{
 		#region Properties
 		private OrthoCameraController cameraController;
-		private Vector4 squareColor = RgbaFloat.DarkRed.ToVector4();
+		private Vector4 squareColor = ColorF.DarkRed;
 		private float rot;
 		private int instanceCount = 10;
 		private readonly float[] _frametime = new float[100];
@@ -32,9 +32,8 @@ namespace Sandbox.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			GraphicsDevice _graphicsDevice = Application.App.Window.GraphicsDevice;
 			float aspectRatio = (float)Application.App.Window.SdlWindow.Width / Application.App.Window.SdlWindow.Height;
-			cameraController = new OrthoCameraController(aspectRatio, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted, true);
+			cameraController = new OrthoCameraController(aspectRatio, true);
 
 			Renderable2DParameters param = new Renderable2DParameters();
 			param.Name = "Quad";
@@ -50,7 +49,7 @@ namespace Sandbox.Layers
 			param1.Position = new Vector3(0, 0, .4f);
 			param1.Size = new Vector2(.25f, .25f);
 			param1.Rotation = 0f;
-			param1.Color = RgbaFloat.White.ToVector4();
+			param1.Color = ColorF.White.ToVector4();
 			param1.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
 			Renderer2D.Instance.SetupQuadDraw(ref param1);
 
@@ -59,7 +58,7 @@ namespace Sandbox.Layers
 			param2.Position = new Vector3(1, 0, .5f);
 			param2.Size = Vector2.One;
 			param2.Rotation = 0f;
-			param2.Color = RgbaFloat.Cyan.ToVector4();
+			param2.Color = ColorF.Cyan.ToVector4();
 			param2.Texture = null;
 			Renderer2D.Instance.SetupQuadDraw(ref param2);
 

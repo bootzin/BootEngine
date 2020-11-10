@@ -33,7 +33,7 @@ namespace Sandbox.Layers
 		{
 			_graphicsDevice = Application.App.Window.GraphicsDevice;
 			float aspectRatio = (float)Application.App.Window.SdlWindow.Width / Application.App.Window.SdlWindow.Height;
-			_cameraController = new OrthoCameraController(aspectRatio, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted, true);
+			_cameraController = new OrthoCameraController(aspectRatio, true);
 			CreateResources();
 		}
 
@@ -75,7 +75,7 @@ namespace Sandbox.Layers
 			ResourceFactory factory = _graphicsDevice.ResourceFactory;
 
 			_squareColor = new Vector3(.8f, .2f, .3f);
-			_texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
+			_texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", BootEngine.Utils.TextureUsage.Sampled);
 
 			Span<VertexPositionTexture> quadVertices = stackalloc VertexPositionTexture[]
 			{

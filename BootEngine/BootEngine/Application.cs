@@ -2,6 +2,7 @@
 using BootEngine.Layers;
 using BootEngine.Layers.GUI;
 using BootEngine.Log;
+using BootEngine.Utils;
 using BootEngine.Utils.ProfilingTools;
 using BootEngine.Window;
 using System;
@@ -21,7 +22,7 @@ namespace BootEngine
 		private bool disposed;
 		#endregion
 
-		protected Application(Type windowType, Veldrid.GraphicsBackend backend)
+		protected Application(Type windowType, GraphicsBackend backend)
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());

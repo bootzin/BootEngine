@@ -64,7 +64,7 @@ namespace BootEngine.Window
 			return graphicsDevice.SyncToVerticalBlank;
 		}
 
-		public static WindowBase CreateMainWindow(Type windowType, WindowProps props = null, GraphicsBackend backend = GraphicsBackend.Direct3D11)
+		public static WindowBase CreateMainWindow(Type windowType, WindowProps props = null, Utils.GraphicsBackend backend = Utils.GraphicsBackend.Direct3D11)
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(typeof(WindowBase));
