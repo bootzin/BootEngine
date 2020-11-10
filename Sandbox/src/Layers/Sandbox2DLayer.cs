@@ -8,6 +8,7 @@ using BootEngine.Utils.ProfilingTools;
 using ImGuiNET;
 using System.Linq;
 using System.Numerics;
+using System.Threading.Tasks;
 using Veldrid;
 
 namespace Sandbox.Layers
@@ -15,11 +16,11 @@ namespace Sandbox.Layers
 	public class Sandbox2DLayer : LayerBase
 	{
 		#region Properties
-		private OrthoCameraController _cameraController;
-		private Vector4 _squareColor = RgbaFloat.DarkRed.ToVector4();
-		private float temp = 0;
+		private OrthoCameraController cameraController;
+		private Vector4 squareColor = RgbaFloat.DarkRed.ToVector4();
+		private float rot;
+		private int instanceCount = 10;
 		private readonly float[] _frametime = new float[100];
-		private int _instanceCount = 10;
 		#endregion
 
 		#region Constructor
@@ -33,42 +34,46 @@ namespace Sandbox.Layers
 #endif
 			GraphicsDevice _graphicsDevice = Application.App.Window.GraphicsDevice;
 			float aspectRatio = (float)Application.App.Window.SdlWindow.Width / Application.App.Window.SdlWindow.Height;
-			_cameraController = new OrthoCameraController(aspectRatio, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted, true);
+			cameraController = new OrthoCameraController(aspectRatio, _graphicsDevice.IsDepthRangeZeroToOne, _graphicsDevice.IsClipSpaceYInverted, true);
 
 			Renderable2DParameters param = new Renderable2DParameters();
 			param.Name = "Quad";
-			param.Position = new Vector3(-2, 0, .5f);
+			param.Position = new Vector3(-1, 0, .5f);
 			param.Size = new Vector2(.5f, .5f);
 			param.Rotation = 0;
-			param.Color = _squareColor;
+			param.Color = squareColor;
 			param.Texture = null;
-			Renderer2D.Instance.SubmitQuadDraw(ref param);
+			Renderer2D.Instance.SetupQuadDraw(ref param);
 
-			param.Name = null;
-			param.Position = new Vector3(0, 0, .4f);
-			param.Size = new Vector2(.25f, .25f);
-			param.Rotation = 0f;
-			param.Color = RgbaFloat.White.ToVector4();
-			param.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
-			Renderer2D.Instance.SubmitQuadDraw(ref param);
+			Renderable2DParameters param1 = new Renderable2DParameters();
+			param1.Name = "Tex";
+			param1.Position = new Vector3(0, 0, .4f);
+			param1.Size = new Vector2(.25f, .25f);
+			param1.Rotation = 0f;
+			param1.Color = RgbaFloat.White.ToVector4();
+			param1.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
+			Renderer2D.Instance.SetupQuadDraw(ref param1);
 
-			param.Name = "Quad2";
-			param.Position = new Vector3(-1, 0, .5f);
-			param.Size = Vector2.One;
-			param.Rotation = 0f;
-			param.Color = RgbaFloat.Cyan.ToVector4();
-			param.Texture = null;
-			Renderer2D.Instance.SubmitQuadDraw(ref param);
+			Renderable2DParameters param2 = new Renderable2DParameters();
+			param2.Name = "Quad2";
+			param2.Position = new Vector3(1, 0, .5f);
+			param2.Size = Vector2.One;
+			param2.Rotation = 0f;
+			param2.Color = RgbaFloat.Cyan.ToVector4();
+			param2.Texture = null;
+			Renderer2D.Instance.SetupQuadDraw(ref param2);
 
-			param.Name = null;
-			param.Size = new Vector2(.1f, .1f);
-			param.Rotation = (float)Utils.Util.Deg2Rad(45);
-			param.Color = _squareColor;
-			param.Texture = null;
-			for (int i = 0; i < _instanceCount; i++)
+			Renderable2DParameters param3 = new Renderable2DParameters();
+			param3.Name = null;
+			param3.Size = new Vector2(.1f, .1f);
+			param3.Rotation = 0;
+			param3.Color = squareColor;
+			//param3.Texture = null;
+			param3.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
+			for (int i = 0; i < instanceCount; i++)
 			{
-				param.Position = new Vector3(-.11f * i, 0, .5f);
-				Renderer2D.Instance.SubmitQuadDraw(ref param);
+				param3.Position = new Vector3(-.11f * (i % 1000), -.11f * (i / 1000), .5f);
+				Renderer2D.Instance.SetupQuadDraw(ref param3);
 			}
 		}
 
@@ -77,34 +82,49 @@ namespace Sandbox.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
+			Renderer2D.Instance.ResetStats();
 			_frametime[99] = deltaSeconds * 1000;
 			for (int i = 0; i < 99;)
 			{
 				_frametime[i] = _frametime[++i];
 			}
 
-			_cameraController.Update(deltaSeconds);
+			cameraController.Update(deltaSeconds);
 			Renderer2D renderer = Renderer2D.Instance;
-			renderer.BeginScene(_cameraController.Camera);
-			renderer.UpdateColor("Quad", _squareColor);
-			renderer.UpdatePosition("Quad2", new Vector3(_squareColor.X, _squareColor.Y, _squareColor.Z));
-			renderer.UpdateRotation("Quad2", (float)Utils.Util.Deg2Rad(temp++));
+			renderer.BeginScene(cameraController.Camera);
+			renderer.UpdatePosition("Quad2", new Vector3(squareColor.X, squareColor.Y, squareColor.Z));
 
-			if (renderer.InstanceCount - 3 < _instanceCount)
+#if DEBUG
+			using (Profiler updateProfiler = new Profiler("Update"))
+#endif
+			Parallel.For(0, renderer.InstanceCount, (i) =>
+			{
+				renderer.UpdateColor(i, squareColor);
+				renderer.UpdateRotation(i, Utils.Util.Deg2Rad(rot));
+			});
+			//for (int i = 0; i < renderer.InstanceCount; i++)
+			//{
+			//	renderer.UpdateColor(i, _squareColor);
+			//	renderer.UpdateRotation(i, (float)Utils.Util.Deg2Rad(temp));
+			//}
+			rot++;
+
+			if (renderer.InstanceCount < instanceCount)
 			{
 				var param = new Renderable2DParameters();
 				param.Size = new Vector2(.1f, .1f);
-				param.Rotation = (float)Utils.Util.Deg2Rad(45);
-				param.Color = _squareColor;
-				for (int i = renderer.InstanceCount - 3; i < _instanceCount; i++)
+				param.Rotation = 0;
+				param.Color = squareColor;
+				param.Texture = AssetManager.LoadTexture2D("assets/textures/sampleDog.png", TextureUsage.Sampled);
+				for (int i = renderer.InstanceCount; i < instanceCount; i++)
 				{
-					param.Position = new Vector3(-.11f * i, 0, .5f);
-					renderer.SubmitQuadDraw(ref param);
+						param.Position = new Vector3(-.11f * (i % 1000), -.11f * (i / 1000), .5f);
+						renderer.SetupQuadDraw(ref param);
 				}
 			}
-			else if (renderer.InstanceCount - 3 > _instanceCount)
+			else if (renderer.InstanceCount > instanceCount)
 			{
-				for (int i = renderer.InstanceCount; i > _instanceCount;)
+				for (int i = renderer.InstanceCount; i > instanceCount;)
 					renderer.RemoveQuadDraw(--i);
 			}
 
@@ -121,7 +141,7 @@ namespace Sandbox.Layers
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
 			ImGui.Begin("Settings 2D");
-			ImGui.ColorEdit4("Square Color 2D", ref _squareColor);
+			ImGui.ColorEdit4("Square Color 2D", ref squareColor);
 			ImGui.End();
 
 			ImGui.Begin("FPS Counter");
@@ -130,13 +150,13 @@ namespace Sandbox.Layers
 			ImGui.End();
 
 			ImGui.Begin("QuadDraw Config");
-			ImGui.DragInt("QuadCount", ref _instanceCount, 1, 10, 1000);
+			ImGui.DragInt("QuadCount", ref instanceCount, 1, 0, 3000000);
 			ImGui.End();
 		}
 
 		public override void OnEvent(EventBase @event)
 		{
-			_cameraController.OnEvent(@event);
+			cameraController.OnEvent(@event);
 		}
 
 		public override void OnDetach()

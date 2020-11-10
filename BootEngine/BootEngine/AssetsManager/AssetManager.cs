@@ -22,31 +22,37 @@ namespace BootEngine.AssetsManager
 		/// <param name="texturePath">Path to the texture.</param>
 		/// <param name="usage">A collection of flags determining the <see cref="TextureUsage"/></param>
 		/// <returns>The update <see cref="Texture"/></returns>
-		public static Texture LoadTexture2D(string texturePath, TextureUsage usage)
+		public static Texture LoadTexture2D(string texturePath, TextureUsage usage, bool cached = true)
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(typeof(AssetManager));
 #endif
-			ImageResult texSrc = ImageHelper.LoadImage(texturePath);
-			TextureDescription texDesc = TextureDescription.Texture2D(
-				(uint)texSrc.Width,
-				(uint)texSrc.Height,
-				1, // Miplevel
-				1, // ArrayLayers
-				PixelFormat.R8_G8_B8_A8_UNorm,
-				usage);
-			Texture tex = gd.ResourceFactory.CreateTexture(texDesc);
-			gd.UpdateTexture(
-				tex,
-				texSrc.Data,
-				0, // x
-				0, // y
-				0, // z
-				(uint)texSrc.Width,
-				(uint)texSrc.Height,
-				1,  // Depth
-				0,  // Miplevel
-				0); // ArrayLayers
+			Texture tex = ResourceCache.GetTexture(texturePath);
+			if (tex == null)
+			{
+				ImageResult texSrc = ImageHelper.LoadImage(texturePath);
+				TextureDescription texDesc = TextureDescription.Texture2D(
+					(uint)texSrc.Width,
+					(uint)texSrc.Height,
+					1, // Miplevel
+					1, // ArrayLayers
+					PixelFormat.R8_G8_B8_A8_UNorm,
+					usage);
+				tex = gd.ResourceFactory.CreateTexture(texDesc);
+				gd.UpdateTexture(
+					tex,
+					texSrc.Data,
+					0, // x
+					0, // y
+					0, // z
+					(uint)texSrc.Width,
+					(uint)texSrc.Height,
+					1,  // Depth
+					0,  // Miplevel
+					0); // ArrayLayer
+				if (cached)
+					ResourceCache.AddTexture(tex, texturePath);
+			}
 			return tex;
 		}
 		#endregion

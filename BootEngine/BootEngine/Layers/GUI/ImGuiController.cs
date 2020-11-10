@@ -793,6 +793,7 @@ namespace BootEngine.Layers.GUI
 
 			io.BackendFlags |= ImGuiBackendFlags.HasMouseCursors | ImGuiBackendFlags.HasSetMousePos | ImGuiBackendFlags.RendererHasVtxOffset;
 
+			// TODO: Enable viewports for OpenGL
 			if (graphicsDevice.BackendType != GraphicsBackend.OpenGL)
 			{
 				io.ConfigFlags |= ImGuiConfigFlags.ViewportsEnable;

@@ -40,7 +40,7 @@
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
     <OutputPath>bin\Dist\x64</OutputPath>
-    <Optimize>true</Optimize>
+    <Optimize>false</Optimize>
     <DefineConstants />
     <PlatformTarget>x64</PlatformTarget>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -58,6 +58,12 @@
     <RuntimeIdentifiers>win10-x64;osx-x64;linux-x64</RuntimeIdentifiers>
     <RootNamespace />
     <RunPostBuildEvent>Always</RunPostBuildEvent>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Copyright>Bootzin 2020</Copyright>
+    <RepositoryUrl>https://github.com/bootzin/BootEngine</RepositoryUrl>
+    <Authors>bootzin</Authors>
+    <Company />
+    <Version>0.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -99,7 +105,7 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>cimgui.dll</TargetPath>
     </ContentWithTargetPath>
-    <ContentWithTargetPath Include="_deps\ImGui.NET\cimgui\win-x86\cimgui.dll" Condition="'$(IsWindows)'=='true' And '$(Platform)'!='x64'">
+    <ContentWithTargetPath Include="_deps\ImGui.NET\cimgui\win-x86\cimgui.dll" Condition="'$(IsWindows)'=='true' And '$(Platform)'=='x86'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>cimgui.dll</TargetPath>
     </ContentWithTargetPath>

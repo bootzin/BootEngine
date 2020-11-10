@@ -29,7 +29,7 @@ namespace BootEngine.Utils.ProfilingTools
 
 				file.Write("{");
 				file.Write("\"cat\":\"function\",");
-				file.Write("\"dur\":" + (profiler.Sw.Elapsed.TotalMilliseconds * 1000) + ",");
+				file.Write("\"dur\":" + (profiler.Sw.Elapsed.TotalMilliseconds * 1000).ToString().Replace(',','.') + ",");
 				file.Write("\"name\":\"" + profiler.Name + "\",");
 				file.Write("\"ph\":\"X\",");
 				file.Write("\"pid\":0,");

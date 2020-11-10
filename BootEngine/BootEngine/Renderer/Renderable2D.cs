@@ -4,18 +4,75 @@ using Veldrid;
 
 namespace BootEngine.Renderer
 {
-	public class Renderable2D : Renderable
+	public sealed class Renderable2D : Renderable
 	{
-		public Texture Texture { get; set; }
-		public Vector4 Color { get; set; }
+		#region Constructors
+		public Renderable2D() { }
+
+		public Renderable2D(ref Renderable2DParameters parameters)
+		{
+			Name = parameters.Name;
+			Position = parameters.Position;
+			Size = parameters.Size;
+			Rotation = parameters.Rotation;
+			Color = parameters.Color;
+			Texture = parameters.Texture;
+		}
+
+		public Renderable2D(ref Renderable2DParameters parameters, int instanceIndex)
+		{
+			Name = parameters.Name;
+			Position = parameters.Position;
+			Size = parameters.Size;
+			Rotation = parameters.Rotation;
+			Color = parameters.Color;
+			Texture = parameters.Texture;
+			InstanceIndex = instanceIndex;
+		}
+
+		public Renderable2D(Vector3 pos, Vector2 scale, float rot, Vector4 col)
+		{
+			Position = pos;
+			Size = scale;
+			Rotation = rot;
+			Color = col;
+		}
+
+		public Renderable2D(string name, Vector3 pos, Vector2 scale, float rot, Vector4 col)
+		{
+			Name = name;
+			Position = pos;
+			Size = scale;
+			Rotation = rot;
+			Color = col;
+		}
+
+		public Renderable2D(Vector3 pos, Vector2 scale, float rot, Vector4 col, Texture tex)
+		{
+			Position = pos;
+			Size = scale;
+			Rotation = rot;
+			Color = col;
+			Texture = tex;
+		}
+
+		public Renderable2D(string name, Vector3 pos, Vector2 scale, float rot, Vector4 col, Texture tex)
+		{
+			Name = name;
+			Position = pos;
+			Size = scale;
+			Rotation = rot;
+			Color = col;
+			Texture = tex;
+		}
+		#endregion
+
 		public Vector3 Position { get; set; }
 		public Vector2 Size { get; set; }
 		public float Rotation { get; set; }
-
-		internal DeviceBuffer ColorBuffer { get; set; }
-		internal DeviceBuffer TransformBuffer { get; set; }
-		internal DeviceBuffer TilingFactor { get; set; }
-		internal ResourceSet ResourceSet { get; set; }
+		public Vector4 Color { get; set; }
+		public Texture Texture { get; set; }
+		public int InstanceIndex { get; set; }
 
 		public void SetParameters(ref Renderable2DParameters parameters)
 		{
@@ -27,21 +84,6 @@ namespace BootEngine.Renderer
 			Rotation = parameters.Rotation;
 			Size = parameters.Size;
 			Name = parameters.Name;
-		}
-
-		protected override void Dispose(bool disposing)
-		{
-#if DEBUG
-			using Profiler fullProfiler = new Profiler(GetType());
-#endif
-			if (disposing)
-			{
-				Texture?.Dispose();
-				ColorBuffer.Dispose();
-				TransformBuffer.Dispose();
-				TilingFactor.Dispose();
-				ResourceSet.Dispose();
-			}
 		}
 	}
 }
