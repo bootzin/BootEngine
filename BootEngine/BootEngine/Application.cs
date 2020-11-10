@@ -75,7 +75,8 @@ namespace BootEngine
 #if DEBUG
 						using (Profiler layerUpdateProfiler = new Profiler("LayersUpdate"))
 #endif
-							LayerStack.Layers.ForEach(layer => layer.OnUpdate(deltaSeconds));
+							for (int i = 0; i < LayerStack.Layers.Count; i++)
+								LayerStack.Layers[i].OnUpdate(deltaSeconds);
 					}
 
 #if DEBUG
@@ -83,7 +84,8 @@ namespace BootEngine
 					{
 #endif
 						ImGuiLayer.Begin(deltaSeconds); //Window is updated in here
-						LayerStack.Layers.ForEach(layer => layer.OnGuiRender());
+						for (int i = 0; i < LayerStack.Layers.Count ; i++)
+							LayerStack.Layers[i].OnGuiRender();
 						ImGuiLayer.End();
 #if DEBUG
 					}
