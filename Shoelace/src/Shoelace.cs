@@ -1,0 +1,34 @@
+﻿using BootEngine;
+using BootEngine.Log;
+using BootEngine.Utils;
+using BootEngine.Utils.ProfilingTools;
+using BootEngine.Window;
+using Platforms.Windows;
+using Shoelace.Layers;
+
+namespace Shoelace
+{
+	public sealed class Shoelace : Application
+	{
+		public Shoelace(GraphicsBackend backend) : base(new WindowProps("Shoelace"), typeof(WindowsWindow), backend)
+		{
+			LayerStack.PushLayer(new EditorLayer());
+		}
+
+		public static void Main()
+		{
+			ProfileWriter.BeginSession("Startup", "BootProfile-Startup.json");
+			Logger.Init();
+			var app = new Shoelace(GraphicsBackend.Direct3D11);
+			ProfileWriter.EndSesison();
+
+			ProfileWriter.BeginSession("Runtime", "BootProfile-Runtime.json");
+			app.Run();
+			ProfileWriter.EndSesison();
+
+			ProfileWriter.BeginSession("Shutdown", "BootProfile-Shutdown.json");
+			app.Dispose();
+			ProfileWriter.EndSesison();
+		}
+	}
+}

@@ -22,6 +22,20 @@ namespace BootEngine
 		private bool disposed;
 		#endregion
 
+		protected Application(WindowProps props, Type windowType, GraphicsBackend backend)
+		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
+			Logger.Assert(App == null, "App already initialized");
+			App = this;
+			LayerStack = new LayerStack();
+			Window = WindowBase.CreateMainWindow(windowType, props, backend: backend);
+			Window.EventCallback = OnEvent;
+			ImGuiLayer = new ImGuiLayer();
+			LayerStack.PushOverlay(ImGuiLayer);
+		}
+
 		protected Application(Type windowType, GraphicsBackend backend)
 		{
 #if DEBUG
@@ -117,6 +131,11 @@ namespace BootEngine
 				if (@event.Handled)
 					break;
 			}
+		}
+
+		public void Close()
+		{
+			Dispose();
 		}
 		#endregion
 

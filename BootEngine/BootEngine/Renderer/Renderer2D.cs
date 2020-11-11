@@ -1,4 +1,5 @@
 ﻿using BootEngine.AssetsManager;
+using BootEngine.Layers.GUI;
 using BootEngine.Log;
 using BootEngine.Renderer.Cameras;
 using BootEngine.Utils.ProfilingTools;
@@ -17,13 +18,15 @@ namespace BootEngine.Renderer
 		#endregion
 
 		#region Properties
-		private bool shouldFlush;
-		private static Scene2D CurrentScene { get; set; }
+		public static Scene2D CurrentScene { get; set; }
+		public static IntPtr RenderedTexturesAddr { get; set; }
+
 		public int InstanceCount { get; private set; }
 
-		private InstanceVertexInfo[] instanceList = new InstanceVertexInfo[MAX_QUADS];
 		private readonly static GraphicsDevice _gd = Application.App.Window.GraphicsDevice;
 		private readonly static CommandList _commandList = _gd.ResourceFactory.CreateCommandList();
+		private InstanceVertexInfo[] instanceList = new InstanceVertexInfo[MAX_QUADS];
+		private bool shouldFlush;
 		#endregion
 
 		#region Constructor
@@ -110,11 +113,26 @@ namespace BootEngine.Renderer
 				shaders: CurrentScene.Shaders);
 			pipelineDescription.Outputs = _gd.MainSwapchain.Framebuffer.OutputDescription;
 
-			CurrentScene.Pipeline = factory.CreateGraphicsPipeline(pipelineDescription);
+			CurrentScene.MainPipeline = CurrentScene.ActivePipeline = factory.CreateGraphicsPipeline(pipelineDescription);
+
+			var tex = factory.CreateTexture(TextureDescription.Texture2D(
+				1280u, // Width
+				720u, // Height
+				1,  // Miplevel
+				1,  // ArrayLayers
+				PixelFormat.R8_G8_B8_A8_UNorm,
+				TextureUsage.RenderTarget | TextureUsage.Sampled));
+			var framebuffer = factory.CreateFramebuffer(new FramebufferDescription(null, tex));
+			pipelineDescription.Outputs = framebuffer.OutputDescription;
+			RenderedTexturesAddr = ImGuiLayer.Controller.GetOrCreateImGuiBinding(factory, tex);
+
+			CurrentScene.FramebufferPipeline = factory.CreateGraphicsPipeline(pipelineDescription);
+			CurrentScene.MainFramebuffer = _gd.MainSwapchain.Framebuffer;
+			CurrentScene.AlternateFramebuffer = framebuffer;
 
 			InstancingTextureData data = new InstancingTextureData()
 			{
-				ResourceSet = _gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(
+				ResourceSet = factory.CreateResourceSet(new ResourceSetDescription(
 					CurrentScene.ResourceLayout,
 					CurrentScene.CameraBuffer,
 					Scene2D.WhiteTexture,
@@ -339,13 +357,14 @@ namespace BootEngine.Renderer
 			if (shouldFlush)
 				Flush();
 			cl.Begin();
-			cl.SetFramebuffer(_gd.SwapchainFramebuffer);
+			cl.SetFramebuffer(CurrentScene.ActiveFramebuffer);
 			cl.SetFullViewport(0);
 			cl.ClearColorTarget(0, RgbaFloat.Grey);
-			cl.ClearDepthStencil(1f);
+			if (CurrentScene.ActiveFramebuffer.DepthTarget != null)
+				cl.ClearDepthStencil(1f);
 			cl.SetVertexBuffer(0, CurrentScene.VertexBuffer);
 			cl.SetIndexBuffer(CurrentScene.IndexBuffer, IndexFormat.UInt16);
-			cl.SetPipeline(CurrentScene.Pipeline);
+			cl.SetPipeline(CurrentScene.ActivePipeline);
 		}
 
 		protected override void BatchRender(CommandList cl)

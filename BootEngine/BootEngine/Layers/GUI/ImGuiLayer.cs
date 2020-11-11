@@ -9,7 +9,7 @@ namespace BootEngine.Layers.GUI
 		#region Properties
 		private GraphicsDevice gd;
 		private CommandList cl;
-		private ImGuiController controller;
+		public static ImGuiController Controller { get; private set; }
 		#endregion
 
 		#region Constructor
@@ -28,9 +28,9 @@ namespace BootEngine.Layers.GUI
 			gd = window.GraphicsDevice;
 			cl = window.ResourceFactory.CreateCommandList();
 
-			controller = new ImGuiController(gd, gd.SwapchainFramebuffer.OutputDescription, window);
+			Controller = new ImGuiController(gd, gd.SwapchainFramebuffer.OutputDescription, window);
 
-			sdlWindow.Resized += () => controller.WindowResized(sdlWindow.Width, sdlWindow.Height, sdlWindow.WindowState == WindowState.Minimized);
+			sdlWindow.Resized += () => Controller.WindowResized(sdlWindow.Width, sdlWindow.Height, sdlWindow.WindowState == WindowState.Minimized);
 		}
 
 		public override void OnDetach()
@@ -38,7 +38,7 @@ namespace BootEngine.Layers.GUI
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			controller.Dispose();
+			Controller.Dispose();
 			cl.Dispose();
 		}
 
@@ -47,8 +47,8 @@ namespace BootEngine.Layers.GUI
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			controller.Update(deltaSeconds);
-			controller.BeginFrame();
+			Controller.Update(deltaSeconds);
+			Controller.BeginFrame();
 			cl.Begin();
 		}
 
@@ -58,12 +58,12 @@ namespace BootEngine.Layers.GUI
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
 			cl.SetFramebuffer(gd.SwapchainFramebuffer);
-			controller.Render(gd, cl);
+			Controller.Render(gd, cl);
 
 			cl.End();
 
 			gd.SubmitCommands(cl);
-			controller.SwapBuffers(gd);
+			Controller.SwapBuffers(gd);
 		}
 
 		public override void OnEvent(EventBase @event)

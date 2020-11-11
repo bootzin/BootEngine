@@ -6,17 +6,42 @@ namespace BootEngine.Renderer
 {
 	public sealed class Scene2D : Scene
 	{
-		public static Texture WhiteTexture { get; set; }
-		public DeviceBuffer IndexBuffer { get; set; }
-		public DeviceBuffer VertexBuffer { get; set; }
-		public DeviceBuffer InstancesVertexBuffer { get; set; }
-		public DeviceBuffer CameraBuffer { get; set; }
+		private bool renderToFramebuffer = false;
+
+		internal DeviceBuffer IndexBuffer { get; set; }
+		internal DeviceBuffer VertexBuffer { get; set; }
+		internal DeviceBuffer InstancesVertexBuffer { get; set; }
+		internal DeviceBuffer CameraBuffer { get; set; }
+		internal Dictionary<Texture, InstancingTextureData> DataPerTexture { get; set; } = new Dictionary<Texture, InstancingTextureData>();
 		public ResourceLayout ResourceLayout { get; set; }
-		public Dictionary<Texture, InstancingTextureData> DataPerTexture { get; set; } = new Dictionary<Texture, InstancingTextureData>();
-		public Pipeline Pipeline { get; set; }
+		internal Pipeline ActivePipeline { get; set; }
+		internal Pipeline MainPipeline { get; set; }
+		internal Pipeline FramebufferPipeline { get; set; }
 		public Shader[] Shaders { get; set; }
+		public static Texture WhiteTexture { get; internal set; }
 		public List<Renderable2D> RenderableList { get; internal set; } = new List<Renderable2D>();
 		public RenderStats Stats { get; } = new RenderStats();
+		internal Framebuffer ActiveFramebuffer { get; set; }
+		internal Framebuffer AlternateFramebuffer { get; set; }
+		internal Framebuffer MainFramebuffer { get; set; }
+		public bool RenderToFramebuffer
+		{
+			get { return renderToFramebuffer; }
+			set
+			{
+				if (value)
+				{
+					ActivePipeline = FramebufferPipeline;
+					ActiveFramebuffer = AlternateFramebuffer;
+				}
+				else
+				{
+					ActivePipeline = MainPipeline;
+					ActiveFramebuffer = MainFramebuffer;
+				}
+				renderToFramebuffer = value;
+			}
+		}
 
 		protected override void Dispose(bool disposing)
 		{
@@ -29,7 +54,10 @@ namespace BootEngine.Renderer
 				VertexBuffer.Dispose();
 				InstancesVertexBuffer.Dispose();
 				CameraBuffer.Dispose();
-				Pipeline.Dispose();
+				MainPipeline.Dispose();
+				FramebufferPipeline.Dispose();
+				if (!ActivePipeline.IsDisposed)
+					ActivePipeline.Dispose();
 				ResourceLayout.Dispose();
 				for (int i = 0; i < Shaders.Length; i++)
 					Shaders[i].Dispose();

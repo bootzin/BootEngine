@@ -1,0 +1,76 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</IsWindows>
+    <IsOSX Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'true'">true</IsOSX>
+    <IsLinux Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Linux)))' == 'true'">true</IsLinux>
+    <Platforms>x64</Platforms>
+    <Configurations>Debug;Release;Dist</Configurations>
+    <AssetsDir>$(MSBuildThisFileDirectory)assets</AssetsDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\x64</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <OutputPath>bin\Release\x64</OutputPath>
+    <Optimize>false</Optimize>
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
+    <OutputPath>bin\Dist\x64</OutputPath>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BootEngine\BootEngine.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="$(AssetsDir)\shaders\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>assets\shaders\%(RecursiveDir)\%(FileName)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="assets\shaders\Texture2D.glsl" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="assets\shaders\Texture2D.glsl" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ContentWithTargetPath Include="..\BootEngine\_deps\ImGui.NET\cimgui\linux-x64\cimgui.so" Condition="'$(IsLinux)'=='true'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>cimgui.so</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="..\BootEngine\_deps\ImGui.NET\cimgui\osx-x64\cimgui.dylib" Condition="'$(IsOSX)'=='true'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>cimgui.dylib</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="..\BootEngine\_deps\ImGui.NET\cimgui\win-x64\cimgui.dll" Condition="'$(IsWindows)'=='true' And '$(Platform)'=='x64'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>cimgui.dll</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="..\BootEngine\_deps\ImGui.NET\cimgui\win-x86\cimgui.dll" Condition="'$(IsWindows)'=='true' And '$(Platform)'!='x64'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>cimgui.dll</TargetPath>
+    </ContentWithTargetPath>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="ImGui.NET">
+      <HintPath>..\BootEngine\_deps\ImGui.NET\ImGui.NET.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
