@@ -19,8 +19,6 @@ namespace BootEngine.Renderer
 
 		#region Properties
 		public static Scene2D CurrentScene { get; set; }
-		public static IntPtr RenderTargetAddr { get; set; }
-
 		public int InstanceCount { get; private set; }
 
 		private readonly static GraphicsDevice _gd = Application.App.Window.GraphicsDevice;
@@ -84,7 +82,6 @@ namespace BootEngine.Renderer
 
 			CurrentScene.InstancesVertexBuffer = factory.CreateBuffer(new BufferDescription(InstanceVertexInfo.SizeInBytes * MAX_QUADS, BufferUsage.VertexBuffer));
 			CurrentScene.CameraBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
-			CurrentScene.Shaders = AssetManager.GenerateShadersFromFile("Texture2D.glsl");
 
 			VertexLayoutDescription sharedVertexLayout = new VertexLayoutDescription(
 				new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
@@ -111,33 +108,10 @@ namespace BootEngine.Renderer
 			pipelineDescription.ResourceLayouts = new ResourceLayout[] { CurrentScene.ResourceLayout };
 			pipelineDescription.ShaderSet = new ShaderSetDescription(
 				vertexLayouts: new VertexLayoutDescription[] { sharedVertexLayout, instanceVertexLayout },
-				shaders: CurrentScene.Shaders);
+				shaders: AssetManager.GenerateShadersFromFile("Texture2D.glsl"));
 			pipelineDescription.Outputs = _gd.MainSwapchain.Framebuffer.OutputDescription;
 
-			CurrentScene.MainPipeline = CurrentScene.ActivePipeline = factory.CreateGraphicsPipeline(pipelineDescription);
-
-			var tex = factory.CreateTexture(TextureDescription.Texture2D(
-				1264u, // Width
-				714u, // Height
-				1,  // Miplevel
-				1,  // ArrayLayers
-				PixelFormat.R8_G8_B8_A8_UNorm,
-				TextureUsage.RenderTarget | TextureUsage.Sampled));
-			var depthTex = factory.CreateTexture(TextureDescription.Texture2D(
-				1264u, // Width
-				714u, // Height
-				1,  // Miplevel
-				1,  // ArrayLayers
-				PixelFormat.R16_UNorm,
-				TextureUsage.DepthStencil));
-			var framebuffer = factory.CreateFramebuffer(new FramebufferDescription(depthTex, tex));
-
-			pipelineDescription.Outputs = framebuffer.OutputDescription;
-			RenderTargetAddr = ImGuiLayer.Controller.GetOrCreateImGuiBinding(factory, tex);
-
-			CurrentScene.FramebufferPipeline = factory.CreateGraphicsPipeline(pipelineDescription);
-			CurrentScene.MainFramebuffer = CurrentScene.ActiveFramebuffer = _gd.MainSwapchain.Framebuffer;
-			CurrentScene.AlternateFramebuffer = framebuffer;
+			CurrentScene.SetPipelineDescrition(pipelineDescription, _gd.SwapchainFramebuffer);
 
 			InstancingTextureData data = new InstancingTextureData()
 			{

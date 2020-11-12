@@ -17,7 +17,7 @@ namespace Shoelace
 		public static void Main()
 		{
 			ProfileWriter.BeginSession("Startup", "BootProfile-Startup.json");
-			var app = new Shoelace(GraphicsBackend.OpenGL);
+			var app = new Shoelace(GraphicsBackend.Vulkan);
 			ProfileWriter.EndSesison();
 
 			ProfileWriter.BeginSession("Runtime", "BootProfile-Runtime.json");

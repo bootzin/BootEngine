@@ -1,6 +1,7 @@
 ﻿using BootEngine;
 using BootEngine.Events;
 using BootEngine.Layers;
+using BootEngine.Layers.GUI;
 using BootEngine.Renderer;
 using BootEngine.Renderer.Cameras;
 using BootEngine.Utils;
@@ -21,6 +22,9 @@ namespace Shoelace.Layers
 		private float rot;
 		private int instanceCount = 1;
 		private readonly float[] _frametime = new float[100];
+		private Texture fbTex, fbDepthTex;
+		private IntPtr renderTargetAddr;
+		private Framebuffer fb;
 		private bool dockspaceOpen = true;
 		#endregion
 
@@ -46,7 +50,27 @@ namespace Shoelace.Layers
 				Texture = null
 			};
 			Renderer2D.Instance.SetupQuadDraw(ref param);
-			Renderer2D.CurrentScene.RenderToFramebuffer = true;
+
+			var currentPipeline = Renderer2D.CurrentScene.PipelineDescrition;
+			fbTex = ResourceFactory.CreateTexture(TextureDescription.Texture2D(
+				1264u, // Width
+				714u, // Height
+				1,  // Miplevel
+				1,  // ArrayLayers
+				PixelFormat.R8_G8_B8_A8_UNorm,
+				Veldrid.TextureUsage.RenderTarget | Veldrid.TextureUsage.Sampled));
+			renderTargetAddr = ImGuiLayer.Controller.GetOrCreateImGuiBinding(ResourceFactory, fbTex);
+
+			fbDepthTex = ResourceFactory.CreateTexture(TextureDescription.Texture2D(
+				1264u, // Width
+				714u, // Height
+				1,  // Miplevel
+				1,  // ArrayLayers
+				PixelFormat.R16_UNorm,
+				Veldrid.TextureUsage.DepthStencil));
+			fb = ResourceFactory.CreateFramebuffer(new FramebufferDescription(fbDepthTex, fbTex));
+			currentPipeline.Outputs = fb.OutputDescription;
+			Renderer2D.CurrentScene.SetPipelineDescrition(currentPipeline, fb);
 		}
 
 		public override void OnUpdate(float deltaSeconds)
@@ -159,9 +183,9 @@ namespace Shoelace.Layers
 
 			var viewportPanelSize = ImGui.GetContentRegionAvail();
 			if (!GraphicsDevice.IsUvOriginTopLeft)
-				ImGui.Image(Renderer2D.RenderTargetAddr, viewportPanelSize, new Vector2(0,1), new Vector2(1,0));
+				ImGui.Image(renderTargetAddr, viewportPanelSize, new Vector2(0,1), new Vector2(1,0));
 			else
-				ImGui.Image(Renderer2D.RenderTargetAddr, viewportPanelSize);
+				ImGui.Image(renderTargetAddr, viewportPanelSize);
 			ImGui.End(); //Viewport
 			ImGui.End(); // Dockspace
 		}
@@ -176,6 +200,9 @@ namespace Shoelace.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
+			fb.Dispose();
+			fbTex.Dispose();
+			fbDepthTex.Dispose();
 			Renderer2D.Instance.Dispose();
 		}
 	}
