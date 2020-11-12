@@ -24,7 +24,7 @@ namespace Platforms.Windows
 
 		#region Methods
 		#region Public
-		public override void OnUpdate(bool updateSnapshot = true)
+		internal override void OnUpdate(bool updateSnapshot = true)
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
@@ -40,14 +40,13 @@ namespace Platforms.Windows
 		{
 			GcHandle = GCHandle.Alloc(this);
 			graphicsDevice = gd;
-			ResourceFactory = gd.ResourceFactory;
 			VSync = gd.SyncToVerticalBlank;
 			window = sdlWindow;
 
 			SwapchainSource scSrc = WindowStartup.GetSwapchainSource(sdlWindow);
 			SwapchainDescription scDesc = new SwapchainDescription(scSrc, (uint)sdlWindow.Width, (uint)sdlWindow.Height,
 				gd.SwapchainFramebuffer.OutputDescription.DepthAttachment?.Format, VSync);
-			swapchain = ResourceFactory.CreateSwapchain(scDesc);
+			swapchain = gd.ResourceFactory.CreateSwapchain(scDesc);
 
 			window.Resized += () => swapchain.Resize((uint)window.Width, (uint)window.Height);
 		}
@@ -75,7 +74,6 @@ namespace Platforms.Windows
 			WindowStartup.CreateWindowAndGraphicsDevice(props, options, (Veldrid.GraphicsBackend)backend, out window, out graphicsDevice);
 
 			VSync = props.VSync;
-			ResourceFactory = graphicsDevice.ResourceFactory;
 			swapchain = graphicsDevice.MainSwapchain;
 
 			//Called twice possibly because of 2 events being fired: Resize and SizeChanged (and Maximized)

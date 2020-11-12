@@ -34,15 +34,14 @@ namespace BootEngine.Window
 	public abstract class WindowBase : IDisposable
 	{
 		#region Properties
-		public Action<EventBase> EventCallback { get; set; }
-		public ResourceFactory ResourceFactory { get; set; }
-		public GCHandle GcHandle { get; set; }
-		protected bool VSync { get { return GraphicsDevice.SyncToVerticalBlank; } set { SetVSync(value); } }
-		public ref GraphicsDevice GraphicsDevice => ref graphicsDevice;
-		public Swapchain Swapchain => swapchain;
-		public Sdl2Window SdlWindow => window;
-		public bool Exists => window.Exists;
 		public bool Minimized => window.WindowState == WindowState.Minimized;
+		public ref GraphicsDevice GraphicsDevice => ref graphicsDevice;
+		internal Action<EventBase> EventCallback { get; set; }
+		internal GCHandle GcHandle { get; set; }
+		internal Swapchain Swapchain => swapchain;
+		internal Sdl2Window SdlWindow => window;
+		internal bool Exists => window.Exists;
+		protected bool VSync { get { return GraphicsDevice.SyncToVerticalBlank; } set { SetVSync(value); } }
 
 		protected GraphicsDevice graphicsDevice;
 		protected Sdl2Window window;
@@ -52,16 +51,11 @@ namespace BootEngine.Window
 		#endregion
 
 		#region Methods
-		public abstract void OnUpdate(bool updateSnapshot = true);
+		internal abstract void OnUpdate(bool updateSnapshot = true);
 
-		public virtual void SetVSync(bool enabled)
+		protected virtual void SetVSync(bool enabled)
 		{
 			graphicsDevice.SyncToVerticalBlank = enabled;
-		}
-
-		public virtual bool IsVSync()
-		{
-			return graphicsDevice.SyncToVerticalBlank;
 		}
 
 		public static WindowBase CreateMainWindow(Type windowType, WindowProps props = null, Utils.GraphicsBackend backend = Utils.GraphicsBackend.Direct3D11)

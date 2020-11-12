@@ -32,7 +32,7 @@ namespace Sandbox.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			float aspectRatio = (float)Application.App.Window.SdlWindow.Width / Application.App.Window.SdlWindow.Height;
+			float aspectRatio = (float)Width / Height;
 			cameraController = new OrthoCameraController(aspectRatio, true);
 
 			Renderable2DParameters param = new Renderable2DParameters();

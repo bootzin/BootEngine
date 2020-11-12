@@ -14,7 +14,6 @@ namespace Sandbox.Layers
 	{
 		public ExampleLayer() : base("Example") { }
 
-		private GraphicsDevice _graphicsDevice;
 		private OrthoCameraController _cameraController;
 		private CommandList _commandList;
 		private DeviceBuffer _vertexBuffer;
@@ -31,8 +30,7 @@ namespace Sandbox.Layers
 
 		public override void OnAttach()
 		{
-			_graphicsDevice = Application.App.Window.GraphicsDevice;
-			float aspectRatio = (float)Application.App.Window.SdlWindow.Width / Application.App.Window.SdlWindow.Height;
+			float aspectRatio = (float)Width / Height;
 			_cameraController = new OrthoCameraController(aspectRatio, true);
 			CreateResources();
 		}
@@ -72,7 +70,7 @@ namespace Sandbox.Layers
 
 		private void CreateResources()
 		{
-			ResourceFactory factory = _graphicsDevice.ResourceFactory;
+			ResourceFactory factory = ResourceFactory;
 
 			_squareColor = new Vector3(.8f, .2f, .3f);
 			_texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", BootEngine.Utils.TextureUsage.Sampled);
@@ -89,14 +87,14 @@ namespace Sandbox.Layers
 				VertexPositionTexture.SizeInBytes * 4,
 				BufferUsage.VertexBuffer);
 			_vertexBuffer = factory.CreateBuffer(vbDescription);
-			_graphicsDevice.UpdateBuffer(_vertexBuffer, 0, quadVertices.ToArray());
+			GraphicsDevice.UpdateBuffer(_vertexBuffer, 0, quadVertices.ToArray());
 
 			Span<ushort> quadIndices = stackalloc ushort[] { 0, 1, 2, 3 };
 			BufferDescription ibDescription = new BufferDescription(
 				4 * sizeof(ushort),
 				BufferUsage.IndexBuffer);
 			_indexBuffer = factory.CreateBuffer(ibDescription);
-			_graphicsDevice.UpdateBuffer(_indexBuffer, 0, quadIndices.ToArray());
+			GraphicsDevice.UpdateBuffer(_indexBuffer, 0, quadIndices.ToArray());
 
 			_cameraBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
 			_squareTransform = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
@@ -122,12 +120,12 @@ namespace Sandbox.Layers
 					new ResourceLayoutElementDescription("Texture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
 					new ResourceLayoutElementDescription("Sampler", ResourceKind.Sampler, ShaderStages.Fragment)));
 
-			_graphicsDevice.DisposeWhenIdle(resourceLayout);
-			_graphicsDevice.DisposeWhenIdle(texResourceLayout);
-			_graphicsDevice.DisposeWhenIdle(_shaders[0]);
-			_graphicsDevice.DisposeWhenIdle(_shaders[1]);
-			_graphicsDevice.DisposeWhenIdle(texShaders[0]);
-			_graphicsDevice.DisposeWhenIdle(texShaders[1]);
+			GraphicsDevice.DisposeWhenIdle(resourceLayout);
+			GraphicsDevice.DisposeWhenIdle(texResourceLayout);
+			GraphicsDevice.DisposeWhenIdle(_shaders[0]);
+			GraphicsDevice.DisposeWhenIdle(_shaders[1]);
+			GraphicsDevice.DisposeWhenIdle(texShaders[0]);
+			GraphicsDevice.DisposeWhenIdle(texShaders[1]);
 
 			// Create pipeline
 			GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription();
@@ -147,7 +145,7 @@ namespace Sandbox.Layers
 			pipelineDescription.ShaderSet = new ShaderSetDescription(
 				vertexLayouts: new VertexLayoutDescription[] { vertexLayout },
 				shaders: _shaders);
-			pipelineDescription.Outputs = _graphicsDevice.SwapchainFramebuffer.OutputDescription;
+			pipelineDescription.Outputs = GraphicsDevice.SwapchainFramebuffer.OutputDescription;
 
 			_resourceSet = factory.CreateResourceSet(new ResourceSetDescription(
 				resourceLayout,
@@ -160,7 +158,7 @@ namespace Sandbox.Layers
 				_cameraBuffer,
 				_squareTransform,
 				_texture,
-				_graphicsDevice.LinearSampler));
+				GraphicsDevice.LinearSampler));
 
 			GraphicsPipelineDescription texPipelineDesc = pipelineDescription;
 			texPipelineDesc.ShaderSet = new ShaderSetDescription(vertexLayouts: new VertexLayoutDescription[] { vertexLayout },
@@ -179,8 +177,8 @@ namespace Sandbox.Layers
 		{
 			_commandList.Begin();
 
-			_commandList.SetFramebuffer(_graphicsDevice.SwapchainFramebuffer);
-			_commandList.SetViewport(0, new Viewport(0, 0, _graphicsDevice.SwapchainFramebuffer.Width, _graphicsDevice.SwapchainFramebuffer.Height, 0, 1));
+			_commandList.SetFramebuffer(GraphicsDevice.SwapchainFramebuffer);
+			_commandList.SetViewport(0, new Viewport(0, 0, GraphicsDevice.SwapchainFramebuffer.Width, GraphicsDevice.SwapchainFramebuffer.Height, 0, 1));
 			_commandList.SetFullViewports();
 			_commandList.ClearColorTarget(0, RgbaFloat.CornflowerBlue);
 
@@ -220,7 +218,7 @@ namespace Sandbox.Layers
 						instanceStart: 0);
 
 			_commandList.End();
-			_graphicsDevice.SubmitCommands(_commandList);
+			GraphicsDevice.SubmitCommands(_commandList);
 		}
 
 		public readonly struct VertexPositionTexture

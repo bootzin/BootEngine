@@ -18,17 +18,17 @@ namespace BootEngine.Renderer.Cameras
 
 		public OrthoCamera Camera { get; }
 
-		public OrthoCameraController(OrthoCamera camera, float aspectRatio, bool enableRotation = false)
+		public OrthoCameraController(OrthoCamera camera, float aspectRatio, bool enableRotation = true)
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
 			Camera = camera;
-			this._enableRotation = enableRotation;
 			this.aspectRatio = aspectRatio;
+			_enableRotation = enableRotation;
 		}
 
-		public OrthoCameraController(float aspectRatio, bool enableRotation = false)
+		public OrthoCameraController(float aspectRatio, bool enableRotation = true)
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
@@ -36,7 +36,7 @@ namespace BootEngine.Renderer.Cameras
 			Camera = new OrthoCamera(-aspectRatio * zoomLevel, aspectRatio * zoomLevel, -zoomLevel, zoomLevel,
 				Application.App.Window.GraphicsDevice.IsDepthRangeZeroToOne, Application.App.Window.GraphicsDevice.IsClipSpaceYInverted);
 			this.aspectRatio = aspectRatio;
-			this._enableRotation = enableRotation;
+			_enableRotation = enableRotation;
 		}
 
 		public void OnEvent(EventBase @event)

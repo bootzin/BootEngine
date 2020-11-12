@@ -1,4 +1,5 @@
 ﻿using BootEngine.Events;
+using Veldrid;
 
 namespace BootEngine.Layers
 {
@@ -6,6 +7,10 @@ namespace BootEngine.Layers
 	{
 		#region Properties
 		protected string DebugName { get; }
+		protected int Width => Application.App.Window.SdlWindow.Width;
+		protected int Height => Application.App.Window.SdlWindow.Height;
+		protected GraphicsDevice GraphicsDevice => Application.App.Window.GraphicsDevice;
+		protected ResourceFactory ResourceFactory => Application.App.Window.GraphicsDevice.ResourceFactory;
 		#endregion
 
 		#region Constructor
@@ -21,6 +26,8 @@ namespace BootEngine.Layers
 		public virtual void OnUpdate(float deltaSeconds) { }
 		public virtual void OnEvent(EventBase @event) { }
 		public virtual void OnGuiRender() { }
+
+		public virtual void Close() => Application.App.Close();
 		#endregion
 	}
 }

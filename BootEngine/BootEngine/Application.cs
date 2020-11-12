@@ -14,11 +14,10 @@ namespace BootEngine
 	{
 		#region Properties
 		public static Application App { get; private set; }
-
 		public WindowBase Window { get; }
 		protected LayerStack LayerStack { get; }
-
 		private ImGuiLayer ImGuiLayer { get; }
+
 		private bool disposed;
 		#endregion
 
@@ -27,6 +26,7 @@ namespace BootEngine
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
+			Logger.Init();
 			Logger.Assert(App == null, "App already initialized");
 			App = this;
 			LayerStack = new LayerStack();
@@ -41,6 +41,7 @@ namespace BootEngine
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
+			Logger.Init();
 			Logger.Assert(App == null, "App already initialized");
 			App = this;
 			LayerStack = new LayerStack();
@@ -55,6 +56,7 @@ namespace BootEngine
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
+			Logger.Init();
 			Logger.Assert(App == null, "App already initialized");
 			App = this;
 			LayerStack = new LayerStack();
@@ -99,7 +101,7 @@ namespace BootEngine
 					{
 #endif
 						ImGuiLayer.Begin(deltaSeconds); //Window is updated in here
-						for (int i = 0; i < LayerStack.Layers.Count ; i++)
+						for (int i = 0; i < LayerStack.Layers.Count; i++)
 							LayerStack.Layers[i].OnGuiRender();
 						ImGuiLayer.End();
 #if DEBUG
@@ -162,7 +164,6 @@ namespace BootEngine
 					}
 					Window.Dispose();
 					Window.GraphicsDevice.Dispose();
-					Window.ResourceFactory = null;
 					LayerStack.Layers.Clear();
 				}
 				disposed = true;

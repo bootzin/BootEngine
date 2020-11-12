@@ -21,7 +21,7 @@ namespace BootEngine.Renderer
 		public static Texture WhiteTexture { get; internal set; }
 		public List<Renderable2D> RenderableList { get; internal set; } = new List<Renderable2D>();
 		public RenderStats Stats { get; } = new RenderStats();
-		internal Framebuffer ActiveFramebuffer { get; set; }
+		public Framebuffer ActiveFramebuffer { get; set; }
 		internal Framebuffer AlternateFramebuffer { get; set; }
 		internal Framebuffer MainFramebuffer { get; set; }
 		public bool RenderToFramebuffer

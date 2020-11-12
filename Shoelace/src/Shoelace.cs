@@ -1,5 +1,4 @@
 ﻿using BootEngine;
-using BootEngine.Log;
 using BootEngine.Utils;
 using BootEngine.Utils.ProfilingTools;
 using BootEngine.Window;
@@ -18,8 +17,7 @@ namespace Shoelace
 		public static void Main()
 		{
 			ProfileWriter.BeginSession("Startup", "BootProfile-Startup.json");
-			Logger.Init();
-			var app = new Shoelace(GraphicsBackend.Direct3D11);
+			var app = new Shoelace(GraphicsBackend.OpenGL);
 			ProfileWriter.EndSesison();
 
 			ProfileWriter.BeginSession("Runtime", "BootProfile-Runtime.json");

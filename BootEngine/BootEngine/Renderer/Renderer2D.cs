@@ -19,7 +19,7 @@ namespace BootEngine.Renderer
 
 		#region Properties
 		public static Scene2D CurrentScene { get; set; }
-		public static IntPtr RenderedTexturesAddr { get; set; }
+		public static IntPtr RenderTargetAddr { get; set; }
 
 		public int InstanceCount { get; private set; }
 
@@ -27,10 +27,11 @@ namespace BootEngine.Renderer
 		private readonly static CommandList _commandList = _gd.ResourceFactory.CreateCommandList();
 		private InstanceVertexInfo[] instanceList = new InstanceVertexInfo[MAX_QUADS];
 		private bool shouldFlush;
+		private bool shouldClearBuffers;
 		#endregion
 
 		#region Constructor
-		static Renderer2D()
+		public Renderer2D()
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(typeof(Renderer2D));
@@ -116,18 +117,26 @@ namespace BootEngine.Renderer
 			CurrentScene.MainPipeline = CurrentScene.ActivePipeline = factory.CreateGraphicsPipeline(pipelineDescription);
 
 			var tex = factory.CreateTexture(TextureDescription.Texture2D(
-				1280u, // Width
-				720u, // Height
+				1264u, // Width
+				714u, // Height
 				1,  // Miplevel
 				1,  // ArrayLayers
 				PixelFormat.R8_G8_B8_A8_UNorm,
 				TextureUsage.RenderTarget | TextureUsage.Sampled));
-			var framebuffer = factory.CreateFramebuffer(new FramebufferDescription(null, tex));
+			var depthTex = factory.CreateTexture(TextureDescription.Texture2D(
+				1264u, // Width
+				714u, // Height
+				1,  // Miplevel
+				1,  // ArrayLayers
+				PixelFormat.R16_UNorm,
+				TextureUsage.DepthStencil));
+			var framebuffer = factory.CreateFramebuffer(new FramebufferDescription(depthTex, tex));
+
 			pipelineDescription.Outputs = framebuffer.OutputDescription;
-			RenderedTexturesAddr = ImGuiLayer.Controller.GetOrCreateImGuiBinding(factory, tex);
+			RenderTargetAddr = ImGuiLayer.Controller.GetOrCreateImGuiBinding(factory, tex);
 
 			CurrentScene.FramebufferPipeline = factory.CreateGraphicsPipeline(pipelineDescription);
-			CurrentScene.MainFramebuffer = _gd.MainSwapchain.Framebuffer;
+			CurrentScene.MainFramebuffer = CurrentScene.ActiveFramebuffer = _gd.MainSwapchain.Framebuffer;
 			CurrentScene.AlternateFramebuffer = framebuffer;
 
 			InstancingTextureData data = new InstancingTextureData()
@@ -156,8 +165,9 @@ namespace BootEngine.Renderer
 			CurrentScene = scene;
 		}
 
-		public void BeginScene(OrthoCamera camera)
+		public void BeginScene(OrthoCamera camera, bool shouldClearBuffers = true)
 		{
+			this.shouldClearBuffers = shouldClearBuffers;
 			_gd.UpdateBuffer(CurrentScene.CameraBuffer, 0, camera.ViewProjectionMatrix);
 		}
 
@@ -359,12 +369,15 @@ namespace BootEngine.Renderer
 			cl.Begin();
 			cl.SetFramebuffer(CurrentScene.ActiveFramebuffer);
 			cl.SetFullViewport(0);
-			cl.ClearColorTarget(0, RgbaFloat.Grey);
-			if (CurrentScene.ActiveFramebuffer.DepthTarget != null)
+			if (shouldClearBuffers)
+			{
+				cl.ClearColorTarget(0, RgbaFloat.Grey);
 				cl.ClearDepthStencil(1f);
-			cl.SetVertexBuffer(0, CurrentScene.VertexBuffer);
-			cl.SetIndexBuffer(CurrentScene.IndexBuffer, IndexFormat.UInt16);
+			}
 			cl.SetPipeline(CurrentScene.ActivePipeline);
+			cl.SetIndexBuffer(CurrentScene.IndexBuffer, IndexFormat.UInt16);
+			cl.SetVertexBuffer(0, CurrentScene.VertexBuffer);
+			cl.SetVertexBuffer(1, CurrentScene.InstancesVertexBuffer);
 		}
 
 		protected override void BatchRender(CommandList cl)
@@ -372,7 +385,6 @@ namespace BootEngine.Renderer
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			cl.SetVertexBuffer(1, CurrentScene.InstancesVertexBuffer);
 			uint instanceStart = 0;
 			foreach (var entry in CurrentScene.DataPerTexture)
 			{

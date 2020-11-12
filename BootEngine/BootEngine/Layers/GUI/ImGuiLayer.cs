@@ -26,11 +26,11 @@ namespace BootEngine.Layers.GUI
 			var sdlWindow = window.SdlWindow;
 
 			gd = window.GraphicsDevice;
-			cl = window.ResourceFactory.CreateCommandList();
+			cl = window.GraphicsDevice.ResourceFactory.CreateCommandList();
 
 			Controller = new ImGuiController(gd, gd.SwapchainFramebuffer.OutputDescription, window);
 
-			sdlWindow.Resized += () => Controller.WindowResized(sdlWindow.Width, sdlWindow.Height, sdlWindow.WindowState == WindowState.Minimized);
+			sdlWindow.Resized += () => Controller.WindowResized(Width, Height, sdlWindow.WindowState == WindowState.Minimized);
 		}
 
 		public override void OnDetach()
@@ -58,6 +58,8 @@ namespace BootEngine.Layers.GUI
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
 			cl.SetFramebuffer(gd.SwapchainFramebuffer);
+			cl.ClearDepthStencil(1f);
+			cl.ClearColorTarget(0, RgbaFloat.Grey);
 			Controller.Render(gd, cl);
 
 			cl.End();

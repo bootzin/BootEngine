@@ -6,6 +6,7 @@ using BootEngine.Renderer.Cameras;
 using BootEngine.Utils;
 using BootEngine.Utils.ProfilingTools;
 using ImGuiNET;
+using System;
 using System.Numerics;
 using System.Threading.Tasks;
 using Veldrid;
@@ -32,8 +33,8 @@ namespace Shoelace.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			float aspectRatio = (float)Application.App.Window.SdlWindow.Width / Application.App.Window.SdlWindow.Height;
-			cameraController = new OrthoCameraController(aspectRatio, true);
+			float aspectRatio = (float)Width / Height;
+			cameraController = new OrthoCameraController(aspectRatio);
 
 			Renderable2DParameters param = new Renderable2DParameters
 			{
@@ -45,6 +46,7 @@ namespace Shoelace.Layers
 				Texture = null
 			};
 			Renderer2D.Instance.SetupQuadDraw(ref param);
+			Renderer2D.CurrentScene.RenderToFramebuffer = true;
 		}
 
 		public override void OnUpdate(float deltaSeconds)
@@ -62,7 +64,7 @@ namespace Shoelace.Layers
 			cameraController.Update(deltaSeconds);
 			Renderer2D renderer = Renderer2D.Instance;
 			renderer.BeginScene(cameraController.Camera);
-			renderer.UpdatePosition("Quad2", new Vector3(squareColor.X, squareColor.Y, squareColor.Z));
+			renderer.UpdatePosition("Quad", new Vector3(0, 0, .9f));
 
 #if DEBUG
 			using (Profiler updateProfiler = new Profiler("Update"))
@@ -72,11 +74,6 @@ namespace Shoelace.Layers
 					renderer.UpdateColor(i, squareColor);
 					renderer.UpdateRotation(i, Utils.Util.Deg2Rad(rot));
 				});
-			//for (int i = 0; i < renderer.InstanceCount; i++)
-			//{
-			//	renderer.UpdateColor(i, _squareColor);
-			//	renderer.UpdateRotation(i, (float)Utils.Util.Deg2Rad(temp));
-			//}
 			rot++;
 
 			if (renderer.InstanceCount < instanceCount)
@@ -102,14 +99,16 @@ namespace Shoelace.Layers
 #if DEBUG
 			using (Profiler camProfiler = new Profiler("Rendering"))
 			{
-
 #endif
-				Renderer2D.CurrentScene.RenderToFramebuffer = true;
 				renderer.Render();
-				Renderer2D.CurrentScene.RenderToFramebuffer = false;
 #if DEBUG
 			}
 #endif
+			renderer.EndScene();
+
+			renderer.BeginScene(cameraController.Camera, false);
+			renderer.UpdatePosition("Quad", new Vector3(squareColor.X, squareColor.Y, squareColor.Z));
+			renderer.Render();
 			renderer.EndScene();
 		}
 
@@ -135,15 +134,20 @@ namespace Shoelace.Layers
 			ImGui.SetNextWindowPos(viewport.Pos);
 			ImGui.SetNextWindowSize(viewport.Size);
 			ImGui.SetNextWindowViewport(viewport.ID);
+			ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0.0f);
+			ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 0.0f);
 			const ImGuiWindowFlags dockspaceFlags = ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoResize
-				| ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoBringToFrontOnFocus | ImGuiWindowFlags.NoNavFocus | ImGuiWindowFlags.NoBackground;
+				| ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoBringToFrontOnFocus | ImGuiWindowFlags.NoNavFocus | ImGuiWindowFlags.NoBackground
+				| ImGuiWindowFlags.MenuBar;
+			ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
 			ImGui.Begin("Dockspace", ref dockspaceOpen, dockspaceFlags);
+			ImGui.PopStyleVar(3);
 			if (ImGui.BeginMenuBar())
 			{
 				if (ImGui.BeginMenu("File"))
 				{
 					if (ImGui.MenuItem("Exit"))
-						Application.App.Close();
+						Close();
 					ImGui.EndMenu();
 				}
 				ImGui.EndMenuBar();
@@ -154,7 +158,10 @@ namespace Shoelace.Layers
 			var hovered = ImGui.IsWindowHovered();
 
 			var viewportPanelSize = ImGui.GetContentRegionAvail();
-			ImGui.Image(Renderer2D.RenderedTexturesAddr, viewportPanelSize);
+			if (!GraphicsDevice.IsUvOriginTopLeft)
+				ImGui.Image(Renderer2D.RenderTargetAddr, viewportPanelSize, new Vector2(0,1), new Vector2(1,0));
+			else
+				ImGui.Image(Renderer2D.RenderTargetAddr, viewportPanelSize);
 			ImGui.End(); //Viewport
 			ImGui.End(); // Dockspace
 		}

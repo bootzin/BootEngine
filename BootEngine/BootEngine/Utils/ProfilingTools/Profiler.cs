@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.Threading;
 #if !DEBUG
-using Utils.Exceptions;
 #endif
 
 namespace BootEngine.Utils.ProfilingTools
@@ -21,7 +20,7 @@ namespace BootEngine.Utils.ProfilingTools
 		public Profiler(string name)
 		{
 #if !DEBUG
-			throw new BootEngineException("Profiler should not be called without the DEBUG compilation flag.");
+			Log.Logger.CoreWarn("Profiler should not be called without the DEBUG compilation flag.");
 #endif
 			Name = name;
 			Init();
@@ -30,7 +29,7 @@ namespace BootEngine.Utils.ProfilingTools
 		public Profiler(Type type, [System.Runtime.CompilerServices.CallerMemberName] string name = null)
 		{
 #if !DEBUG
-			throw new BootEngineException("Profiler should not be called without the DEBUG compilation flag.");
+			Log.Logger.CoreWarn("Profiler should not be called without the DEBUG compilation flag.");
 #endif
 			Name = type.Name + "_" + name;
 			Init();
