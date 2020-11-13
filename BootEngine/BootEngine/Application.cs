@@ -19,6 +19,7 @@ namespace BootEngine
 		private ImGuiLayer ImGuiLayer { get; }
 
 		private bool disposed;
+		private bool shouldDispose;
 		#endregion
 
 		protected Application(WindowProps props, Type windowType, GraphicsBackend backend)
@@ -118,6 +119,8 @@ namespace BootEngine
 #if DEBUG
 				}
 #endif
+				if (shouldDispose)
+					Dispose();
 			}
 		}
 
@@ -137,7 +140,7 @@ namespace BootEngine
 
 		public void Close()
 		{
-			Dispose();
+			shouldDispose = true;
 		}
 		#endregion
 

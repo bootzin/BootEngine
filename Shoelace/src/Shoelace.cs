@@ -23,10 +23,6 @@ namespace Shoelace
 			ProfileWriter.BeginSession("Runtime", "BootProfile-Runtime.json");
 			app.Run();
 			ProfileWriter.EndSesison();
-
-			ProfileWriter.BeginSession("Shutdown", "BootProfile-Shutdown.json");
-			app.Dispose();
-			ProfileWriter.EndSesison();
 		}
 	}
 }

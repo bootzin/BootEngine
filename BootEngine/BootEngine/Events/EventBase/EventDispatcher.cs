@@ -21,7 +21,7 @@ namespace BootEngine.Events
 		{
 			if (Event is T)
 			{
-				Event.Handled = func(Event as T);
+				Event.Handled |= func(Event as T);
 				return true;
 			}
 			return false;

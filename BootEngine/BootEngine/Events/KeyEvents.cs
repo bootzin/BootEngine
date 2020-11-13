@@ -1,16 +1,18 @@
-﻿namespace BootEngine.Events
+﻿using Utils;
+
+namespace BootEngine.Events
 {
 	public class KeyEvent : EventBase
 	{
 		#region Constructor
 		protected KeyEvent(int keyCode)
 		{
-			KeyCode = keyCode;
+			KeyCode = (KeyCodes)keyCode;
 		}
 		#endregion
 
 		#region Properties
-		public int KeyCode { get; }
+		public KeyCodes KeyCode { get; }
 		#endregion
 
 		#region EventBase

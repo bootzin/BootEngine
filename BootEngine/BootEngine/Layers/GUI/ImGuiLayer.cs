@@ -10,6 +10,7 @@ namespace BootEngine.Layers.GUI
 		private GraphicsDevice gd;
 		private CommandList cl;
 		public static ImGuiController Controller { get; private set; }
+		public static bool BlockEvents { get; set; }
 		#endregion
 
 		#region Constructor
@@ -70,7 +71,12 @@ namespace BootEngine.Layers.GUI
 
 		public override void OnEvent(EventBase @event)
 		{
-			//
+			if (BlockEvents)
+			{
+				var io = ImGuiNET.ImGui.GetIO();
+				@event.Handled |= @event.IsInCategory(EventCategory.Mouse) && io.WantCaptureMouse;
+				@event.Handled |= @event.IsInCategory(EventCategory.Keyboard) && io.WantCaptureKeyboard;
+			}
 		}
 		#endregion
 	}

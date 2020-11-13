@@ -1,5 +1,5 @@
-﻿using BootEngine;
-using BootEngine.Events;
+﻿using BootEngine.Events;
+using BootEngine.Input;
 using BootEngine.Layers;
 using BootEngine.Layers.GUI;
 using BootEngine.Renderer;
@@ -10,6 +10,7 @@ using ImGuiNET;
 using System;
 using System.Numerics;
 using System.Threading.Tasks;
+using Utils;
 using Veldrid;
 
 namespace Shoelace.Layers
@@ -26,6 +27,8 @@ namespace Shoelace.Layers
 		private IntPtr renderTargetAddr;
 		private Framebuffer fb;
 		private bool dockspaceOpen = true;
+		private Vector2 lastSize = Vector2.Zero;
+		private bool viewportFocused;
 		#endregion
 
 		#region Constructor
@@ -85,7 +88,8 @@ namespace Shoelace.Layers
 				_frametime[i] = _frametime[++i];
 			}
 
-			cameraController.Update(deltaSeconds);
+			if (viewportFocused)
+				cameraController.Update(deltaSeconds);
 			Renderer2D renderer = Renderer2D.Instance;
 			renderer.BeginScene(cameraController.Camera);
 			renderer.UpdatePosition("Quad", new Vector3(0, 0, .9f));
@@ -141,10 +145,6 @@ namespace Shoelace.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			//ImGui.Begin("Settings 2D");
-			//ImGui.ColorEdit4("Square Color 2D", ref squareColor);
-			//ImGui.End();
-
 			//ImGui.Begin("FPS Counter");
 			//ImGui.PlotLines("", ref _frametime[0], 100, 0, "Frametime (ms)", 0, 66.6f, new Vector2(250, 50));
 			//ImGui.Text("FPS: " + (1000f / _frametime.Average()));
@@ -166,33 +166,66 @@ namespace Shoelace.Layers
 			ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
 			ImGui.Begin("Dockspace", ref dockspaceOpen, dockspaceFlags);
 			ImGui.PopStyleVar(3);
+			ImGui.DockSpace(ImGui.GetID("MyDockspace"), Vector2.Zero);
 			if (ImGui.BeginMenuBar())
 			{
 				if (ImGui.BeginMenu("File"))
 				{
-					if (ImGui.MenuItem("Exit"))
+					if (ImGui.MenuItem("Exit", "Ctrl+Q"))
 						Close();
 					ImGui.EndMenu();
 				}
 				ImGui.EndMenuBar();
 			}
 
+			ImGui.Begin("Settings 2D");
+			ImGui.ColorEdit4("Square Color 2D", ref squareColor);
+			ImGui.End();
+
+			ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
 			ImGui.Begin("Viewport");
-			var focused = ImGui.IsWindowFocused();
-			var hovered = ImGui.IsWindowHovered();
+			viewportFocused = ImGui.IsWindowFocused();
+			ImGuiLayer.BlockEvents = !viewportFocused || !ImGui.IsWindowHovered();
 
 			var viewportPanelSize = ImGui.GetContentRegionAvail();
 			if (!GraphicsDevice.IsUvOriginTopLeft)
 				ImGui.Image(renderTargetAddr, viewportPanelSize, new Vector2(0,1), new Vector2(1,0));
 			else
 				ImGui.Image(renderTargetAddr, viewportPanelSize);
+			if (viewportPanelSize != lastSize)
+			{
+				lastSize = viewportPanelSize;
+				cameraController.OnResize((int)viewportPanelSize.X, (int)viewportPanelSize.Y);
+			}
 			ImGui.End(); //Viewport
+			ImGui.PopStyleVar();
 			ImGui.End(); // Dockspace
 		}
 
 		public override void OnEvent(EventBase @event)
 		{
 			cameraController.OnEvent(@event);
+			EventDispatcher dis = new EventDispatcher(@event);
+			dis.Dispatch<KeyPressedEvent>(OnKeyPressed);
+		}
+
+		private bool OnKeyPressed(KeyPressedEvent e)
+		{
+			bool control = InputManager.Instance.GetKeyDown(KeyCodes.ControlLeft) || InputManager.Instance.GetKeyDown(KeyCodes.ControlRight);
+			bool shift = InputManager.Instance.GetKeyDown(KeyCodes.ShiftLeft) || InputManager.Instance.GetKeyDown(KeyCodes.ShiftRight);
+
+			switch (e.KeyCode)
+			{
+				case KeyCodes.N:
+				case KeyCodes.O:
+				case KeyCodes.S:
+					break;
+				case KeyCodes.Q:
+					if (control)
+						Close();
+					break;
+			}
+			return false;
 		}
 
 		public override void OnDetach()

@@ -3,12 +3,12 @@
 	public class WindowResizeEvent : EventBase
 	{
 		#region Properties
-		public uint Width { get; }
-		public uint Height { get; }
+		public int Width { get; }
+		public int Height { get; }
 		#endregion
 
 		#region Constructor
-		public WindowResizeEvent(uint width, uint height)
+		public WindowResizeEvent(int width, int height)
 		{
 			Width = width;
 			Height = height;

@@ -105,11 +105,22 @@ namespace BootEngine.Renderer.Cameras
 			// Deduplicate resized events
 			if (aspectRatio != newAR)
 			{
-				aspectRatio = newAR;
-				Camera.SetProjectionMatrix(-aspectRatio * zoomLevel, aspectRatio * zoomLevel, -zoomLevel, zoomLevel);
-				Application.App.Window.Swapchain.Resize(e.Width, e.Height);
+				OnResize(newAR);
+				Application.App.Window.Swapchain.Resize((uint)e.Width, (uint)e.Height);
 			}
 			return false;
+		}
+
+		public void OnResize(int width, int height)
+		{
+			aspectRatio = (float)width / height;
+			Camera.SetProjectionMatrix(-aspectRatio * zoomLevel, aspectRatio * zoomLevel, -zoomLevel, zoomLevel);
+		}
+
+		public void OnResize(float ar)
+		{
+			aspectRatio = ar;
+			Camera.SetProjectionMatrix(-aspectRatio * zoomLevel, aspectRatio * zoomLevel, -zoomLevel, zoomLevel);
 		}
 	}
 }
