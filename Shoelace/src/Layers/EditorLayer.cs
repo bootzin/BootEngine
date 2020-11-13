@@ -136,6 +136,7 @@ namespace Shoelace.Layers
 
 			renderer.BeginScene(cameraController.Camera, false);
 			renderer.UpdatePosition("Quad", new Vector3(squareColor.X, squareColor.Y, squareColor.Z));
+			renderer.UpdateColor("Quad", ColorF.Black);
 			renderer.Render();
 			renderer.EndScene();
 		}
