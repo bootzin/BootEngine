@@ -129,7 +129,6 @@ namespace BootEngine.Renderer
 
 		public void ResetStats()
 		{
-			Logger.CoreInfo("Currently issuing " + CurrentScene.Stats.DrawCalls + " draw calls");
 			CurrentScene.Stats.DrawCalls = 0;
 		}
 		#endregion

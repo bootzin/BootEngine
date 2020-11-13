@@ -180,6 +180,11 @@ namespace Shoelace.Layers
 
 			ImGui.Begin("Settings 2D");
 			ImGui.ColorEdit4("Square Color 2D", ref squareColor);
+			ImGui.Begin("Stats");
+			ImGui.Text("Renderer Stats:");
+			ImGui.Text("Draw Calls: " + Renderer2D.CurrentScene.Stats.DrawCalls);
+			ImGui.Text("Instance Count: " + Renderer2D.Instance.InstanceCount);
+			ImGui.End();
 			ImGui.End();
 
 			ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
