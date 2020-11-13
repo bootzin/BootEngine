@@ -100,7 +100,7 @@ namespace Sandbox.Layers
 			Parallel.For(0, renderer.InstanceCount, (i) =>
 			{
 				renderer.UpdateColor(i, squareColor);
-				renderer.UpdateRotation(i, Utils.Util.Deg2Rad(rot));
+				//renderer.UpdateRotation(i, Utils.Util.Deg2Rad(rot));
 			});
 			//for (int i = 0; i < renderer.InstanceCount; i++)
 			//{
