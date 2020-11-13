@@ -23,12 +23,15 @@ namespace BootEngine.Layers.GUI
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			gd = Application.App.Window.GraphicsDevice;
-			cl = Application.App.Window.GraphicsDevice.ResourceFactory.CreateCommandList();
+			var window = Application.App.Window;
+			var sdlWindow = window.SdlWindow;
 
-			Controller = new ImGuiController(gd, gd.SwapchainFramebuffer.OutputDescription, Application.App.Window);
+			gd = window.GraphicsDevice;
+			cl = window.GraphicsDevice.ResourceFactory.CreateCommandList();
 
-			Application.App.Window.SdlWindow.Resized += () => Controller.WindowResized(Width, Height, Application.App.Window.SdlWindow.WindowState == WindowState.Minimized);
+			Controller = new ImGuiController(gd, gd.SwapchainFramebuffer.OutputDescription, window);
+
+			sdlWindow.Resized += () => Controller.WindowResized(Width, Height, sdlWindow.WindowState == WindowState.Minimized);
 		}
 
 		public override void OnDetach()
