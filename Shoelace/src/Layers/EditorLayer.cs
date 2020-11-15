@@ -73,7 +73,7 @@ namespace Shoelace.Layers
 				Veldrid.TextureUsage.DepthStencil));
 			fb = ResourceFactory.CreateFramebuffer(new FramebufferDescription(fbDepthTex, fbTex));
 			currentPipeline.Outputs = fb.OutputDescription;
-			Renderer2D.CurrentScene.SetPipelineDescrition(currentPipeline, fb);
+			Renderer2D.CurrentScene.SetPipelineDescrition(currentPipeline, fb, true);
 		}
 
 		public override void OnUpdate(float deltaSeconds)

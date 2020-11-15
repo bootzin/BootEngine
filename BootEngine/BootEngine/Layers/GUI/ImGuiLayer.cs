@@ -11,6 +11,7 @@ namespace BootEngine.Layers.GUI
 		private CommandList cl;
 		public static ImGuiController Controller { get; private set; }
 		public static bool BlockEvents { get; set; }
+		internal static bool ShouldClearBuffers { get; set; }
 		#endregion
 
 		#region Constructor
@@ -59,8 +60,11 @@ namespace BootEngine.Layers.GUI
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
 			cl.SetFramebuffer(gd.SwapchainFramebuffer);
-			cl.ClearDepthStencil(1f);
-			cl.ClearColorTarget(0, RgbaFloat.Grey);
+			if (ShouldClearBuffers)
+			{
+				cl.ClearDepthStencil(1f);
+				cl.ClearColorTarget(0, RgbaFloat.Grey);
+			}
 			Controller.Render(gd, cl);
 
 			cl.End();

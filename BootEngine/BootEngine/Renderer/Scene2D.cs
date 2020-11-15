@@ -1,4 +1,5 @@
-﻿using BootEngine.Utils.ProfilingTools;
+﻿using BootEngine.Layers.GUI;
+using BootEngine.Utils.ProfilingTools;
 using System.Collections.Generic;
 using Veldrid;
 
@@ -20,11 +21,12 @@ namespace BootEngine.Renderer
 		internal Pipeline ActivePipeline { get; private set; }
 		internal Framebuffer ActiveFramebuffer { get; private set; }
 
-		public void SetPipelineDescrition(GraphicsPipelineDescription pd, Framebuffer targetFb)
+		public void SetPipelineDescrition(GraphicsPipelineDescription pd, Framebuffer targetFb, bool clearMainFramebuffer = false)
 		{
 			ActiveFramebuffer = targetFb;
 			PipelineDescrition = pd;
 			ActivePipeline = Application.App.Window.GraphicsDevice.ResourceFactory.CreateGraphicsPipeline(pd);
+			ImGuiLayer.ShouldClearBuffers = clearMainFramebuffer;
 		}
 
 		protected override void Dispose(bool disposing)

@@ -1,10 +1,7 @@
 ﻿using BootEngine.AssetsManager;
-using BootEngine.Layers.GUI;
-using BootEngine.Log;
 using BootEngine.Renderer.Cameras;
 using BootEngine.Utils.ProfilingTools;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Veldrid;
@@ -111,7 +108,7 @@ namespace BootEngine.Renderer
 				shaders: AssetManager.GenerateShadersFromFile("Texture2D.glsl"));
 			pipelineDescription.Outputs = _gd.MainSwapchain.Framebuffer.OutputDescription;
 
-			CurrentScene.SetPipelineDescrition(pipelineDescription, _gd.SwapchainFramebuffer);
+			CurrentScene.SetPipelineDescrition(pipelineDescription, _gd.MainSwapchain.Framebuffer);
 
 			InstancingTextureData data = new InstancingTextureData()
 			{

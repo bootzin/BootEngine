@@ -72,10 +72,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="BootEngine">
-      <HintPath>..\BootEngine\bin\$(ConfigurationName)\x64\netcoreapp3.0\BootEngine.dll</HintPath>
-      <Private>true</Private>
-    </Reference>
     <Reference Include="ImGui.NET">
       <HintPath>..\BootEngine\_deps\ImGui.NET\ImGui.NET.dll</HintPath>
     </Reference>
@@ -98,6 +94,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>cimgui.dll</TargetPath>
     </ContentWithTargetPath>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BootEngine\BootEngine.csproj" />
   </ItemGroup>
 
 </Project>
