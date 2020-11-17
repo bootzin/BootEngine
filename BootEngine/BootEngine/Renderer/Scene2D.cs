@@ -48,6 +48,7 @@ namespace BootEngine.Renderer
 					kv.Value.ResourceSet.Dispose();
 					kv.Key.Dispose();
 				}
+				Dispose();
 			}
 		}
 	}

@@ -90,6 +90,12 @@
     <Reference Include="ImGui.NET">
       <HintPath>deps\ImGui.NET\ImGui.NET.dll</HintPath>
     </Reference>
+    <Reference Include="Leopotam.Ecs">
+      <HintPath>_deps\Leo.ECS\Leopotam.Ecs.dll</HintPath>
+    </Reference>
+    <Reference Include="Svelto.ECS">
+      <HintPath>_deps\Svelto.ECS\Svelto.ECS.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>

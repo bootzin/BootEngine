@@ -15,7 +15,7 @@ using Veldrid;
 
 namespace Shoelace.Layers
 {
-	public class EditorLayer : LayerBase
+	public sealed class EditorLayer : LayerBase
 	{
 		#region Properties
 		private OrthoCameraController cameraController;
@@ -56,8 +56,8 @@ namespace Shoelace.Layers
 
 			var currentPipeline = Renderer2D.CurrentScene.PipelineDescrition;
 			fbTex = ResourceFactory.CreateTexture(TextureDescription.Texture2D(
-				1264u, // Width
-				714u, // Height
+				(uint)Width, // Width
+				(uint)Height, // Height
 				1,  // Miplevel
 				1,  // ArrayLayers
 				PixelFormat.R8_G8_B8_A8_UNorm,
@@ -65,8 +65,8 @@ namespace Shoelace.Layers
 			renderTargetAddr = ImGuiLayer.Controller.GetOrCreateImGuiBinding(ResourceFactory, fbTex);
 
 			fbDepthTex = ResourceFactory.CreateTexture(TextureDescription.Texture2D(
-				1264u, // Width
-				714u, // Height
+				(uint)Width, // Width
+				(uint)Height, // Height
 				1,  // Miplevel
 				1,  // ArrayLayers
 				PixelFormat.R16_UNorm,
@@ -90,21 +90,20 @@ namespace Shoelace.Layers
 
 			if (viewportFocused)
 				cameraController.Update(deltaSeconds);
-			Renderer2D renderer = Renderer2D.Instance;
-			renderer.BeginScene(cameraController.Camera);
-			renderer.UpdatePosition("Quad", new Vector3(0, 0, .9f));
+			Renderer2D.Instance.BeginScene(cameraController.Camera);
+			Renderer2D.Instance.UpdatePosition("Quad", new Vector3(0, 0, .9f));
 
 #if DEBUG
 			using (Profiler updateProfiler = new Profiler("Update"))
 #endif
-				Parallel.For(0, renderer.InstanceCount, (i) =>
+				Parallel.For(0, Renderer2D.Instance.InstanceCount, (i) =>
 				{
-					renderer.UpdateColor(i, squareColor);
-					renderer.UpdateRotation(i, Utils.Util.Deg2Rad(rot));
+					Renderer2D.Instance.UpdateColor(i, squareColor);
+					Renderer2D.Instance.UpdateRotation(i, Util.Deg2Rad(rot));
 				});
 			rot++;
 
-			if (renderer.InstanceCount < instanceCount)
+			if (Renderer2D.Instance.InstanceCount < instanceCount)
 			{
 				var param = new Renderable2DParameters
 				{
@@ -112,32 +111,32 @@ namespace Shoelace.Layers
 					Rotation = 0,
 					Color = squareColor
 				};
-				for (int i = renderer.InstanceCount; i < instanceCount; i++)
+				for (int i = Renderer2D.Instance.InstanceCount; i < instanceCount; i++)
 				{
 					param.Position = new Vector3(-.11f * (i % 1000), -.11f * (i / 1000), .5f);
-					renderer.SetupQuadDraw(ref param);
+					Renderer2D.Instance.SetupQuadDraw(ref param);
 				}
 			}
-			else if (renderer.InstanceCount > instanceCount)
+			else if (Renderer2D.Instance.InstanceCount > instanceCount)
 			{
-				for (int i = renderer.InstanceCount; i > instanceCount;)
-					renderer.RemoveQuadDraw(--i);
+				for (int i = Renderer2D.Instance.InstanceCount; i > instanceCount;)
+					Renderer2D.Instance.RemoveQuadDraw(--i);
 			}
 
 #if DEBUG
 			using (Profiler camProfiler = new Profiler("Rendering"))
 			{
 #endif
-				renderer.Render();
+				Renderer2D.Instance.Render();
 #if DEBUG
 			}
 #endif
-			renderer.EndScene();
+			Renderer2D.Instance.EndScene();
 
-			renderer.BeginScene(cameraController.Camera, false);
-			renderer.UpdatePosition("Quad", new Vector3(squareColor.X, squareColor.Y, squareColor.Z));
-			renderer.Render();
-			renderer.EndScene();
+			Renderer2D.Instance.BeginScene(cameraController.Camera, false);
+			Renderer2D.Instance.UpdatePosition("Quad", new Vector3(squareColor.X, squareColor.Y, squareColor.Z));
+			Renderer2D.Instance.Render();
+			Renderer2D.Instance.EndScene();
 		}
 
 		public override void OnGuiRender()
@@ -182,8 +181,8 @@ namespace Shoelace.Layers
 			ImGui.ColorEdit4("Square Color 2D", ref squareColor);
 			ImGui.Begin("Stats");
 			ImGui.Text("Renderer Stats:");
-			ImGui.Text("Draw Calls: " + Renderer2D.CurrentScene.Stats.DrawCalls);
-			ImGui.Text("Instance Count: " + Renderer2D.Instance.InstanceCount);
+			ImGui.Text("Draw Calls: " + Renderer2D.CurrentScene.Stats.DrawCalls.ToString());
+			ImGui.Text("Instance Count: " + Renderer2D.Instance.InstanceCount.ToString());
 			ImGui.End();
 			ImGui.End();
 
