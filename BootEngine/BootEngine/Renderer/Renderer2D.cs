@@ -19,6 +19,7 @@ namespace BootEngine.Renderer
 		public int InstanceCount { get; private set; }
 
 		private readonly static GraphicsDevice _gd = Application.App.Window.GraphicsDevice;
+
 		private readonly static CommandList _commandList = _gd.ResourceFactory.CreateCommandList();
 		private InstanceVertexInfo[] instanceList = new InstanceVertexInfo[MAX_QUADS];
 		private bool shouldFlush;
@@ -141,12 +142,22 @@ namespace BootEngine.Renderer
 			_gd.UpdateBuffer(CurrentScene.CameraBuffer, 0, camera.ViewProjectionMatrix);
 		}
 
+		public void BeginScene(Camera cam, Matrix4x4 transform)
+		{
+			throw new NotImplementedException();
+		}
+
 		public void EndScene()
 		{
 			//
 		}
 
 		#region Primitives
+		public void QueueQuad(Matrix4x4 transform, Vector4 color)
+		{
+			throw new NotImplementedException();
+		}
+
 		public Renderable2D SetupQuadDraw(Renderable2DParameters parameters, bool flush = true) => SetupQuadDraw(ref parameters, flush);
 
 		public Renderable2D SetupQuadDraw(ref Renderable2DParameters parameters, bool flush = true)

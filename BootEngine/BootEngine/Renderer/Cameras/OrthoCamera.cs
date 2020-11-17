@@ -3,7 +3,7 @@ using System.Numerics;
 
 namespace BootEngine.Renderer.Cameras
 {
-	public sealed class OrthoCamera
+	public sealed class OrthoCamera : Camera
 	{
 		private Vector3 position;
 		private float rotation;

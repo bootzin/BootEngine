@@ -74,9 +74,6 @@
     <Reference Include="Leopotam.Ecs">
       <HintPath>..\BootEngine\_deps\Leo.ECS\Leopotam.Ecs.dll</HintPath>
     </Reference>
-    <Reference Include="Svelto.ECS">
-      <HintPath>..\BootEngine\_deps\Svelto.ECS\Svelto.ECS.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
 </Project>

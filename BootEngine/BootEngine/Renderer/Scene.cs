@@ -14,8 +14,9 @@ namespace BootEngine.Renderer
 			Systems = new EcsSystems(World, "MainEcsSystems");
 		}
 
-		public Entity CreateEntity(string name)
+		public Entity CreateEntity(string name = null)
 		{
+			//Log.Logger.Assert(Systems.GetAllSystems().Count > 0, "A system must be added before creating entities!");
 			Entity e = new Entity(World.NewEntity());
 			e.AddComponent<TransformComponent>();
 			ref var tag = ref e.AddComponent<TagComponent>();

@@ -27,7 +27,7 @@ namespace BootEngine.Utils
         public float A => _channels.W;
 
         /// <summary>
-        /// Constructs a new RgbaFloat from the given components.
+        /// Constructs a new ColorF from the given components.
         /// </summary>
         /// <param name="r">The red component.</param>
         /// <param name="g">The green component.</param>
@@ -39,7 +39,7 @@ namespace BootEngine.Utils
         }
 
         /// <summary>
-        /// Constructs a new RgbaFloat from the XYZW components of a vector.
+        /// Constructs a new ColorF from the XYZW components of a vector.
         /// </summary>
         /// <param name="channels">The vector containing the color components.</param>
         public ColorF(Vector4 channels)
@@ -48,7 +48,7 @@ namespace BootEngine.Utils
         }
 
         /// <summary>
-        /// The total size, in bytes, of an RgbaFloat value.
+        /// The total size, in bytes, of an ColorF value.
         /// </summary>
         public static readonly int SizeInBytes = 16;
 
@@ -109,22 +109,19 @@ namespace BootEngine.Utils
         /// </summary>
         public static readonly ColorF Orange = new ColorF(1f, 0.36f, 0f, 1);
 
-        /// <summary>
-        /// Converts this RgbaFloat into a Vector4.
-        /// </summary>
-        /// <returns></returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Vector4 ToVector4()
-        {
-            return _channels;
-        }
+		/// <summary>
+		/// Converts this ColorF into a Vector4.
+		/// </summary>
+		/// <returns></returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public Vector4 ToVector4() => _channels;
 
-        /// <summary>
-        /// Element-wise equality.
-        /// </summary>
-        /// <param name="other">The instance to compare to.</param>
-        /// <returns>True if all elements are equal; false otherswise.</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+		/// <summary>
+		/// Element-wise equality.
+		/// </summary>
+		/// <param name="other">The instance to compare to.</param>
+		/// <returns>True if all elements are equal; false otherswise.</returns>
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(ColorF other)
         {
             return _channels.Equals(other._channels);
@@ -156,7 +153,7 @@ namespace BootEngine.Utils
         /// <returns></returns>
         public override string ToString()
         {
-            return string.Format("R:{0}, G:{1}, B:{2}, A:{3}", R, G, B, A);
+            return $"R:{R.ToString()}, G:{G.ToString()}, B:{B.ToString()}, A:{A.ToString()}";
         }
 
         /// <summary>

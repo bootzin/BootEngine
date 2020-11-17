@@ -1,4 +1,5 @@
-﻿using BootEngine.Events;
+﻿using BootEngine.ECS.Components;
+using BootEngine.Events;
 using BootEngine.Input;
 using BootEngine.Layers;
 using BootEngine.Layers.GUI;
@@ -53,6 +54,15 @@ namespace Shoelace.Layers
 				Texture = null
 			};
 			Renderer2D.Instance.SetupQuadDraw(ref param);
+
+			var entt = Renderer2D.CurrentScene.CreateEntity("Quad");
+			ref var comp = ref entt.GetComponent<TransformComponent>();
+			comp.Position = new Vector3(-1, 0, .5f);
+			comp.Scale = new Vector3(.5f, .5f, .5f);
+			//entt.AddComponent(new SpriteComponent(Vector4.One));
+			// OR 
+			ref var sprite = ref entt.AddComponent<SpriteComponent>();
+			sprite.Color = squareColor;
 
 			var currentPipeline = Renderer2D.CurrentScene.PipelineDescrition;
 			fbTex = ResourceFactory.CreateTexture(TextureDescription.Texture2D(
@@ -131,11 +141,6 @@ namespace Shoelace.Layers
 #if DEBUG
 			}
 #endif
-			Renderer2D.Instance.EndScene();
-
-			Renderer2D.Instance.BeginScene(cameraController.Camera, false);
-			Renderer2D.Instance.UpdatePosition("Quad", new Vector3(squareColor.X, squareColor.Y, squareColor.Z));
-			Renderer2D.Instance.Render();
 			Renderer2D.Instance.EndScene();
 		}
 

@@ -75,9 +75,6 @@
     <Reference Include="ImGui.NET">
       <HintPath>..\BootEngine\_deps\ImGui.NET\ImGui.NET.dll</HintPath>
     </Reference>
-    <Reference Include="Svelto.ECS">
-      <HintPath>..\BootEngine\_deps\Svelto.ECS\Svelto.ECS.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
   <ItemGroup>

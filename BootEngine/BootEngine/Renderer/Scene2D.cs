@@ -7,17 +7,17 @@ namespace BootEngine.Renderer
 {
 	public sealed class Scene2D : Scene
 	{
-		public GraphicsPipelineDescription PipelineDescrition { get; private set; }
-
 		internal DeviceBuffer IndexBuffer { get; set; }
 		internal DeviceBuffer VertexBuffer { get; set; }
 		internal DeviceBuffer InstancesVertexBuffer { get; set; }
 		internal DeviceBuffer CameraBuffer { get; set; }
-		internal Dictionary<Texture, InstancingTextureData> DataPerTexture { get; set; } = new Dictionary<Texture, InstancingTextureData>();
 		internal ResourceLayout ResourceLayout { get; set; }
 		public static Texture WhiteTexture { get; internal set; }
-		public List<Renderable2D> RenderableList { get; internal set; } = new List<Renderable2D>();
+		internal Dictionary<Texture, InstancingTextureData> DataPerTexture { get; } = new Dictionary<Texture, InstancingTextureData>();
+		public List<Renderable2D> RenderableList { get; } = new List<Renderable2D>();
 		public RenderStats Stats { get; } = new RenderStats();
+
+		public GraphicsPipelineDescription PipelineDescrition { get; private set; }
 		internal Pipeline ActivePipeline { get; private set; }
 		internal Framebuffer ActiveFramebuffer { get; private set; }
 
