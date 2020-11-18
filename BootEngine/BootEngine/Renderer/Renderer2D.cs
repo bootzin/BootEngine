@@ -1,8 +1,9 @@
 ﻿using BootEngine.AssetsManager;
+using BootEngine.Layers.GUI;
 using BootEngine.Renderer.Cameras;
 using BootEngine.Utils.ProfilingTools;
 using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Numerics;
 using Veldrid;
 
@@ -11,19 +12,34 @@ namespace BootEngine.Renderer
 	public sealed class Renderer2D : Renderer<Renderer2D>, IDisposable
 	{
 		#region Constants
-		private const int MAX_QUADS = 512;
+		private const int MAX_QUADS = 8;
 		#endregion
 
 		#region Properties
-		public static Scene2D CurrentScene { get; set; }
 		public int InstanceCount { get; private set; }
 
 		private readonly static GraphicsDevice _gd = Application.App.Window.GraphicsDevice;
 
 		private readonly static CommandList _commandList = _gd.ResourceFactory.CreateCommandList();
-		private InstanceVertexInfo[] instanceList = new InstanceVertexInfo[MAX_QUADS];
+		private readonly List<InstanceVertexInfo> instanceList = new List<InstanceVertexInfo>(MAX_QUADS);
 		private bool shouldFlush;
 		private bool shouldClearBuffers;
+
+		#region RendererData
+		public static Texture WhiteTexture { get; internal set; }
+		internal DeviceBuffer IndexBuffer { get; set; }
+		internal DeviceBuffer VertexBuffer { get; set; }
+		internal DeviceBuffer InstancesVertexBuffer { get; set; }
+		internal DeviceBuffer CameraBuffer { get; set; }
+		internal ResourceLayout ResourceLayout { get; set; }
+
+		public GraphicsPipelineDescription PipelineDescrition { get; private set; }
+		internal Pipeline ActivePipeline { get; private set; }
+		internal Framebuffer ActiveFramebuffer { get; private set; }
+		public RenderStats Stats { get; } = new RenderStats();
+
+		private Dictionary<Texture, InstancingTextureData> DataPerTexture { get; } = new Dictionary<Texture, InstancingTextureData>();
+		#endregion
 		#endregion
 
 		#region Constructor
@@ -32,8 +48,6 @@ namespace BootEngine.Renderer
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(typeof(Renderer2D));
 #endif
-			CurrentScene = new Scene2D();
-
 			ResourceFactory factory = _gd.ResourceFactory;
 
 			Span<ushort> quadIndices = stackalloc ushort[] { 0, 1, 2, 3 };
@@ -52,12 +66,12 @@ namespace BootEngine.Renderer
 				4 * sizeof(ushort),
 				BufferUsage.IndexBuffer);
 
-			CurrentScene.IndexBuffer = factory.CreateBuffer(ibDescription);
-			CurrentScene.VertexBuffer = factory.CreateBuffer(vbDescription);
-			_gd.UpdateBuffer(CurrentScene.IndexBuffer, 0, quadIndices.ToArray());
-			_gd.UpdateBuffer(CurrentScene.VertexBuffer, 0, quadVertices.ToArray());
+			IndexBuffer = factory.CreateBuffer(ibDescription);
+			VertexBuffer = factory.CreateBuffer(vbDescription);
+			_gd.UpdateBuffer(IndexBuffer, 0, quadIndices.ToArray());
+			_gd.UpdateBuffer(VertexBuffer, 0, quadVertices.ToArray());
 
-			Scene2D.WhiteTexture = factory.CreateTexture(TextureDescription.Texture2D(
+			WhiteTexture = factory.CreateTexture(TextureDescription.Texture2D(
 				1u, // Width
 				1u, // Height
 				1,  // Miplevel
@@ -66,7 +80,7 @@ namespace BootEngine.Renderer
 				TextureUsage.Sampled));
 			uint[] whiteTexture = { 0xffffffff };
 			_gd.UpdateTexture(
-				Scene2D.WhiteTexture,
+				WhiteTexture,
 				whiteTexture,
 				0,  // x
 				0,  // y
@@ -76,10 +90,10 @@ namespace BootEngine.Renderer
 				1,  // Depth
 				0,  // Miplevel
 				0); // ArrayLayer
-			Scene2D.WhiteTexture.Name = "WhiteTex";
+			WhiteTexture.Name = "WhiteTex";
 
-			CurrentScene.InstancesVertexBuffer = factory.CreateBuffer(new BufferDescription(InstanceVertexInfo.SizeInBytes * MAX_QUADS, BufferUsage.VertexBuffer));
-			CurrentScene.CameraBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
+			InstancesVertexBuffer = factory.CreateBuffer(new BufferDescription(InstanceVertexInfo.SizeInBytes * MAX_QUADS, BufferUsage.VertexBuffer));
+			CameraBuffer = factory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer));
 
 			VertexLayoutDescription sharedVertexLayout = new VertexLayoutDescription(
 				new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
@@ -87,12 +101,12 @@ namespace BootEngine.Renderer
 
 			VertexLayoutDescription instanceVertexLayout = new VertexLayoutDescription(
 				new VertexElementDescription("InstancePosition", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
-				new VertexElementDescription("InstanceScale", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2),
-				new VertexElementDescription("InstanceRotation", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float1),
+				new VertexElementDescription("InstanceScale", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
+				new VertexElementDescription("InstanceRotation", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
 				new VertexElementDescription("InstanceColor", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float4));
 			instanceVertexLayout.InstanceStepRate = 1;
 
-			CurrentScene.ResourceLayout = factory.CreateResourceLayout(
+			ResourceLayout = factory.CreateResourceLayout(
 				new ResourceLayoutDescription(
 					new ResourceLayoutElementDescription("ViewProjection", ResourceKind.UniformBuffer, ShaderStages.Vertex),
 					new ResourceLayoutElementDescription("Texture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
@@ -103,43 +117,35 @@ namespace BootEngine.Renderer
 			pipelineDescription.DepthStencilState = DepthStencilStateDescription.DepthOnlyLessEqual;
 			pipelineDescription.RasterizerState = RasterizerStateDescription.Default;
 			pipelineDescription.PrimitiveTopology = PrimitiveTopology.TriangleStrip;
-			pipelineDescription.ResourceLayouts = new ResourceLayout[] { CurrentScene.ResourceLayout };
+			pipelineDescription.ResourceLayouts = new ResourceLayout[] { ResourceLayout };
 			pipelineDescription.ShaderSet = new ShaderSetDescription(
 				vertexLayouts: new VertexLayoutDescription[] { sharedVertexLayout, instanceVertexLayout },
-				shaders: AssetManager.GenerateShadersFromFile("Texture2D.glsl"));
+				shaders: AssetManager.GenerateShadersFromFile("TexturedInstancing.glsl"));
 			pipelineDescription.Outputs = _gd.MainSwapchain.Framebuffer.OutputDescription;
 
-			CurrentScene.SetPipelineDescrition(pipelineDescription, _gd.MainSwapchain.Framebuffer);
+			SetPipelineDescrition(pipelineDescription, _gd.MainSwapchain.Framebuffer);
 
-			InstancingTextureData data = new InstancingTextureData()
+			DataPerTexture.Add(WhiteTexture, new InstancingTextureData()
 			{
 				ResourceSet = factory.CreateResourceSet(new ResourceSetDescription(
-					CurrentScene.ResourceLayout,
-					CurrentScene.CameraBuffer,
-					Scene2D.WhiteTexture,
+					ResourceLayout,
+					CameraBuffer,
+					WhiteTexture,
 					_gd.LinearSampler)),
-				IndexStart = 0,
 				Count = 0
-			};
-
-			CurrentScene.DataPerTexture.Add(Scene2D.WhiteTexture, data);
+			});
 		}
 
 		public void ResetStats()
 		{
-			CurrentScene.Stats.DrawCalls = 0;
+			Stats.DrawCalls = 0;
 		}
 		#endregion
-
-		public static void SetCurrentScene(Scene2D scene)
-		{
-			CurrentScene = scene;
-		}
 
 		public void BeginScene(OrthoCamera camera, bool shouldClearBuffers = true)
 		{
 			this.shouldClearBuffers = shouldClearBuffers;
-			_gd.UpdateBuffer(CurrentScene.CameraBuffer, 0, camera.ViewProjectionMatrix);
+			_gd.UpdateBuffer(CameraBuffer, 0, camera.ViewProjectionMatrix);
 		}
 
 		public void BeginScene(Camera cam, Matrix4x4 transform)
@@ -158,157 +164,135 @@ namespace BootEngine.Renderer
 			throw new NotImplementedException();
 		}
 
-		public Renderable2D SetupQuadDraw(Renderable2DParameters parameters, bool flush = true) => SetupQuadDraw(ref parameters, flush);
-
-		public Renderable2D SetupQuadDraw(ref Renderable2DParameters parameters, bool flush = true)
+		public void QueueQuad(Vector3 position, Vector3 scale, Vector3 rotation, Vector4 color, Texture tex = null)
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			Renderable2D renderable;
-			if (parameters.Texture == null)
+			if (tex != null)
 			{
-				renderable = SetupInstancedQuad(ref parameters);
-				CurrentScene.RenderableList.Insert((int)CurrentScene.DataPerTexture[Scene2D.WhiteTexture].LastInstanceIndex - 1, renderable);
+				if (!DataPerTexture.ContainsKey(tex))
+				{
+					DataPerTexture.Add(tex, new InstancingTextureData()
+					{
+						ResourceSet = _gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(
+							ResourceLayout,
+							CameraBuffer,
+							tex,
+							_gd.LinearSampler)),
+						Count = 1
+					});
+				}
+				else
+				{
+					DataPerTexture[tex].Count++;
+				}
 			}
 			else
 			{
-				renderable = SetupInstancedTextureQuad(ref parameters);
-				CurrentScene.RenderableList.Insert((int)CurrentScene.DataPerTexture[parameters.Texture].LastInstanceIndex - 1, renderable);
+				DataPerTexture[WhiteTexture].Count++;
 			}
+
+			instanceList.Add(new InstanceVertexInfo()
+			{
+				Color = color,
+				Position = position,
+				Scale = scale,
+				Rotation = rotation
+			});
 
 			InstanceCount++;
-
-			shouldFlush |= flush;
-
-			return renderable;
+			shouldFlush = true;
 		}
 
-		internal Renderable2D SetupInstancedQuad(ref Renderable2DParameters parameters)
-		{
-#if DEBUG
-			using Profiler fullProfiler = new Profiler(GetType());
-#endif
-			CurrentScene.DataPerTexture[Scene2D.WhiteTexture].Count++;
-			return new Renderable2D(ref parameters, InstanceCount);
-		}
+//		public void RemoveQuadDraw(int instanceIndex, bool flush = true)
+//		{
+//#if DEBUG
+//			using Profiler fullProfiler = new Profiler(GetType());
+//#endif
+//			Renderable2D renderable = GetRenderableByInstanceIndex(instanceIndex);
+//			if (--DataPerTexture[renderable.Texture ?? WhiteTexture].Count == 0 && renderable.Texture != null)
+//			{
+//				DataPerTexture.Remove(renderable.Texture, out InstancingTextureData data);
+//				_gd.DisposeWhenIdle(renderable.Texture);
+//				_gd.DisposeWhenIdle(data.ResourceSet);
+//			}
 
-		internal Renderable2D SetupInstancedTextureQuad(ref Renderable2DParameters parameters)
-		{
-#if DEBUG
-			using Profiler fullProfiler = new Profiler(GetType());
-#endif
-			Renderable2D renderable = new Renderable2D(ref parameters, InstanceCount);
-
-			if (!CurrentScene.DataPerTexture.ContainsKey(parameters.Texture))
-			{
-				CurrentScene.DataPerTexture.Add(renderable.Texture, new InstancingTextureData()
-				{
-					ResourceSet = _gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(
-						CurrentScene.ResourceLayout,
-						CurrentScene.CameraBuffer,
-						renderable.Texture,
-						_gd.LinearSampler)),
-					Count = 1,
-					IndexStart = CurrentScene.DataPerTexture.Values.Max(data => data.LastInstanceIndex)
-				});
-			}
-			else
-			{
-				CurrentScene.DataPerTexture[parameters.Texture].Count++;
-			}
-
-			return renderable;
-		}
-
-		public void RemoveQuadDraw(int instanceIndex, bool flush = true)
-		{
-#if DEBUG
-			using Profiler fullProfiler = new Profiler(GetType());
-#endif
-			Renderable2D renderable = GetRenderableByInstanceIndex(instanceIndex);
-			if (--CurrentScene.DataPerTexture[renderable.Texture ?? Scene2D.WhiteTexture].Count == 0 && renderable.Texture != null)
-			{
-				CurrentScene.DataPerTexture.Remove(renderable.Texture, out InstancingTextureData data);
-				_gd.DisposeWhenIdle(renderable.Texture);
-				_gd.DisposeWhenIdle(data.ResourceSet);
-			}
-
-			InstanceCount--;
-			CurrentScene.RenderableList.RemoveAt(instanceIndex);
-			shouldFlush |= flush;
-		}
+//			InstanceCount--;
+//			CurrentScene.RenderableList.RemoveAt(instanceIndex);
+//			shouldFlush |= flush;
+//		}
 		#endregion
 
-		#region Renderable Update
-		public void UpdatePosition(string renderableName, Vector3 position) => UpdateTransform(renderableName, position, null, null);
-		public void UpdatePosition(int instanceIndex, Vector3 position) => UpdateTransform(instanceIndex, position, null, null);
-		public void UpdateSize(string renderableName, Vector2 size) => UpdateTransform(renderableName, null, size, null);
-		public void UpdateSize(int instanceIndex, Vector2 size) => UpdateTransform(instanceIndex, null, size, null);
-		public void UpdateRotation(string renderableName, float rotation) => UpdateTransform(renderableName, null, null, rotation);
-		public void UpdateRotation(int instanceIndex, float rotation) => UpdateTransform(instanceIndex, null, null, rotation);
-		public void UpdateTransform(string renderableName, Vector3? position = null, Vector2? size = null, float? rotation = null)
-		{
-			Renderable2D renderable = GetRenderableByName(renderableName);
-			if (renderable != null)
-				UpdateTransform(renderable, position, size, rotation);
-		}
+		//#region Renderable Update
+		//public void UpdatePosition(string renderableName, Vector3 position) => UpdateTransform(renderableName, position, null, null);
+		//public void UpdatePosition(int instanceIndex, Vector3 position) => UpdateTransform(instanceIndex, position, null, null);
+		//public void UpdateSize(string renderableName, Vector2 size) => UpdateTransform(renderableName, null, size, null);
+		//public void UpdateSize(int instanceIndex, Vector2 size) => UpdateTransform(instanceIndex, null, size, null);
+		//public void UpdateRotation(string renderableName, float rotation) => UpdateTransform(renderableName, null, null, rotation);
+		//public void UpdateRotation(int instanceIndex, float rotation) => UpdateTransform(instanceIndex, null, null, rotation);
+		//public void UpdateTransform(string renderableName, Vector3? position = null, Vector2? size = null, float? rotation = null)
+		//{
+		//	Renderable2D renderable = GetRenderableByName(renderableName);
+		//	if (renderable != null)
+		//		UpdateTransform(renderable, position, size, rotation);
+		//}
 
-		public void UpdateTransform(int instanceIndex, Vector3? position = null, Vector2? size = null, float? rotation = null) => UpdateTransform(GetRenderableByInstanceIndex(instanceIndex), position, size, rotation);
+		//public void UpdateTransform(int instanceIndex, Vector3? position = null, Vector2? size = null, float? rotation = null) => UpdateTransform(GetRenderableByInstanceIndex(instanceIndex), position, size, rotation);
 
-		public void UpdateTransform(Renderable2D renderable, Vector3? position = null, Vector2? size = null, float? rotation = null)
-		{
-			int index = renderable.InstanceIndex;
-			if (position.HasValue && instanceList[index].Position != position.Value)
-			{
-				instanceList[index].Position = position.Value;
-				renderable.Position = position.Value;
-				shouldFlush = true;
-			}
-			if (size.HasValue && instanceList[index].Scale != size.Value)
-			{
-				instanceList[index].Scale = size.Value;
-				renderable.Size = size.Value;
-				shouldFlush = true;
-			}
-			if (rotation.HasValue && instanceList[index].Rotation != rotation.Value)
-			{
-				instanceList[index].Rotation = rotation.Value;
-				renderable.Rotation = rotation.Value;
-				shouldFlush = true;
-			}
-		}
+		//public void UpdateTransform(Renderable2D renderable, Vector3? position = null, Vector2? size = null, float? rotation = null)
+		//{
+		//	int index = renderable.InstanceIndex;
+		//	if (position.HasValue && instanceList[index].Position != position.Value)
+		//	{
+		//		instanceList[index].Position = position.Value;
+		//		renderable.Position = position.Value;
+		//		shouldFlush = true;
+		//	}
+		//	if (size.HasValue && instanceList[index].Scale != size.Value)
+		//	{
+		//		instanceList[index].Scale = size.Value;
+		//		renderable.Size = size.Value;
+		//		shouldFlush = true;
+		//	}
+		//	if (rotation.HasValue && instanceList[index].Rotation != rotation.Value)
+		//	{
+		//		instanceList[index].Rotation = rotation.Value;
+		//		renderable.Rotation = rotation.Value;
+		//		shouldFlush = true;
+		//	}
+		//}
 
-		public void UpdateColor(string renderableName, Vector4 value)
-		{
-			Renderable2D renderable = GetRenderableByName(renderableName);
-			if (renderable != null)
-				UpdateColor(renderable, value);
-		}
+		//public void UpdateColor(string renderableName, Vector4 value)
+		//{
+		//	Renderable2D renderable = GetRenderableByName(renderableName);
+		//	if (renderable != null)
+		//		UpdateColor(renderable, value);
+		//}
 
-		public void UpdateColor(int instanceIndex, Vector4 value) => UpdateColor(GetRenderableByInstanceIndex(instanceIndex), value);
+		//public void UpdateColor(int instanceIndex, Vector4 value) => UpdateColor(GetRenderableByInstanceIndex(instanceIndex), value);
 
-		public void UpdateColor(Renderable2D renderable, Vector4 value)
-		{
-			if (instanceList[renderable.InstanceIndex].Color != value)
-			{
-				renderable.Color = value;
-				instanceList[renderable.InstanceIndex].Color = value;
-				shouldFlush = true;
-			}
-		}
-		#endregion
+		//public void UpdateColor(Renderable2D renderable, Vector4 value)
+		//{
+		//	if (instanceList[renderable.InstanceIndex].Color != value)
+		//	{
+		//		renderable.Color = value;
+		//		instanceList[renderable.InstanceIndex].Color = value;
+		//		shouldFlush = true;
+		//	}
+		//}
+		//#endregion
 
 		#region Helpers
-		public Renderable2D GetRenderableByName(string name)
-		{
-			return CurrentScene.RenderableList.Find(r => r.Name == name);
-		}
+		//public Renderable2D GetRenderableByName(string name)
+		//{
+		//	return CurrentScene.RenderableList.Find(r => r.Name == name);
+		//}
 
-		public Renderable2D GetRenderableByInstanceIndex(int instanceIndex)
-		{
-			return CurrentScene.RenderableList[instanceIndex];
-		}
+		//public Renderable2D GetRenderableByInstanceIndex(int instanceIndex)
+		//{
+		//	return CurrentScene.RenderableList[instanceIndex];
+		//}
 
 		public void Flush()
 		{
@@ -317,24 +301,13 @@ namespace BootEngine.Renderer
 #endif
 			shouldFlush = false;
 
-			if (instanceList.Length < CurrentScene.RenderableList.Count)
+			if (InstanceCount < instanceList.Count)
 			{
-				var tmp = new InstanceVertexInfo[CurrentScene.RenderableList.Count * 2];
-				Array.Copy(instanceList, tmp, instanceList.Length);
-				instanceList = tmp;
-				CurrentScene.InstancesVertexBuffer = _gd.ResourceFactory.CreateBuffer(new BufferDescription((uint)(instanceList.Length * InstanceVertexInfo.SizeInBytes), BufferUsage.VertexBuffer));
+				InstanceCount = instanceList.Count;
+				InstancesVertexBuffer = _gd.ResourceFactory.CreateBuffer(new BufferDescription((uint)(instanceList.Count * InstanceVertexInfo.SizeInBytes), BufferUsage.VertexBuffer));
 			}
 
-			for (int index = 0; index < CurrentScene.RenderableList.Count; index++)
-			{
-				Renderable2D renderable = CurrentScene.RenderableList[index];
-				renderable.InstanceIndex = index;
-				instanceList[index].Position = renderable.Position;
-				instanceList[index].Scale = renderable.Size;
-				instanceList[index].Rotation = renderable.Rotation;
-				instanceList[index].Color = renderable.Color;
-			}
-			_gd.UpdateBuffer(CurrentScene.InstancesVertexBuffer, 0, instanceList);
+			_gd.UpdateBuffer(InstancesVertexBuffer, 0, instanceList.ToArray());
 		}
 		#endregion
 
@@ -348,17 +321,17 @@ namespace BootEngine.Renderer
 			if (shouldFlush)
 				Flush();
 			cl.Begin();
-			cl.SetFramebuffer(CurrentScene.ActiveFramebuffer);
+			cl.SetFramebuffer(ActiveFramebuffer);
 			cl.SetFullViewport(0);
 			if (shouldClearBuffers)
 			{
 				cl.ClearColorTarget(0, RgbaFloat.Grey);
 				cl.ClearDepthStencil(1f);
 			}
-			cl.SetPipeline(CurrentScene.ActivePipeline);
-			cl.SetIndexBuffer(CurrentScene.IndexBuffer, IndexFormat.UInt16);
-			cl.SetVertexBuffer(0, CurrentScene.VertexBuffer);
-			cl.SetVertexBuffer(1, CurrentScene.InstancesVertexBuffer);
+			cl.SetPipeline(ActivePipeline);
+			cl.SetIndexBuffer(IndexBuffer, IndexFormat.UInt16);
+			cl.SetVertexBuffer(0, VertexBuffer);
+			cl.SetVertexBuffer(1, InstancesVertexBuffer);
 		}
 
 		protected override void BatchRender(CommandList cl)
@@ -367,12 +340,12 @@ namespace BootEngine.Renderer
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
 			uint instanceStart = 0;
-			foreach (var entry in CurrentScene.DataPerTexture)
+			foreach (var entry in DataPerTexture)
 			{
 				uint instancePerTexCount = entry.Value.Count;
 				if (instancePerTexCount > 0)
 				{
-					CurrentScene.Stats.DrawCalls++;
+					Stats.DrawCalls++;
 					cl.SetGraphicsResourceSet(0, entry.Value.ResourceSet);
 					cl.DrawIndexed(
 						indexCount: 4,
@@ -389,15 +362,39 @@ namespace BootEngine.Renderer
 		{
 			cl.End();
 			_gd.SubmitCommands(cl);
+			InstanceCount = 0;
+			foreach (var entry in DataPerTexture)
+			{
+				entry.Value.Count = 0u;
+			}
 		}
 		#endregion
+
+		public void SetPipelineDescrition(GraphicsPipelineDescription pd, Framebuffer targetFb, bool clearMainFramebuffer = false)
+		{
+			ActiveFramebuffer = targetFb;
+			PipelineDescrition = pd;
+			ActivePipeline = _gd.ResourceFactory.CreateGraphicsPipeline(pd);
+			ImGuiLayer.ShouldClearBuffers = clearMainFramebuffer; // TODO: This shouldn't be here, but I'm unsure on how to do it properly
+		}
 
 		public void Dispose()
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			CurrentScene.Dispose();
+			IndexBuffer.Dispose();
+			VertexBuffer.Dispose();
+			InstancesVertexBuffer.Dispose();
+			CameraBuffer.Dispose();
+			if (!ActivePipeline.IsDisposed)
+				ActivePipeline.Dispose();
+			ResourceLayout.Dispose();
+			foreach (var kv in DataPerTexture)
+			{
+				kv.Value.ResourceSet.Dispose();
+				kv.Key.Dispose();
+			}
 		}
 
 		private readonly struct VertexPositionTexture
@@ -415,52 +412,35 @@ namespace BootEngine.Renderer
 
 		private struct InstanceVertexInfo
 		{
-			public const uint SizeInBytes = 40;
+			public const uint SizeInBytes = 52;
 
 			public Vector3 Position { get; set; }
-			public Vector2 Scale { get; set; }
-			public float Rotation { get; set; }
+			public Vector3 Scale { get; set; }
+			public Vector3 Rotation { get; set; }
 			public Vector4 Color { get; set; }
 		}
+
+		private class InstancingTextureData
+		{
+			public ResourceSet ResourceSet { get; set; }
+			public uint Count { get; set; }
+		}
+	}
+
+	#region Aux
+	public class RenderStats
+	{
+		public int DrawCalls { get; set; }
 	}
 
 	public ref struct Renderable2DParameters
 	{
-		public Renderable2DParameters(Vector2? position, Vector2? size, float? rotation, Vector4? color = null, Texture texture = null)
-		{
-			Name = null;
-			Position = new Vector3(position ?? Vector2.Zero, 0f);
-			Size = size ?? Vector2.One;
-			Rotation = rotation ?? 0f;
-			Color = color ?? RgbaFloat.White.ToVector4();
-			Texture = texture ?? Scene2D.WhiteTexture;
-		}
-
-		public Renderable2DParameters(Vector3? position = null, Vector2? size = null, float? rotation = null, Vector4? color = null, Texture texture = null)
-		{
-			Name = null;
-			Position = position ?? Vector3.Zero;
-			Size = size ?? Vector2.One;
-			Rotation = rotation ?? 0f;
-			Color = color ?? RgbaFloat.White.ToVector4();
-			Texture = texture ?? Scene2D.WhiteTexture;
-		}
-
-		public Renderable2DParameters(string name, Vector3? position, Vector2? size, float? rotation, Vector4? color = null, Texture texture = null)
-		{
-			Name = name;
-			Position = position ?? Vector3.Zero;
-			Size = size ?? Vector2.One;
-			Rotation = rotation ?? 0f;
-			Color = color ?? RgbaFloat.White.ToVector4();
-			Texture = texture ?? Scene2D.WhiteTexture;
-		}
-
 		public string Name { get; set; }
 		public Vector4 Color { get; set; }
 		public Vector3 Position { get; set; }
-		public Vector2 Size { get; set; }
-		public float Rotation { get; set; }
+		public Vector3 Size { get; set; }
+		public Vector3 Rotation { get; set; }
 		public Texture Texture { get; set; }
 	}
+	#endregion
 }

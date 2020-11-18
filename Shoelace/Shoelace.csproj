@@ -42,9 +42,11 @@
 
   <ItemGroup>
     <None Remove="assets\shaders\Texture2D.glsl" />
+    <None Remove="assets\shaders\TexturedInstancing.glsl" />
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="assets\shaders\TexturedInstancing.glsl" />
     <Content Include="assets\shaders\Texture2D.glsl" />
   </ItemGroup>
 

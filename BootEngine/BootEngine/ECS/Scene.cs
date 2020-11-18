@@ -1,15 +1,14 @@
-﻿using BootEngine.ECS;
-using BootEngine.ECS.Components;
+﻿using BootEngine.ECS.Components;
 using Leopotam.Ecs;
 using System;
 
-namespace BootEngine.Renderer
+namespace BootEngine.ECS
 {
-	public abstract class Scene : IDisposable
+	public sealed class Scene : IDisposable
 	{
 		internal readonly EcsWorld World = new EcsWorld();
-		protected readonly EcsSystems Systems;
-		protected Scene()
+		internal readonly EcsSystems Systems;
+		public Scene()
 		{
 			Systems = new EcsSystems(World, "MainEcsSystems");
 		}
@@ -25,12 +24,6 @@ namespace BootEngine.Renderer
 		}
 
 		public void Dispose()
-		{
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
-		protected virtual void Dispose(bool disposing)
 		{
 			Systems.Destroy();
 			World.Destroy();

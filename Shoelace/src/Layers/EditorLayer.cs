@@ -1,4 +1,5 @@
-﻿using BootEngine.ECS.Components;
+﻿using BootEngine.ECS;
+using BootEngine.ECS.Components;
 using BootEngine.Events;
 using BootEngine.Input;
 using BootEngine.Layers;
@@ -10,7 +11,6 @@ using BootEngine.Utils.ProfilingTools;
 using ImGuiNET;
 using System;
 using System.Numerics;
-using System.Threading.Tasks;
 using Utils;
 using Veldrid;
 
@@ -21,8 +21,6 @@ namespace Shoelace.Layers
 		#region Properties
 		private OrthoCameraController cameraController;
 		private Vector4 squareColor = ColorF.Pink;
-		private float rot;
-		private int instanceCount = 1;
 		private readonly float[] _frametime = new float[100];
 		private Texture fbTex, fbDepthTex;
 		private IntPtr renderTargetAddr;
@@ -30,10 +28,11 @@ namespace Shoelace.Layers
 		private bool dockspaceOpen = true;
 		private Vector2 lastSize = Vector2.Zero;
 		private bool viewportFocused;
+		private Scene ActiveScene;
 		#endregion
 
 		#region Constructor
-		public EditorLayer() : base("Shoelace") { }
+		public EditorLayer() : base("Editor") { }
 		#endregion
 
 		public override void OnAttach()
@@ -41,21 +40,11 @@ namespace Shoelace.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
+			ActiveScene = new Scene();
 			float aspectRatio = (float)Width / Height;
 			cameraController = new OrthoCameraController(aspectRatio);
 
-			Renderable2DParameters param = new Renderable2DParameters
-			{
-				Name = "Quad",
-				Position = new Vector3(-1, 0, .5f),
-				Size = new Vector2(.5f, .5f),
-				Rotation = 0,
-				Color = squareColor,
-				Texture = null
-			};
-			Renderer2D.Instance.SetupQuadDraw(ref param);
-
-			var entt = Renderer2D.CurrentScene.CreateEntity("Quad");
+			var entt = ActiveScene.CreateEntity("Quad");
 			ref var comp = ref entt.GetComponent<TransformComponent>();
 			comp.Position = new Vector3(-1, 0, .5f);
 			comp.Scale = new Vector3(.5f, .5f, .5f);
@@ -64,7 +53,7 @@ namespace Shoelace.Layers
 			ref var sprite = ref entt.AddComponent<SpriteComponent>();
 			sprite.Color = squareColor;
 
-			var currentPipeline = Renderer2D.CurrentScene.PipelineDescrition;
+			var currentPipeline = Renderer2D.Instance.PipelineDescrition;
 			fbTex = ResourceFactory.CreateTexture(TextureDescription.Texture2D(
 				(uint)Width, // Width
 				(uint)Height, // Height
@@ -83,7 +72,7 @@ namespace Shoelace.Layers
 				Veldrid.TextureUsage.DepthStencil));
 			fb = ResourceFactory.CreateFramebuffer(new FramebufferDescription(fbDepthTex, fbTex));
 			currentPipeline.Outputs = fb.OutputDescription;
-			Renderer2D.CurrentScene.SetPipelineDescrition(currentPipeline, fb, true);
+			Renderer2D.Instance.SetPipelineDescrition(currentPipeline, fb, true);
 		}
 
 		public override void OnUpdate(float deltaSeconds)
@@ -100,38 +89,6 @@ namespace Shoelace.Layers
 
 			if (viewportFocused)
 				cameraController.Update(deltaSeconds);
-			Renderer2D.Instance.BeginScene(cameraController.Camera);
-			Renderer2D.Instance.UpdatePosition("Quad", new Vector3(0, 0, .9f));
-
-#if DEBUG
-			using (Profiler updateProfiler = new Profiler("Update"))
-#endif
-				Parallel.For(0, Renderer2D.Instance.InstanceCount, (i) =>
-				{
-					Renderer2D.Instance.UpdateColor(i, squareColor);
-					Renderer2D.Instance.UpdateRotation(i, Util.Deg2Rad(rot));
-				});
-			rot++;
-
-			if (Renderer2D.Instance.InstanceCount < instanceCount)
-			{
-				var param = new Renderable2DParameters
-				{
-					Size = new Vector2(.1f, .1f),
-					Rotation = 0,
-					Color = squareColor
-				};
-				for (int i = Renderer2D.Instance.InstanceCount; i < instanceCount; i++)
-				{
-					param.Position = new Vector3(-.11f * (i % 1000), -.11f * (i / 1000), .5f);
-					Renderer2D.Instance.SetupQuadDraw(ref param);
-				}
-			}
-			else if (Renderer2D.Instance.InstanceCount > instanceCount)
-			{
-				for (int i = Renderer2D.Instance.InstanceCount; i > instanceCount;)
-					Renderer2D.Instance.RemoveQuadDraw(--i);
-			}
 
 #if DEBUG
 			using (Profiler camProfiler = new Profiler("Rendering"))
@@ -186,7 +143,7 @@ namespace Shoelace.Layers
 			ImGui.ColorEdit4("Square Color 2D", ref squareColor);
 			ImGui.Begin("Stats");
 			ImGui.Text("Renderer Stats:");
-			ImGui.Text("Draw Calls: " + Renderer2D.CurrentScene.Stats.DrawCalls.ToString());
+			ImGui.Text("Draw Calls: " + Renderer2D.Instance.Stats.DrawCalls.ToString());
 			ImGui.Text("Instance Count: " + Renderer2D.Instance.InstanceCount.ToString());
 			ImGui.End();
 			ImGui.End();
