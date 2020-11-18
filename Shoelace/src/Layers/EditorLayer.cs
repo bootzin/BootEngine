@@ -1,5 +1,6 @@
 ﻿using BootEngine.ECS;
 using BootEngine.ECS.Components;
+using BootEngine.ECS.Systems;
 using BootEngine.Events;
 using BootEngine.Input;
 using BootEngine.Layers;
@@ -10,6 +11,7 @@ using BootEngine.Utils;
 using BootEngine.Utils.ProfilingTools;
 using ImGuiNET;
 using System;
+using System.Linq;
 using System.Numerics;
 using Utils;
 using Veldrid;
@@ -41,17 +43,27 @@ namespace Shoelace.Layers
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
 			ActiveScene = new Scene();
+			ActiveScene.AddSystem(new CameraSystem(), "Camera System");
+			ActiveScene.Init();
+
 			float aspectRatio = (float)Width / Height;
 			cameraController = new OrthoCameraController(aspectRatio);
 
-			var entt = ActiveScene.CreateEntity("Quad");
-			ref var comp = ref entt.GetComponent<TransformComponent>();
-			comp.Position = new Vector3(-1, 0, .5f);
-			comp.Scale = new Vector3(.5f, .5f, .5f);
-			//entt.AddComponent(new SpriteComponent(Vector4.One));
-			// OR 
-			ref var sprite = ref entt.AddComponent<SpriteComponent>();
-			sprite.Color = squareColor;
+			var cam = ActiveScene.CreateEntity("Main Camera");
+			cam.AddComponent(new CameraComponent()
+			{
+				Camera = cameraController.Camera
+			});
+
+			var redQuad = ActiveScene.CreateEntity("Red Quad");
+			ref var sprite = ref redQuad.AddComponent<SpriteComponent>();
+			sprite.Color = ColorF.Red;
+
+			var pinkQuad = ActiveScene.CreateEntity("Pink Quad").AddComponent(new SpriteComponent(squareColor));
+			ref var transform = ref pinkQuad.GetComponent<TransformComponent>();
+			transform.Position = new Vector3(0, 0, -.5f);
+			transform.Scale = new Vector3(.5f, .5f, .5f);
+			transform.Rotation = new Vector3(0, 0, 45);
 
 			var currentPipeline = Renderer2D.Instance.PipelineDescrition;
 			fbTex = ResourceFactory.CreateTexture(TextureDescription.Texture2D(
@@ -91,14 +103,13 @@ namespace Shoelace.Layers
 				cameraController.Update(deltaSeconds);
 
 #if DEBUG
-			using (Profiler camProfiler = new Profiler("Rendering"))
+			using (_ = new Profiler("Scene Update"))
 			{
 #endif
-				Renderer2D.Instance.Render();
+				ActiveScene.Update();
 #if DEBUG
 			}
 #endif
-			Renderer2D.Instance.EndScene();
 		}
 
 		public override void OnGuiRender()
@@ -106,11 +117,6 @@ namespace Shoelace.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			//ImGui.Begin("FPS Counter");
-			//ImGui.PlotLines("", ref _frametime[0], 100, 0, "Frametime (ms)", 0, 66.6f, new Vector2(250, 50));
-			//ImGui.Text("FPS: " + (1000f / _frametime.Average()));
-			//ImGui.End();
-
 			//ImGui.Begin("QuadDraw Config");
 			//ImGui.DragInt("QuadCount", ref instanceCount, 1, 0, 3000000);
 			//ImGui.End();
@@ -141,12 +147,21 @@ namespace Shoelace.Layers
 
 			ImGui.Begin("Settings 2D");
 			ImGui.ColorEdit4("Square Color 2D", ref squareColor);
+
 			ImGui.Begin("Stats");
 			ImGui.Text("Renderer Stats:");
 			ImGui.Text("Draw Calls: " + Renderer2D.Instance.Stats.DrawCalls.ToString());
 			ImGui.Text("Instance Count: " + Renderer2D.Instance.InstanceCount.ToString());
-			ImGui.End();
-			ImGui.End();
+
+			ImGui.Separator();
+
+			ImGui.PlotLines("", ref _frametime[0], 100, 0, "Frametime (ms)", 0, 66.6f, new Vector2(250, 50));
+			ImGui.Text("FPS: " + (1000f / _frametime.Average()));
+
+			ImGui.Separator();
+
+			ImGui.End(); // Stats
+			ImGui.End(); // Settings 2D
 
 			ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
 			ImGui.Begin("Viewport");

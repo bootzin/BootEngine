@@ -7,7 +7,6 @@ namespace BootEngine.Renderer.Cameras
 	{
 		private Vector3 position;
 		private float rotation;
-		private Matrix4x4 projectionMatrix;
 		private Matrix4x4 viewMatrix;
 		private Matrix4x4 viewProjectionMatrix;
 		private readonly bool useReverseDepth;
@@ -16,7 +15,6 @@ namespace BootEngine.Renderer.Cameras
 		public Vector3 Position { get { return position; } set { position = value; UpdateViewMatrix(); } }
 		public float Rotation { get => rotation; set { rotation = value; UpdateViewMatrix(); } }
 
-		public ref readonly Matrix4x4 ProjectionMatrix => ref projectionMatrix;
 		public ref readonly Matrix4x4 ViewMatrix => ref viewMatrix;
 		public ref readonly Matrix4x4 ViewProjectionMatrix => ref viewProjectionMatrix;
 

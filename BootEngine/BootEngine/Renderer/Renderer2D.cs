@@ -21,7 +21,7 @@ namespace BootEngine.Renderer
 		private readonly static GraphicsDevice _gd = Application.App.Window.GraphicsDevice;
 
 		private readonly static CommandList _commandList = _gd.ResourceFactory.CreateCommandList();
-		private readonly List<InstanceVertexInfo> instanceList = new List<InstanceVertexInfo>(MAX_QUADS);
+		private List<InstanceVertexInfo> instanceList = new List<InstanceVertexInfo>(MAX_QUADS);
 		private bool shouldFlush;
 		private bool shouldClearBuffers;
 
@@ -148,9 +148,13 @@ namespace BootEngine.Renderer
 			_gd.UpdateBuffer(CameraBuffer, 0, camera.ViewProjectionMatrix);
 		}
 
-		public void BeginScene(Camera cam, Matrix4x4 transform)
+		public void BeginScene(Camera cam, Matrix4x4 transform, bool shouldClearBuffers = true)
 		{
-			throw new NotImplementedException();
+			this.shouldClearBuffers = shouldClearBuffers;
+
+			Matrix4x4.Invert(transform, out Matrix4x4 view);
+
+			_gd.UpdateBuffer(CameraBuffer, 0, view * cam.ProjectionMatrix);
 		}
 
 		public void EndScene()
@@ -367,6 +371,7 @@ namespace BootEngine.Renderer
 			{
 				entry.Value.Count = 0u;
 			}
+			instanceList = new List<InstanceVertexInfo>(MAX_QUADS);
 		}
 		#endregion
 

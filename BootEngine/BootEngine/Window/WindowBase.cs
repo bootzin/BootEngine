@@ -19,7 +19,7 @@ namespace BootEngine.Window
 		public WindowState WindowInitialState { get; }
 
 		public WindowProps(string title = "Boot Engine", int width = 1280, int height = 760,
-			int x = 0, int y = 0, bool vSync = true, WindowState windowState = WindowState.Normal)
+			int x = 0, int y = 0, bool vSync = false, WindowState windowState = WindowState.Normal)
 		{
 			Height = height;
 			Width = width;
