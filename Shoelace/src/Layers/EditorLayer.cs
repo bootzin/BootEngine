@@ -1,5 +1,7 @@
-﻿using BootEngine.ECS;
+﻿using BootEngine.AssetsManager;
+using BootEngine.ECS;
 using BootEngine.ECS.Components;
+using BootEngine.ECS.Components.Events;
 using BootEngine.ECS.Systems;
 using BootEngine.Events;
 using BootEngine.Input;
@@ -13,7 +15,6 @@ using ImGuiNET;
 using System;
 using System.Linq;
 using System.Numerics;
-using Utils;
 using Veldrid;
 
 namespace Shoelace.Layers
@@ -21,7 +22,6 @@ namespace Shoelace.Layers
 	public sealed class EditorLayer : LayerBase
 	{
 		#region Properties
-		private OrthoCameraController cameraController;
 		private Vector4 squareColor = ColorF.Pink;
 		private readonly float[] _frametime = new float[100];
 		private Texture fbTex, fbDepthTex;
@@ -43,21 +43,24 @@ namespace Shoelace.Layers
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
 			ActiveScene = new Scene();
-			ActiveScene.AddSystem(new CameraSystem(), "Camera System");
-			ActiveScene.Init();
-
-			float aspectRatio = (float)Width / Height;
-			cameraController = new OrthoCameraController(aspectRatio);
+			ActiveScene.AddSystem(new CameraSystem(), "Camera System")
+				.AddSystem(new RenderSystem())
+				.Init();
 
 			var cam = ActiveScene.CreateEntity("Main Camera");
+			var camera = new OrthoCamera(1, -1, 1);
+			camera.ResizeViewport(Width, Height);
+			camera.FixedAspectRatio = false;
 			cam.AddComponent(new CameraComponent()
 			{
-				Camera = cameraController.Camera
+				Camera = camera
 			});
+			cam.AddComponent<CameraMovementComponent>();
 
-			var redQuad = ActiveScene.CreateEntity("Red Quad");
+			var redQuad = ActiveScene.CreateEntity("Red Textured Quad");
 			ref var sprite = ref redQuad.AddComponent<SpriteComponent>();
 			sprite.Color = ColorF.Red;
+			sprite.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", BootEngine.Utils.TextureUsage.Sampled);
 
 			var pinkQuad = ActiveScene.CreateEntity("Pink Quad").AddComponent(new SpriteComponent(squareColor));
 			ref var transform = ref pinkQuad.GetComponent<TransformComponent>();
@@ -99,8 +102,8 @@ namespace Shoelace.Layers
 				_frametime[i] = _frametime[++i];
 			}
 
-			if (viewportFocused)
-				cameraController.Update(deltaSeconds);
+			//if (viewportFocused)
+			//	cameraController.Update(deltaSeconds);
 
 #if DEBUG
 			using (_ = new Profiler("Scene Update"))
@@ -117,10 +120,6 @@ namespace Shoelace.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			//ImGui.Begin("QuadDraw Config");
-			//ImGui.DragInt("QuadCount", ref instanceCount, 1, 0, 3000000);
-			//ImGui.End();
-
 			var viewport = ImGui.GetMainViewport();
 			ImGui.SetNextWindowPos(viewport.Pos);
 			ImGui.SetNextWindowSize(viewport.Size);
@@ -156,7 +155,7 @@ namespace Shoelace.Layers
 			ImGui.Separator();
 
 			ImGui.PlotLines("", ref _frametime[0], 100, 0, "Frametime (ms)", 0, 66.6f, new Vector2(250, 50));
-			ImGui.Text("FPS: " + (1000f / _frametime.Average()));
+			ImGui.Text("FPS: " + (1000f / _frametime.Average()).ToString());
 
 			ImGui.Separator();
 
@@ -176,7 +175,12 @@ namespace Shoelace.Layers
 			if (viewportPanelSize != lastSize)
 			{
 				lastSize = viewportPanelSize;
-				cameraController.OnResize((int)viewportPanelSize.X, (int)viewportPanelSize.Y);
+				//cameraController.OnResize((int)viewportPanelSize.X, (int)viewportPanelSize.Y);
+				ActiveScene.CreateEntity().AddComponent(new ViewportResizedEvent()
+				{
+					Width = (int)viewportPanelSize.X,
+					Height = (int)viewportPanelSize.Y
+				});
 			}
 			ImGui.End(); //Viewport
 			ImGui.PopStyleVar();
@@ -185,7 +189,7 @@ namespace Shoelace.Layers
 
 		public override void OnEvent(EventBase @event)
 		{
-			cameraController.OnEvent(@event);
+			//cameraController.OnEvent(@event);
 			EventDispatcher dis = new EventDispatcher(@event);
 			dis.Dispatch<KeyPressedEvent>(OnKeyPressed);
 		}

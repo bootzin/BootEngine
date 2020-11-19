@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Utils.Unsafe
+namespace BootEngine.Utils.Unsafe
 {
 	public sealed class FixedAsciiString : IDisposable
 	{

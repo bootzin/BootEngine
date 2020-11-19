@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Utils
+namespace BootEngine.Utils
 {
 	public static class Util
 	{

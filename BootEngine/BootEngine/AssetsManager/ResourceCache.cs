@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using Utils.Exceptions;
+using BootEngine.Utils.Exceptions;
 using Veldrid;
 
 namespace BootEngine.AssetsManager

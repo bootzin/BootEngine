@@ -10,9 +10,9 @@ using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Utils;
-using Utils.Exceptions;
-using Utils.Unsafe;
+using BootEngine.Utils;
+using BootEngine.Utils.Exceptions;
+using BootEngine.Utils.Unsafe;
 using Veldrid;
 using Veldrid.Sdl2;
 using Veldrid.Vk;
@@ -370,7 +370,7 @@ namespace BootEngine.Layers.GUI
 				1,
 				1,
 				PixelFormat.R8_G8_B8_A8_UNorm,
-				TextureUsage.Sampled));
+				Veldrid.TextureUsage.Sampled));
 			fontTexture.Name = "ImGui.NET Font Texture";
 			gd.UpdateTexture(
 				fontTexture,
@@ -669,19 +669,19 @@ namespace BootEngine.Layers.GUI
 			Matrix4x4 mvp;
 			if (gd.BackendType == GraphicsBackend.Vulkan && !gd.IsClipSpaceYInverted)
 			{
-				mvp = new OrthoCamera(
+				mvp = new ImGuiCamera(
 				draw_data.DisplayPos.X,
 				draw_data.DisplayPos.X + draw_data.DisplaySize.X,
 				draw_data.DisplayPos.Y,
-				draw_data.DisplayPos.Y + draw_data.DisplaySize.Y, gd.IsDepthRangeZeroToOne).ViewProjectionMatrix;
+				draw_data.DisplayPos.Y + draw_data.DisplaySize.Y).ProjectionMatrix;
 			}
 			else
 			{
-				mvp = new OrthoCamera(
+				mvp = new ImGuiCamera(
 				draw_data.DisplayPos.X,
 				draw_data.DisplayPos.X + draw_data.DisplaySize.X,
 				draw_data.DisplayPos.Y + draw_data.DisplaySize.Y,
-				draw_data.DisplayPos.Y, gd.IsDepthRangeZeroToOne).ViewProjectionMatrix;
+				draw_data.DisplayPos.Y).ProjectionMatrix;
 			}
 
 			cl.SetPipeline(pipeline);

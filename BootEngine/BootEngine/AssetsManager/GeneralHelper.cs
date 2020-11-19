@@ -1,7 +1,7 @@
 ﻿using BootEngine.Utils.ProfilingTools;
 using System;
 using System.IO;
-using Utils.Exceptions;
+using BootEngine.Utils.Exceptions;
 
 namespace BootEngine.AssetsManager
 {

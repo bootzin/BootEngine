@@ -1,7 +1,7 @@
 ﻿using BootEngine.Utils.ProfilingTools;
 using System.Collections.Generic;
 using System.Numerics;
-using Utils;
+using BootEngine.Utils;
 using Veldrid;
 
 namespace BootEngine.Input

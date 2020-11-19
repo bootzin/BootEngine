@@ -114,4 +114,8 @@
     </ContentWithTargetPath>
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="BootEngine\ECS\Systems\" />
+  </ItemGroup>
+
 </Project>

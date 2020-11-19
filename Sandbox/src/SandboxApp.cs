@@ -10,7 +10,7 @@ namespace Sandbox
 {
 	public sealed class SandboxApp : Application
 	{
-		public SandboxApp(GraphicsBackend backend) : base(typeof(WindowsWindow), backend)
+		public SandboxApp(Veldrid.GraphicsBackend backend) : base(typeof(WindowsWindow), backend)
 		{
 			//LayerStack.PushLayer(new ExampleLayer());
 			LayerStack.PushLayer(new Sandbox2DLayer());
@@ -20,7 +20,7 @@ namespace Sandbox
 		{
 			ProfileWriter.BeginSession("Startup", "BootProfile-Startup.json");
 			Logger.Init();
-			var app = new SandboxApp(GraphicsBackend.Direct3D11);
+			var app = new SandboxApp(Veldrid.GraphicsBackend.Direct3D11);
 			ProfileWriter.EndSesison();
 
 			ProfileWriter.BeginSession("Runtime", "BootProfile-Runtime.json");

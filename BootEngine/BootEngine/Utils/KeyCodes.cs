@@ -1,4 +1,4 @@
-﻿namespace Utils
+﻿namespace BootEngine.Utils
 {
 	public enum KeyCodes
 	{

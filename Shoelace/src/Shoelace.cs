@@ -1,5 +1,4 @@
 ﻿using BootEngine;
-using BootEngine.Utils;
 using BootEngine.Utils.ProfilingTools;
 using BootEngine.Window;
 using Platforms.Windows;
@@ -9,7 +8,7 @@ namespace Shoelace
 {
 	public sealed class Shoelace : Application
 	{
-		public Shoelace(GraphicsBackend backend) : base(new WindowProps("Shoelace"), typeof(WindowsWindow), backend)
+		public Shoelace(Veldrid.GraphicsBackend backend) : base(new WindowProps("Shoelace"), typeof(WindowsWindow), backend)
 		{
 			LayerStack.PushLayer(new EditorLayer());
 		}
@@ -17,7 +16,7 @@ namespace Shoelace
 		public static void Main()
 		{
 			ProfileWriter.BeginSession("Startup", "BootProfile-Startup.json");
-			var app = new Shoelace(GraphicsBackend.Vulkan);
+			var app = new Shoelace(Veldrid.GraphicsBackend.Direct3D11);
 			ProfileWriter.EndSesison();
 
 			ProfileWriter.BeginSession("Runtime", "BootProfile-Runtime.json");

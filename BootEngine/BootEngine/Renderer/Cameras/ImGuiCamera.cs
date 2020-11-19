@@ -3,11 +3,21 @@ using System.Numerics;
 
 namespace BootEngine.Renderer.Cameras
 {
-	public sealed class OrthoCamera : Camera
+	//TODO: Check the viability of merging this with OrthoCamera
+	internal sealed class ImGuiCamera : Camera
 	{
-		public OrthoCamera(float size, float nearClip, float farClip)
+		private readonly float left;
+		private readonly float right;
+		private readonly float bottom;
+		private readonly float top;
+
+		public ImGuiCamera(float left, float right, float bottom, float top)
 		{
-			SetOrthographic(size, nearClip, farClip);
+			this.left = left;
+			this.right = right;
+			this.top = top;
+			this.bottom = bottom;
+			RecalculateProjection();
 		}
 
 		protected override void RecalculateProjection()
@@ -15,11 +25,6 @@ namespace BootEngine.Renderer.Cameras
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			float left = -orthoSize * aspectRatio * zoomLevel;
-			float right = orthoSize * aspectRatio * zoomLevel;
-			float bottom = -orthoSize * zoomLevel;
-			float top = orthoSize * zoomLevel;
-
 			if (useReverseDepth)
 			{
 				projectionMatrix = Matrix4x4.CreateOrthographicOffCenter(left, right, bottom, top, orthoFar, orthoNear);

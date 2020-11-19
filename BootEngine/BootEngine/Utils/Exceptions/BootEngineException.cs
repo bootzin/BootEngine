@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.Serialization;
 
-namespace Utils.Exceptions
+namespace BootEngine.Utils.Exceptions
 {
 	[Serializable]
 	public class BootEngineException : Exception

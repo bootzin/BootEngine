@@ -29,13 +29,18 @@ namespace BootEngine.ECS
 			Systems.Run();
 		}
 
-		public void AddSystem(IEcsSystem sys, string name = null)
+		public Scene AddSystem(IEcsSystem sys, string name = null)
 		{
 			Systems.Add(sys, name);
+			return this;
 		}
 
-		public void Init()
+		public void Init(params object[] injects)
 		{
+			for (int i = 0; i < injects.Length; i++)
+			{
+				Systems.Inject(injects[i]);
+			}
 			Systems.Init();
 		}
 

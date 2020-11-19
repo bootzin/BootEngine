@@ -4,6 +4,7 @@ using BootEngine.Renderer.Cameras;
 using BootEngine.Utils.ProfilingTools;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
 using Veldrid;
 
@@ -99,6 +100,7 @@ namespace BootEngine.Renderer
 				new VertexElementDescription("Position", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
 				new VertexElementDescription("TexCoord", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float2));
 
+			// TODO: Try passing the transform matrix as 4 Vec4 or as a structured buffer
 			VertexLayoutDescription instanceVertexLayout = new VertexLayoutDescription(
 				new VertexElementDescription("InstancePosition", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
 				new VertexElementDescription("InstanceScale", VertexElementSemantic.TextureCoordinate, VertexElementFormat.Float3),
@@ -145,7 +147,7 @@ namespace BootEngine.Renderer
 		public void BeginScene(OrthoCamera camera, bool shouldClearBuffers = true)
 		{
 			this.shouldClearBuffers = shouldClearBuffers;
-			_gd.UpdateBuffer(CameraBuffer, 0, camera.ViewProjectionMatrix);
+			//_gd.UpdateBuffer(CameraBuffer, 0, camera.ViewProjectionMatrix);
 		}
 
 		public void BeginScene(Camera cam, Matrix4x4 transform, bool shouldClearBuffers = true)
@@ -184,26 +186,33 @@ namespace BootEngine.Renderer
 							CameraBuffer,
 							tex,
 							_gd.LinearSampler)),
-						Count = 1
+						Count = 1,
+						IndexStart = DataPerTexture.Values.Max(data => data.LastInstanceIndex)
 					});
 				}
 				else
 				{
 					DataPerTexture[tex].Count++;
 				}
+				instanceList.Insert((int)DataPerTexture[tex].LastInstanceIndex - 1, new InstanceVertexInfo()
+				{
+					Color = color,
+					Position = position,
+					Scale = scale,
+					Rotation = rotation
+				});
 			}
 			else
 			{
 				DataPerTexture[WhiteTexture].Count++;
+				instanceList.Insert((int)DataPerTexture[WhiteTexture].LastInstanceIndex - 1, new InstanceVertexInfo()
+				{
+					Color = color,
+					Position = position,
+					Scale = scale,
+					Rotation = rotation
+				});
 			}
-
-			instanceList.Add(new InstanceVertexInfo()
-			{
-				Color = color,
-				Position = position,
-				Scale = scale,
-				Rotation = rotation
-			});
 
 			InstanceCount++;
 			shouldFlush = true;
@@ -429,6 +438,8 @@ namespace BootEngine.Renderer
 		{
 			public ResourceSet ResourceSet { get; set; }
 			public uint Count { get; set; }
+			public uint IndexStart { get; set; }
+			public uint LastInstanceIndex => IndexStart + Count;
 		}
 	}
 

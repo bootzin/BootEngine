@@ -16,7 +16,7 @@ namespace Platforms.Windows
 			InitializeSubWindow(gd, sdlWindow);
 		}
 
-		public WindowsWindow(WindowProps props, BootEngine.Utils.GraphicsBackend backend)
+		public WindowsWindow(WindowProps props, GraphicsBackend backend)
 		{
 			Initialize(props, backend);
 		}
@@ -51,7 +51,7 @@ namespace Platforms.Windows
 			window.Resized += () => swapchain.Resize((uint)window.Width, (uint)window.Height);
 		}
 
-		private void Initialize(WindowProps props, BootEngine.Utils.GraphicsBackend backend)
+		private void Initialize(WindowProps props, GraphicsBackend backend)
 		{
 			InputManager.CreateInstance<WindowsInput>();
 

@@ -1,14 +1,12 @@
 ﻿using BootEngine.ECS.Components;
-using BootEngine.Renderer;
 using Leopotam.Ecs;
 
-namespace BootEngine.ECS.Systems
+namespace BootEngine.Renderer
 {
-	public class CameraSystem : IEcsRunSystem
+	public class RenderSystem : IEcsRunSystem
 	{
-		public EcsFilter<TransformComponent, SpriteComponent> QuadsFilter;
-		public EcsFilter<TransformComponent, CameraComponent> CameraFilter;
-
+		private readonly EcsFilter<TransformComponent, SpriteComponent> QuadsFilter = default;
+		private readonly EcsFilter<TransformComponent, CameraComponent> CameraFilter = default;
 		public void Run()
 		{
 			foreach (int camera in CameraFilter)
@@ -21,7 +19,8 @@ namespace BootEngine.ECS.Systems
 					{
 						// TODO: Maybe filter quads within camera fustrum
 						ref var transform = ref QuadsFilter.Get1(quad);
-						Renderer2D.Instance.QueueQuad(transform.Position, transform.Scale, transform.Rotation, QuadsFilter.Get2(quad).Color);
+						ref var sprite = ref QuadsFilter.Get2(quad);
+						Renderer2D.Instance.QueueQuad(transform.Position, transform.Scale, transform.Rotation, sprite.Color, sprite.Texture);
 					}
 					Renderer2D.Instance.Render();
 					Renderer2D.Instance.EndScene();

@@ -78,4 +78,10 @@
     </Reference>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="assets\textures\sampleFly.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
