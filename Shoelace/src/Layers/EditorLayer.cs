@@ -1,8 +1,6 @@
 ﻿using BootEngine.AssetsManager;
-using BootEngine.ECS;
 using BootEngine.ECS.Components;
 using BootEngine.ECS.Components.Events;
-using BootEngine.ECS.Systems;
 using BootEngine.Events;
 using BootEngine.Input;
 using BootEngine.Layers;
@@ -30,7 +28,6 @@ namespace Shoelace.Layers
 		private bool dockspaceOpen = true;
 		private Vector2 lastSize = Vector2.Zero;
 		private bool viewportFocused;
-		private Scene ActiveScene;
 		#endregion
 
 		#region Constructor
@@ -42,7 +39,6 @@ namespace Shoelace.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			ActiveScene = new Scene();
 			ActiveScene.AddSystem(new CameraSystem(), "Camera System")
 				.AddSystem(new RenderSystem())
 				.Init();
@@ -50,12 +46,11 @@ namespace Shoelace.Layers
 			var cam = ActiveScene.CreateEntity("Main Camera");
 			var camera = new OrthoCamera(1, -1, 1);
 			camera.ResizeViewport(Width, Height);
-			camera.FixedAspectRatio = false;
 			cam.AddComponent(new CameraComponent()
 			{
 				Camera = camera
 			});
-			cam.AddComponent<CameraMovementComponent>();
+			//cam.AddComponent<CameraMovementComponent>();
 
 			var redQuad = ActiveScene.CreateEntity("Red Textured Quad");
 			ref var sprite = ref redQuad.AddComponent<SpriteComponent>();
@@ -175,7 +170,6 @@ namespace Shoelace.Layers
 			if (viewportPanelSize != lastSize)
 			{
 				lastSize = viewportPanelSize;
-				//cameraController.OnResize((int)viewportPanelSize.X, (int)viewportPanelSize.Y);
 				ActiveScene.CreateEntity().AddComponent(new ViewportResizedEvent()
 				{
 					Width = (int)viewportPanelSize.X,

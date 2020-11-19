@@ -1,6 +1,6 @@
 ﻿using BootEngine;
 using BootEngine.Layers;
-using BootEngine.Log;
+using BootEngine.Logging;
 using BootEngine.Utils;
 using BootEngine.Utils.ProfilingTools;
 using Platforms.Windows;

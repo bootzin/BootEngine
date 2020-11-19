@@ -7,7 +7,6 @@ namespace BootEngine.Renderer.Cameras
 	{
 		protected Matrix4x4 projectionMatrix;
 		public bool Active { get; set; } = true;
-		public bool FixedAspectRatio { get; set; } = true;
 		public ref readonly Matrix4x4 ProjectionMatrix => ref projectionMatrix;
 
 		protected float aspectRatio;

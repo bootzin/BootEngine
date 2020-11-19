@@ -1,4 +1,4 @@
-﻿using BootEngine.Log;
+﻿using BootEngine.Logging;
 using BootEngine.Utils.ProfilingTools;
 using System;
 using System.Runtime.CompilerServices;

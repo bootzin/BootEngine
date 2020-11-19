@@ -4,25 +4,22 @@ using Leopotam.Ecs;
 
 namespace BootEngine.Renderer.Cameras
 {
-	public class CameraSystem : IEcsRunSystem
+	public sealed class CameraSystem : IEcsRunSystem
 	{
-		private readonly EcsFilter<TransformComponent, CameraComponent> CameraFilter = default;
-		private readonly EcsFilter<ViewportResizedEvent> viewportResized = default;
+		private readonly EcsFilter<CameraComponent> _cameraFilter = default;
+		private readonly EcsFilter<ViewportResizedEvent> _viewportResized = default;
 
 		public void Run()
 		{
-			foreach (int camera in CameraFilter)
+			foreach (int camera in _cameraFilter)
 			{
-				ref var cam = ref CameraFilter.Get2(camera);
-				if (!cam.Camera.FixedAspectRatio)
+				ref var cam = ref _cameraFilter.Get1(camera);
+				foreach (var resize in _viewportResized)
 				{
-					foreach (var resize in viewportResized)
-					{
-						ref var entt = ref viewportResized.GetEntity(resize);
-						ref var newSize = ref viewportResized.Get1(resize);
-						cam.Camera.ResizeViewport(newSize.Width, newSize.Height);
-						entt.Destroy();
-					}
+					ref var entt = ref _viewportResized.GetEntity(resize);
+					ref var newSize = ref _viewportResized.Get1(resize);
+					cam.Camera.ResizeViewport(newSize.Width, newSize.Height);
+					entt.Destroy();
 				}
 			}
 		}

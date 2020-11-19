@@ -3,7 +3,7 @@ using Serilog.Sinks.SystemConsole.Themes;
 using System;
 using System.Diagnostics;
 
-namespace BootEngine.Log
+namespace BootEngine.Logging
 {
 	public static class Logger
 	{

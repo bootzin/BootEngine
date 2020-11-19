@@ -21,13 +21,13 @@ namespace BootEngine.ECS
 
 		public ref T AddComponent<T>() where T : struct
 		{
-			Log.Logger.Assert(!HasComponent<T>(), "Entity already has component!");
+			Logging.Logger.Assert(!HasComponent<T>(), "Entity already has component!");
 			return ref entityHandle.Get<T>();
 		}
 
 		public Entity AddComponent<T>(T item) where T : struct
 		{
-			Log.Logger.Assert(!HasComponent<T>(), "Entity already has component!");
+			Logging.Logger.Assert(!HasComponent<T>(), "Entity already has component!");
 			entityHandle.Replace(in item);
 			return this;
 		}
@@ -37,7 +37,7 @@ namespace BootEngine.ECS
 
 		public ref T GetComponent<T>() where T : struct
 		{
-			Log.Logger.Assert(HasComponent<T>(), "Entity does not contain component of type: " + typeof(T));
+			Logging.Logger.Assert(HasComponent<T>(), "Entity does not contain component of type: " + typeof(T));
 			return ref entityHandle.Get<T>();
 		}
 
@@ -48,7 +48,7 @@ namespace BootEngine.ECS
 
 		public void RemoveComponent<T>() where T : struct
 		{
-			Log.Logger.Assert(HasComponent<T>(), "Entity does not contain component of type: " + typeof(T));
+			Logging.Logger.Assert(HasComponent<T>(), "Entity does not contain component of type: " + typeof(T));
 			entityHandle.Del<T>();
 		}
 	}

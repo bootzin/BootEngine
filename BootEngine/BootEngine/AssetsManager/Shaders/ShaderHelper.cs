@@ -1,4 +1,4 @@
-﻿using BootEngine.Log;
+﻿using BootEngine.Logging;
 using System;
 using System.IO;
 using System.Text;

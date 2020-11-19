@@ -1,5 +1,5 @@
 ﻿using BootEngine.ECS.Components;
-using BootEngine.ECS.Systems;
+using BootEngine.Events;
 using Leopotam.Ecs;
 using System;
 
@@ -12,11 +12,12 @@ namespace BootEngine.ECS
 		public Scene()
 		{
 			Systems = new EcsSystems(World, "MainEcsSystems");
+			Systems.Add(new EventSystem());
 		}
 
 		public Entity CreateEntity(string name = null)
 		{
-			Log.Logger.Assert(Systems.GetAllSystems().Count > 0, "A system must be added before creating entities!");
+			Logging.Logger.Assert(Systems.GetAllSystems().Count > 0, "A system must be added before creating entities!");
 			Entity e = new Entity(World.NewEntity());
 			e.AddComponent<TransformComponent>();
 			ref var tag = ref e.AddComponent<TagComponent>();

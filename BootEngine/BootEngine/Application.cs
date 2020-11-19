@@ -1,7 +1,7 @@
 ﻿using BootEngine.Events;
 using BootEngine.Layers;
 using BootEngine.Layers.GUI;
-using BootEngine.Log;
+using BootEngine.Logging;
 using BootEngine.Utils.ProfilingTools;
 using BootEngine.Window;
 using System;
@@ -132,7 +132,7 @@ namespace BootEngine
 			Logger.CoreInfo(@event);
 			for (int index = LayerStack.Layers.Count; index > 0;)
 			{
-				LayerStack.Layers[--index].OnEvent(@event);
+				LayerStack.Layers[--index].OnGenericEvent(@event);
 				if (@event.Handled)
 					break;
 			}

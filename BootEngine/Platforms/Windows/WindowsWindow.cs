@@ -71,13 +71,14 @@ namespace Platforms.Windows
 #if DEBUG
 			options.Debug = true;
 #endif
-			WindowStartup.CreateWindowAndGraphicsDevice(props, options, (Veldrid.GraphicsBackend)backend, out window, out graphicsDevice);
+			WindowStartup.CreateWindowAndGraphicsDevice(props, options, backend, out window, out graphicsDevice);
 
 			VSync = props.VSync;
 			swapchain = graphicsDevice.MainSwapchain;
 
-			//Called twice possibly because of 2 events being fired: Resize and SizeChanged (and Maximized)
-			//#TODO treat it here or hope for Veldrid to be updated with this (Maybe clone and alter source code myself)
+			// Called twice possibly because of 2 events being fired: Resize and SizeChanged (and Maximized)
+			// #TODO treat it here or hope for Veldrid to be updated with this (Maybe clone and alter source code myself)
+			// currently deduplicated in the application
 			window.Resized += () =>
 			{
 				EventCallback(new WindowResizeEvent(window.Width, window.Height));

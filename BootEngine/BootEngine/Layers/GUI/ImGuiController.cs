@@ -208,6 +208,7 @@ namespace BootEngine.Layers.GUI
 			textureLayout = gd.ResourceFactory.CreateResourceLayout(new ResourceLayoutDescription(
 				new ResourceLayoutElementDescription("MainTexture", ResourceKind.TextureReadOnly, ShaderStages.Fragment)));
 
+			// TODO: Check pipeline description
 			GraphicsPipelineDescription pd = new GraphicsPipelineDescription(
 				BlendStateDescription.SingleAlphaBlend,
 				new DepthStencilStateDescription(false, false, ComparisonKind.Always),
@@ -665,11 +666,11 @@ namespace BootEngine.Layers.GUI
 				indexOffsetInElements += (uint)cmd_list.IdxBuffer.Size;
 			}
 
-			//Setup orthographic projection matrix regarding backend
-			Matrix4x4 mvp;
-			if (gd.BackendType == GraphicsBackend.Vulkan && !gd.IsClipSpaceYInverted)
+			//Setup orthographic projection matrix regarding backend (view matrix is identity)
+			Matrix4x4 proj;
+			if (gd.BackendType == GraphicsBackend.Vulkan)
 			{
-				mvp = new ImGuiCamera(
+				proj = new ImGuiCamera(
 				draw_data.DisplayPos.X,
 				draw_data.DisplayPos.X + draw_data.DisplaySize.X,
 				draw_data.DisplayPos.Y,
@@ -677,7 +678,7 @@ namespace BootEngine.Layers.GUI
 			}
 			else
 			{
-				mvp = new ImGuiCamera(
+				proj = new ImGuiCamera(
 				draw_data.DisplayPos.X,
 				draw_data.DisplayPos.X + draw_data.DisplaySize.X,
 				draw_data.DisplayPos.Y + draw_data.DisplaySize.Y,
@@ -685,11 +686,10 @@ namespace BootEngine.Layers.GUI
 			}
 
 			cl.SetPipeline(pipeline);
-			cl.SetViewport(0, new Viewport(draw_data.DisplayPos.X, draw_data.DisplayPos.Y, draw_data.DisplaySize.X, draw_data.DisplaySize.Y, 0, 1));
 			cl.SetFullViewports();
 			cl.SetVertexBuffer(0, vertexBuffer);
 			cl.SetIndexBuffer(indexBuffer, IndexFormat.UInt16);
-			cl.UpdateBuffer(projMatrixBuffer, 0, ref mvp);
+			cl.UpdateBuffer(projMatrixBuffer, 0, ref proj);
 			cl.SetGraphicsResourceSet(0, mainResourceSet);
 
 			draw_data.ScaleClipRects(draw_data.FramebufferScale);
@@ -755,10 +755,7 @@ namespace BootEngine.Layers.GUI
 				plIo.NativePtr->Monitors = new ImVector();
 			}
 
-			foreach (IDisposable resource in ownedResources)
-			{
-				resource.Dispose();
-			}
+			ClearCachedImageResources();
 
 			ImGui.DestroyContext();
 
