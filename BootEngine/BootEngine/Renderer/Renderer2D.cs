@@ -117,7 +117,7 @@ namespace BootEngine.Renderer
 			GraphicsPipelineDescription pipelineDescription = new GraphicsPipelineDescription();
 			pipelineDescription.BlendState = BlendStateDescription.SingleAlphaBlend;
 			pipelineDescription.DepthStencilState = DepthStencilStateDescription.DepthOnlyLessEqual;
-			pipelineDescription.RasterizerState = RasterizerStateDescription.Default;
+			pipelineDescription.RasterizerState = RasterizerStateDescription.CullNone;
 			pipelineDescription.PrimitiveTopology = PrimitiveTopology.TriangleStrip;
 			pipelineDescription.ResourceLayouts = new ResourceLayout[] { ResourceLayout };
 			pipelineDescription.ShaderSet = new ShaderSetDescription(
@@ -143,13 +143,6 @@ namespace BootEngine.Renderer
 			Stats.DrawCalls = 0;
 		}
 		#endregion
-
-		public void BeginScene(OrthoCamera camera, bool shouldClearBuffers = true)
-		{
-			this.shouldClearBuffers = shouldClearBuffers;
-			//_gd.UpdateBuffer(CameraBuffer, 0, camera.ViewProjectionMatrix);
-		}
-
 		public void BeginScene(Camera cam, Matrix4x4 transform, bool shouldClearBuffers = true)
 		{
 			this.shouldClearBuffers = shouldClearBuffers;
@@ -217,95 +210,7 @@ namespace BootEngine.Renderer
 			InstanceCount++;
 			shouldFlush = true;
 		}
-
-//		public void RemoveQuadDraw(int instanceIndex, bool flush = true)
-//		{
-//#if DEBUG
-//			using Profiler fullProfiler = new Profiler(GetType());
-//#endif
-//			Renderable2D renderable = GetRenderableByInstanceIndex(instanceIndex);
-//			if (--DataPerTexture[renderable.Texture ?? WhiteTexture].Count == 0 && renderable.Texture != null)
-//			{
-//				DataPerTexture.Remove(renderable.Texture, out InstancingTextureData data);
-//				_gd.DisposeWhenIdle(renderable.Texture);
-//				_gd.DisposeWhenIdle(data.ResourceSet);
-//			}
-
-//			InstanceCount--;
-//			CurrentScene.RenderableList.RemoveAt(instanceIndex);
-//			shouldFlush |= flush;
-//		}
 		#endregion
-
-		//#region Renderable Update
-		//public void UpdatePosition(string renderableName, Vector3 position) => UpdateTransform(renderableName, position, null, null);
-		//public void UpdatePosition(int instanceIndex, Vector3 position) => UpdateTransform(instanceIndex, position, null, null);
-		//public void UpdateSize(string renderableName, Vector2 size) => UpdateTransform(renderableName, null, size, null);
-		//public void UpdateSize(int instanceIndex, Vector2 size) => UpdateTransform(instanceIndex, null, size, null);
-		//public void UpdateRotation(string renderableName, float rotation) => UpdateTransform(renderableName, null, null, rotation);
-		//public void UpdateRotation(int instanceIndex, float rotation) => UpdateTransform(instanceIndex, null, null, rotation);
-		//public void UpdateTransform(string renderableName, Vector3? position = null, Vector2? size = null, float? rotation = null)
-		//{
-		//	Renderable2D renderable = GetRenderableByName(renderableName);
-		//	if (renderable != null)
-		//		UpdateTransform(renderable, position, size, rotation);
-		//}
-
-		//public void UpdateTransform(int instanceIndex, Vector3? position = null, Vector2? size = null, float? rotation = null) => UpdateTransform(GetRenderableByInstanceIndex(instanceIndex), position, size, rotation);
-
-		//public void UpdateTransform(Renderable2D renderable, Vector3? position = null, Vector2? size = null, float? rotation = null)
-		//{
-		//	int index = renderable.InstanceIndex;
-		//	if (position.HasValue && instanceList[index].Position != position.Value)
-		//	{
-		//		instanceList[index].Position = position.Value;
-		//		renderable.Position = position.Value;
-		//		shouldFlush = true;
-		//	}
-		//	if (size.HasValue && instanceList[index].Scale != size.Value)
-		//	{
-		//		instanceList[index].Scale = size.Value;
-		//		renderable.Size = size.Value;
-		//		shouldFlush = true;
-		//	}
-		//	if (rotation.HasValue && instanceList[index].Rotation != rotation.Value)
-		//	{
-		//		instanceList[index].Rotation = rotation.Value;
-		//		renderable.Rotation = rotation.Value;
-		//		shouldFlush = true;
-		//	}
-		//}
-
-		//public void UpdateColor(string renderableName, Vector4 value)
-		//{
-		//	Renderable2D renderable = GetRenderableByName(renderableName);
-		//	if (renderable != null)
-		//		UpdateColor(renderable, value);
-		//}
-
-		//public void UpdateColor(int instanceIndex, Vector4 value) => UpdateColor(GetRenderableByInstanceIndex(instanceIndex), value);
-
-		//public void UpdateColor(Renderable2D renderable, Vector4 value)
-		//{
-		//	if (instanceList[renderable.InstanceIndex].Color != value)
-		//	{
-		//		renderable.Color = value;
-		//		instanceList[renderable.InstanceIndex].Color = value;
-		//		shouldFlush = true;
-		//	}
-		//}
-		//#endregion
-
-		#region Helpers
-		//public Renderable2D GetRenderableByName(string name)
-		//{
-		//	return CurrentScene.RenderableList.Find(r => r.Name == name);
-		//}
-
-		//public Renderable2D GetRenderableByInstanceIndex(int instanceIndex)
-		//{
-		//	return CurrentScene.RenderableList[instanceIndex];
-		//}
 
 		public void Flush()
 		{
@@ -322,7 +227,6 @@ namespace BootEngine.Renderer
 
 			_gd.UpdateBuffer(InstancesVertexBuffer, 0, instanceList.ToArray());
 		}
-		#endregion
 
 		#region Renderer
 		public void Render()

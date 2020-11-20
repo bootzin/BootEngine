@@ -39,7 +39,7 @@ void main()
         sinZ, cosZ, 0,
         0, 0, 1);
 
-    mat3 instanceRotFull = instanceRotZ * instanceRotY * instanceRotZ;
+    mat3 instanceRotFull = instanceRotX * instanceRotY * instanceRotZ;
 	mat3 scaleMatrix = mat3(InstanceScale.x, 0, 0, 0, InstanceScale.y, 0, 0, 0, InstanceScale.z);
 
 	vec3 transformedPosition = (scaleMatrix * instanceRotFull * Position) + InstancePosition;

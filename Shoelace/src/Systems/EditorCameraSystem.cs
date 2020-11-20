@@ -14,6 +14,8 @@ namespace Shoelace.src.Systems
 		private readonly EcsFilter<VelocityComponent, CameraComponent> _cameraTranslationFilter = default;
 		private readonly EcsFilter<EcsMouseScrolledEvent> _mouseScrollEvents = default;
 		private readonly GuiService _guiService = default;
+		private const float CAMERA_ROTATION_SPEED = 60f;
+		private const float CAMERA_MOVEMENT_SPEED = 2f;
 
 		public void Run()
 		{
@@ -26,11 +28,11 @@ namespace Shoelace.src.Systems
 					float xVeloc = 0;
 					if (InputManager.Instance.GetKeyDown(KeyCodes.A))
 					{
-						xVeloc = -zoomLevel;
+						xVeloc = -zoomLevel * CAMERA_MOVEMENT_SPEED;
 					}
 					else if (InputManager.Instance.GetKeyDown(KeyCodes.D))
 					{
-						xVeloc = zoomLevel;
+						xVeloc = zoomLevel * CAMERA_MOVEMENT_SPEED;
 					}
 
 					float yVeloc = 0;
@@ -47,11 +49,11 @@ namespace Shoelace.src.Systems
 					speed.RotationSpeed = Vector3.Zero;
 					if (InputManager.Instance.GetKeyDown(KeyCodes.Q))
 					{
-						speed.RotationSpeed += Vector3.UnitZ * Util.Deg2Rad(60);
+						speed.RotationSpeed += Vector3.UnitZ * Util.Deg2Rad(CAMERA_ROTATION_SPEED);
 					}
 					if (InputManager.Instance.GetKeyDown(KeyCodes.E))
 					{
-						speed.RotationSpeed -= Vector3.UnitZ * Util.Deg2Rad(60);
+						speed.RotationSpeed -= Vector3.UnitZ * Util.Deg2Rad(CAMERA_ROTATION_SPEED);
 					}
 				}
 				else

@@ -63,7 +63,7 @@ namespace Shoelace.Layers
 
 			var pinkQuad = ActiveScene.CreateEntity("Pink Quad").AddComponent(new SpriteComponent(squareColor));
 			ref var transform = ref pinkQuad.GetComponent<TransformComponent>();
-			transform.Position = new Vector3(0, 0, -.5f);
+			transform.Position = new Vector3(0f, 0f, -.5f);
 			transform.Scale = new Vector3(.5f, .5f, .5f);
 			transform.Rotation = new Vector3(0, 0, 45);
 
