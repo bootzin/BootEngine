@@ -21,7 +21,7 @@ namespace BootEngine.Renderer.Cameras
 					cam.Camera.ResizeViewport(newSize.Width, newSize.Height);
 					entt.Destroy();
 				}
-			}
+			}	
 		}
 	}
 }

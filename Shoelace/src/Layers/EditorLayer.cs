@@ -1,8 +1,7 @@
 ﻿using BootEngine.AssetsManager;
 using BootEngine.ECS.Components;
 using BootEngine.ECS.Components.Events;
-using BootEngine.Events;
-using BootEngine.Input;
+using BootEngine.ECS.Systems;
 using BootEngine.Layers;
 using BootEngine.Layers.GUI;
 using BootEngine.Renderer;
@@ -10,6 +9,8 @@ using BootEngine.Renderer.Cameras;
 using BootEngine.Utils;
 using BootEngine.Utils.ProfilingTools;
 using ImGuiNET;
+using Shoelace.src.Services;
+using Shoelace.src.Systems;
 using System;
 using System.Linq;
 using System.Numerics;
@@ -27,7 +28,7 @@ namespace Shoelace.Layers
 		private Framebuffer fb;
 		private bool dockspaceOpen = true;
 		private Vector2 lastSize = Vector2.Zero;
-		private bool viewportFocused;
+		private readonly GuiService guiService = new GuiService();
 		#endregion
 
 		#region Constructor
@@ -39,8 +40,11 @@ namespace Shoelace.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			ActiveScene.AddSystem(new CameraSystem(), "Camera System")
-				.AddSystem(new RenderSystem())
+			ActiveScene
+				.AddSystem(new GuiControlSystem(), "GUI System")
+				.AddSystem(new EditorCameraSystem(), "Editor Camera")
+				.AddSystem(new VelocitySystem(), "Velocity System")
+				.Inject(guiService)
 				.Init();
 
 			var cam = ActiveScene.CreateEntity("Main Camera");
@@ -50,7 +54,7 @@ namespace Shoelace.Layers
 			{
 				Camera = camera
 			});
-			//cam.AddComponent<CameraMovementComponent>();
+			cam.AddComponent<VelocityComponent>();
 
 			var redQuad = ActiveScene.CreateEntity("Red Textured Quad");
 			ref var sprite = ref redQuad.AddComponent<SpriteComponent>();
@@ -71,7 +75,7 @@ namespace Shoelace.Layers
 				1,  // ArrayLayers
 				PixelFormat.R8_G8_B8_A8_UNorm,
 				Veldrid.TextureUsage.RenderTarget | Veldrid.TextureUsage.Sampled));
-			renderTargetAddr = ImGuiLayer.Controller.GetOrCreateImGuiBinding(ResourceFactory, fbTex);
+			renderTargetAddr = ImGuiLayer.GetOrCreateImGuiBinding(ResourceFactory, fbTex);
 
 			fbDepthTex = ResourceFactory.CreateTexture(TextureDescription.Texture2D(
 				(uint)Width, // Width
@@ -96,9 +100,6 @@ namespace Shoelace.Layers
 			{
 				_frametime[i] = _frametime[++i];
 			}
-
-			//if (viewportFocused)
-			//	cameraController.Update(deltaSeconds);
 
 #if DEBUG
 			using (_ = new Profiler("Scene Update"))
@@ -151,6 +152,7 @@ namespace Shoelace.Layers
 
 			ImGui.PlotLines("", ref _frametime[0], 100, 0, "Frametime (ms)", 0, 66.6f, new Vector2(250, 50));
 			ImGui.Text("FPS: " + (1000f / _frametime.Average()).ToString());
+			ImGui.Text("Frametime: " + _frametime.Average().ToString());
 
 			ImGui.Separator();
 
@@ -159,8 +161,9 @@ namespace Shoelace.Layers
 
 			ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
 			ImGui.Begin("Viewport");
-			viewportFocused = ImGui.IsWindowFocused();
-			ImGuiLayer.BlockEvents = !viewportFocused || !ImGui.IsWindowHovered();
+			guiService.ViewportFocused = ImGui.IsWindowFocused();
+			guiService.ViewportHovered = ImGui.IsWindowHovered();
+			guiService.BlockEvents = !guiService.ViewportFocused || !ImGui.IsWindowHovered();
 
 			var viewportPanelSize = ImGui.GetContentRegionAvail();
 			if (!GraphicsDevice.IsUvOriginTopLeft)
@@ -179,32 +182,6 @@ namespace Shoelace.Layers
 			ImGui.End(); //Viewport
 			ImGui.PopStyleVar();
 			ImGui.End(); // Dockspace
-		}
-
-		public override void OnEvent(EventBase @event)
-		{
-			//cameraController.OnEvent(@event);
-			EventDispatcher dis = new EventDispatcher(@event);
-			dis.Dispatch<KeyPressedEvent>(OnKeyPressed);
-		}
-
-		private bool OnKeyPressed(KeyPressedEvent e)
-		{
-			bool control = InputManager.Instance.GetKeyDown(KeyCodes.ControlLeft) || InputManager.Instance.GetKeyDown(KeyCodes.ControlRight);
-			bool shift = InputManager.Instance.GetKeyDown(KeyCodes.ShiftLeft) || InputManager.Instance.GetKeyDown(KeyCodes.ShiftRight);
-
-			switch (e.KeyCode)
-			{
-				case KeyCodes.N:
-				case KeyCodes.O:
-				case KeyCodes.S:
-					break;
-				case KeyCodes.Q:
-					if (control)
-						Close();
-					break;
-			}
-			return false;
 		}
 
 		public override void OnDetach()

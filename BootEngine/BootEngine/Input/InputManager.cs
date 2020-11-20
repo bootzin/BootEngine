@@ -15,7 +15,7 @@ namespace BootEngine.Input
 		private readonly static HashSet<MouseButtonCodes> newMouseButtonsThisFrame = new HashSet<MouseButtonCodes>();
 		private static InputSnapshot snapshot;
 
-		public static InputSnapshot Snapshot
+		internal static InputSnapshot Snapshot
 		{
 			get => snapshot;
 
@@ -28,7 +28,7 @@ namespace BootEngine.Input
 
 		public static InputManager Instance { get; private set; }
 
-		public static T CreateInstance<T>() where T : InputManager, new()
+		internal static T CreateInstance<T>() where T : InputManager, new()
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(typeof(InputManager));

@@ -19,14 +19,17 @@ namespace BootEngine.Events
 #if DEBUG
 			using var _ = new Profiler(GetType());
 #endif
+			foreach (var ev in _windowCloseEvents)
+			{
+				_windowCloseEvents.GetEntity(ev).Destroy();
+				Application.App.Close();
+			}
+
 			foreach (var ev in _keyEvents)
 				_keyEvents.GetEntity(ev).Destroy();
 
 			foreach (var ev in _windowResizeEvents)
 				_windowResizeEvents.GetEntity(ev).Destroy();
-
-			foreach (var ev in _windowCloseEvents)
-				_windowCloseEvents.GetEntity(ev).Destroy();
 
 			foreach (var ev in _mouseButtonEvents)
 				_mouseButtonEvents.GetEntity(ev).Destroy();
@@ -50,28 +53,28 @@ namespace BootEngine.Events
 			switch (e)
 			{
 				case KeyEvent ke:
-					var kev = _world.NewEntity().Get<EcsKeyEvent>();
+					ref var kev = ref _world.NewEntity().Get<EcsKeyEvent>();
 					kev.Event = ke;
 					break;
 				case WindowResizeEvent we:
 					Application.App.Window.Swapchain.Resize((uint)we.Width, (uint)we.Height);
-					var wev = _world.NewEntity().Get<EcsWindowResizeEvent>();
+					ref var wev = ref _world.NewEntity().Get<EcsWindowResizeEvent>();
 					wev.Event = we;
 					break;
 				case WindowCloseEvent wce:
-					var wcev = _world.NewEntity().Get<EcsWindowCloseEvent>();
+					ref var wcev = ref _world.NewEntity().Get<EcsWindowCloseEvent>();
 					wcev.Event = wce;
 					break;
 				case MouseButtonEvent mbe:
-					var mbev = _world.NewEntity().Get<EcsMouseButtonEvent>();
+					ref var mbev = ref _world.NewEntity().Get<EcsMouseButtonEvent>();
 					mbev.Event = mbe;
 					break;
 				case MouseScrolledEvent mse:
-					var msev = _world.NewEntity().Get<EcsMouseScrolledEvent>();
+					ref var msev = ref _world.NewEntity().Get<EcsMouseScrolledEvent>();
 					msev.Event = mse;
 					break;
 				case MouseMovedEvent mme:
-					var mmev = _world.NewEntity().Get<EcsMouseMovedEvent>();
+					ref var mmev = ref _world.NewEntity().Get<EcsMouseMovedEvent>();
 					mmev.Event = mme;
 					break;
 			}

@@ -19,7 +19,7 @@ using Veldrid.Vk;
 
 namespace BootEngine.Layers.GUI
 {
-	public sealed class ImGuiController : IDisposable
+	internal sealed class ImGuiController : IDisposable
 	{
 		#region Properties
 		private GraphicsDevice graphicsDevice;

@@ -1,5 +1,4 @@
-﻿using BootEngine.Events;
-using BootEngine.Utils.ProfilingTools;
+﻿using BootEngine.Utils.ProfilingTools;
 using Veldrid;
 
 namespace BootEngine.Layers.GUI
@@ -9,8 +8,7 @@ namespace BootEngine.Layers.GUI
 		#region Properties
 		private GraphicsDevice gd;
 		private CommandList cl;
-		public static ImGuiController Controller { get; private set; }
-		public static bool BlockEvents { get; set; }
+		internal static ImGuiController Controller { get; private set; }
 		internal static bool ShouldClearBuffers { get; set; }
 		#endregion
 
@@ -73,15 +71,7 @@ namespace BootEngine.Layers.GUI
 			Controller.SwapBuffers(gd);
 		}
 
-		public override void OnEvent(EventBase @event)
-		{
-			if (BlockEvents)
-			{
-				var io = ImGuiNET.ImGui.GetIO();
-				@event.Handled |= @event.IsInCategory(EventCategory.Mouse) && io.WantCaptureMouse;
-				@event.Handled |= @event.IsInCategory(EventCategory.Keyboard) && io.WantCaptureKeyboard;
-			}
-		}
+		public static System.IntPtr GetOrCreateImGuiBinding(ResourceFactory factory, Texture texture) => Controller.GetOrCreateImGuiBinding(factory, texture);
 		#endregion
 	}
 }

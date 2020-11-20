@@ -8,15 +8,20 @@ namespace BootEngine.Renderer.Cameras
 		protected Matrix4x4 projectionMatrix;
 		public bool Active { get; set; } = true;
 		public ref readonly Matrix4x4 ProjectionMatrix => ref projectionMatrix;
+		public float ZoomLevel
+		{
+			get { return zoomLevel; }
+			set { zoomLevel = value; RecalculateProjection(); }
+		}
 
 		protected float aspectRatio;
 		private ProjectionType ProjectionType;
+		private float zoomLevel = 1f;
 
 		protected float perspectiveFov = Util.Deg2Rad(45);
 		protected float perspectiveNear = 0.01f;
 		protected float perspectiveFar = 1000f;
 
-		protected float zoomLevel = 1f;
 		protected float orthoSize = 1f;
 		protected float orthoNear = -1;
 		protected float orthoFar = 1;

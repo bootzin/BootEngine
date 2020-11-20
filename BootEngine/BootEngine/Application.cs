@@ -1,4 +1,5 @@
-﻿using BootEngine.Events;
+﻿using BootEngine.ECS.Services;
+using BootEngine.Events;
 using BootEngine.Layers;
 using BootEngine.Layers.GUI;
 using BootEngine.Logging;
@@ -14,6 +15,7 @@ namespace BootEngine
 	{
 		#region Properties
 		public static Application App { get; private set; }
+		public static TimeService TimeService { get; } = new TimeService();
 		public WindowBase Window { get; }
 		protected LayerStack LayerStack { get; }
 		private ImGuiLayer ImGuiLayer { get; }
@@ -84,7 +86,7 @@ namespace BootEngine
 				{
 #endif
 					long currentFrameTicks = sw.ElapsedTicks;
-					float deltaSeconds = (currentFrameTicks - previousFrameTicks) / (float)Stopwatch.Frequency;
+					TimeService.DeltaSeconds = (currentFrameTicks - previousFrameTicks) / (float)Stopwatch.Frequency;
 
 					previousFrameTicks = currentFrameTicks;
 
@@ -94,14 +96,14 @@ namespace BootEngine
 						using (Profiler layerUpdateProfiler = new Profiler("LayersUpdate"))
 #endif
 							for (int i = 0; i < LayerStack.Layers.Count; i++)
-								LayerStack.Layers[i].OnUpdate(deltaSeconds);
+								LayerStack.Layers[i].OnUpdate(TimeService.DeltaSeconds);
 					}
 
 #if DEBUG
 					using (Profiler imguiProfiler = new Profiler("ImGuiFlow"))
 					{
 #endif
-						ImGuiLayer.Begin(deltaSeconds); //Window is updated in here
+						ImGuiLayer.Begin(TimeService.DeltaSeconds); //Window is updated in here
 						for (int i = 0; i < LayerStack.Layers.Count; i++)
 							LayerStack.Layers[i].OnGuiRender();
 						ImGuiLayer.End();

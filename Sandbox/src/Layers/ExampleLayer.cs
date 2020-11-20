@@ -10,11 +10,12 @@ using Veldrid;
 
 namespace Sandbox.Layers
 {
+	// TODO: Adjust Example Layer to conform with new ECS patterns
 	internal sealed class ExampleLayer : LayerBase
 	{
 		public ExampleLayer() : base("Example") { }
 
-		private OrthoCameraController _cameraController;
+		private OrthoCamera _camera;
 		private CommandList _commandList;
 		private DeviceBuffer _vertexBuffer;
 		private DeviceBuffer _indexBuffer;
@@ -31,7 +32,7 @@ namespace Sandbox.Layers
 		public override void OnAttach()
 		{
 			float aspectRatio = (float)Width / Height;
-			_cameraController = new OrthoCameraController(aspectRatio, true);
+			_camera = new OrthoCamera(1, -1, 1);
 			CreateResources();
 		}
 
@@ -52,13 +53,7 @@ namespace Sandbox.Layers
 
 		public override void OnUpdate(float deltaSeconds)
 		{
-			_cameraController.Update(deltaSeconds);
 			Draw();
-		}
-
-		public override void OnEvent(EventBase @event)
-		{
-			_cameraController.OnEvent(@event);
 		}
 
 		public override void OnGuiRender()
@@ -182,7 +177,7 @@ namespace Sandbox.Layers
 			_commandList.SetFullViewports();
 			_commandList.ClearColorTarget(0, RgbaFloat.CornflowerBlue);
 
-			_commandList.UpdateBuffer(_cameraBuffer, 0, _cameraController.Camera.ViewProjectionMatrix);
+			_commandList.UpdateBuffer(_cameraBuffer, 0, _camera.ProjectionMatrix);
 
 			_commandList.SetVertexBuffer(0, _vertexBuffer);
 			_commandList.SetIndexBuffer(_indexBuffer, IndexFormat.UInt16);
@@ -196,7 +191,6 @@ namespace Sandbox.Layers
 					Vector3 pos = new Vector3(x * 1.11f, y * 1.11f, 0f);
 					Matrix4x4 translation = Matrix4x4.CreateTranslation(pos) * Matrix4x4.CreateScale(.1f);
 					_commandList.UpdateBuffer(_squareTransform, 0, translation);
-					_commandList.UpdateBuffer(_colorBuffer, 0, (pos / 10) - (_cameraController.Camera.Position * 1.1f) + _squareColor);
 
 					_commandList.DrawIndexed(
 						indexCount: 4,

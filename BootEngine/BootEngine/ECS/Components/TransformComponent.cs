@@ -28,7 +28,7 @@ namespace BootEngine.ECS.Components
 				Matrix4x4 rotation = Matrix4x4.CreateRotationX(Rotation.X)
 					* Matrix4x4.CreateRotationY(Rotation.Y)
 					* Matrix4x4.CreateRotationZ(Rotation.Z);
-				return Matrix4x4.CreateScale(Scale) * rotation * Matrix4x4.CreateTranslation(Position);
+				return Matrix4x4.CreateTranslation(Position) * rotation * Matrix4x4.CreateScale(Scale);
 			}
 		}
 	}

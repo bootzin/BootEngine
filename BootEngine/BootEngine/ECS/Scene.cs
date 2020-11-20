@@ -1,5 +1,7 @@
 ﻿using BootEngine.ECS.Components;
 using BootEngine.Events;
+using BootEngine.Renderer;
+using BootEngine.Renderer.Cameras;
 using Leopotam.Ecs;
 using System;
 
@@ -12,7 +14,10 @@ namespace BootEngine.ECS
 		public Scene()
 		{
 			Systems = new EcsSystems(World, "MainEcsSystems");
-			Systems.Add(new EventSystem());
+			Systems
+				.Add(new EventSystem(), "Event System")
+				.Add(new CameraSystem(), "Camera System")
+				.Add(new RenderSystem(), "Rendering System");
 		}
 
 		public Entity CreateEntity(string name = null)
@@ -25,14 +30,17 @@ namespace BootEngine.ECS
 			return e;
 		}
 
-		public void Update()
-		{
-			Systems.Run();
-		}
+		public void Update() => Systems.Run();
 
 		public Scene AddSystem(IEcsSystem sys, string name = null)
 		{
 			Systems.Add(sys, name);
+			return this;
+		}
+
+		public Scene Inject(object obj)
+		{
+			Systems.Inject(obj);
 			return this;
 		}
 
@@ -42,6 +50,8 @@ namespace BootEngine.ECS
 			{
 				Systems.Inject(injects[i]);
 			}
+			Systems.Inject(Application.TimeService);
+			Systems.Inject(this);
 			Systems.Init();
 		}
 

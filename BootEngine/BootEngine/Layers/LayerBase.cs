@@ -39,7 +39,7 @@ namespace BootEngine.Layers
 		public virtual void OnEvent(EventBase @event) { }
 		public virtual void OnGuiRender() { }
 
-		public virtual void Close() => Application.App.Close();
+		public void Close() => Application.App.Close();
 		#endregion
 	}
 }

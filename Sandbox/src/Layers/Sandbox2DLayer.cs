@@ -13,10 +13,11 @@ using System.Threading.Tasks;
 
 namespace Sandbox.Layers
 {
+	// TODO: Adjust Sandbox2DLayer Layer to conform with new ECS patterns
 	public class Sandbox2DLayer : LayerBase
 	{
 		#region Properties
-		private OrthoCameraController cameraController;
+		//private OrthoCameraController cameraController;
 		private Vector4 squareColor = ColorF.DarkRed;
 		private float rot;
 		private int instanceCount = 10;

@@ -3,7 +3,7 @@ using Leopotam.Ecs;
 
 namespace BootEngine.Renderer
 {
-	public class RenderSystem : IEcsRunSystem
+	public sealed class RenderSystem : IEcsRunSystem
 	{
 		private readonly EcsFilter<TransformComponent, SpriteComponent> QuadsFilter = default;
 		private readonly EcsFilter<TransformComponent, CameraComponent> CameraFilter = default;
