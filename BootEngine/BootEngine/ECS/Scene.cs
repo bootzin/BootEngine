@@ -4,6 +4,7 @@ using BootEngine.Renderer;
 using BootEngine.Renderer.Cameras;
 using Leopotam.Ecs;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace BootEngine.ECS
 {
@@ -26,6 +27,15 @@ namespace BootEngine.ECS
 			Entity e = new Entity(World.NewEntity());
 			e.AddComponent<TransformComponent>();
 			ref var tag = ref e.AddComponent<TagComponent>();
+			tag.Tag = string.IsNullOrEmpty(name) ? "Entity" : name;
+			return e;
+		}
+
+		public Entity CreateEntity(Entity entity, string name = null)
+		{
+			Logging.Logger.Assert(Systems.GetAllSystems().Count > 0, "A system must be added before creating entities!");
+			Entity e = new Entity(entity);
+			ref var tag = ref e.GetComponent<TagComponent>();
 			tag.Tag = string.IsNullOrEmpty(name) ? "Entity" : name;
 			return e;
 		}
@@ -54,6 +64,9 @@ namespace BootEngine.ECS
 			Systems.Inject(this);
 			Systems.Init();
 		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public EcsFilter GetFilter(Type filterType) => World.GetFilter(filterType);
 
 		public void Dispose()
 		{

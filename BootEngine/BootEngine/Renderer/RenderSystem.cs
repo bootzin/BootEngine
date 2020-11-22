@@ -1,4 +1,5 @@
 ﻿using BootEngine.ECS.Components;
+using BootEngine.ECS.Components.Events.Ecs;
 using Leopotam.Ecs;
 
 namespace BootEngine.Renderer
@@ -7,6 +8,7 @@ namespace BootEngine.Renderer
 	{
 		private readonly EcsFilter<TransformComponent, SpriteComponent> QuadsFilter = default;
 		private readonly EcsFilter<TransformComponent, CameraComponent> CameraFilter = default;
+		private readonly EcsFilter<EcsWindowResizeEvent> _windowResizeEvents = default;
 		public void Run()
 		{
 			foreach (int camera in CameraFilter)

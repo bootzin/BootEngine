@@ -125,7 +125,7 @@ namespace BootEngine.Renderer
 				shaders: AssetManager.GenerateShadersFromFile("TexturedInstancing.glsl"));
 			pipelineDescription.Outputs = _gd.MainSwapchain.Framebuffer.OutputDescription;
 
-			SetPipelineDescrition(pipelineDescription, _gd.MainSwapchain.Framebuffer);
+			SetPipelineDescrition(pipelineDescription, _gd.SwapchainFramebuffer);
 
 			DataPerTexture.Add(WhiteTexture, new InstancingTextureData()
 			{
@@ -219,7 +219,7 @@ namespace BootEngine.Renderer
 #endif
 			shouldFlush = false;
 
-			if (InstanceCount < instanceList.Count)
+			if (InstancesVertexBuffer.SizeInBytes < instanceList.Count * InstanceVertexInfo.SizeInBytes)
 			{
 				InstanceCount = instanceList.Count;
 				InstancesVertexBuffer = _gd.ResourceFactory.CreateBuffer(new BufferDescription((uint)(instanceList.Count * InstanceVertexInfo.SizeInBytes), BufferUsage.VertexBuffer));

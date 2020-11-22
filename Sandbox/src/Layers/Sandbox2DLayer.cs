@@ -10,14 +10,16 @@ using ImGuiNET;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
+using BootEngine.ECS.Systems;
+using BootEngine.ECS.Components;
+using Leopotam.Ecs;
 
 namespace Sandbox.Layers
 {
-	// TODO: Adjust Sandbox2DLayer Layer to conform with new ECS patterns
+	 //TODO: Adjust Sandbox2DLayer Layer to conform with new ECS patterns
 	public class Sandbox2DLayer : LayerBase
 	{
 		#region Properties
-		//private OrthoCameraController cameraController;
 		private Vector4 squareColor = ColorF.DarkRed;
 		private float rot;
 		private int instanceCount = 10;
@@ -30,133 +32,139 @@ namespace Sandbox.Layers
 
 		public override void OnAttach()
 		{
-//#if DEBUG
-//			using Profiler fullProfiler = new Profiler(GetType());
-//#endif
-//			float aspectRatio = (float)Width / Height;
-//			cameraController = new OrthoCameraController(aspectRatio, true);
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
+			ActiveScene
+				.AddSystem(new VelocitySystem())
+				.Init();
 
-//			Renderable2DParameters param = new Renderable2DParameters();
-//			param.Name = "Quad";
-//			param.Position = new Vector3(-1, 0, .5f);
-//			param.Size = new Vector2(.5f, .5f);
-//			param.Rotation = 0;
-//			param.Color = squareColor;
-//			param.Texture = null;
-//			Renderer2D.Instance.SetupQuadDraw(ref param);
+			var cam = ActiveScene.CreateEntity("Main Camera");
+			var camera = new OrthoCamera(1, -1, 1);
+			camera.ResizeViewport(Width, Height);
+			cam.AddComponent(new CameraComponent()
+			{
+				Camera = camera
+			});
+			cam.AddComponent<VelocityComponent>();
 
-//			Renderable2DParameters param1 = new Renderable2DParameters();
-//			param1.Name = "Tex";
-//			param1.Position = new Vector3(0, 0, .4f);
-//			param1.Size = new Vector2(.25f, .25f);
-//			param1.Rotation = 0f;
-//			param1.Color = ColorF.White.ToVector4();
-//			param1.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
-//			Renderer2D.Instance.SetupQuadDraw(ref param1);
+			var quad = ActiveScene.CreateEntity("Quad");
+			quad.AddComponent(new SpriteComponent()
+			{
+				Color = squareColor
+			});
+			ref var transform = ref quad.GetComponent<TransformComponent>();
+			transform.Position = new Vector3(-1, 0, .5f);
+			transform.Scale = new Vector3(.5f, .5f, 1);
+			transform.Rotation = Vector3.Zero;
 
-//			Renderable2DParameters param2 = new Renderable2DParameters();
-//			param2.Name = "Quad2";
-//			param2.Position = new Vector3(1, 0, .5f);
-//			param2.Size = Vector2.One;
-//			param2.Rotation = 0f;
-//			param2.Color = ColorF.Cyan.ToVector4();
-//			param2.Texture = null;
-//			Renderer2D.Instance.SetupQuadDraw(ref param2);
+			var quad2 = ActiveScene.CreateEntity(quad, "Tex");
+			ref var transform2 = ref quad2.GetComponent<TransformComponent>();
+			transform2.Position = new Vector3(0, 0, .4f);
+			transform2.Scale = new Vector3(.25f, .25f, 1);
+			transform2.Rotation = Vector3.Zero;
+			ref var sprite = ref quad2.GetComponent<SpriteComponent>();
+			sprite.Color = ColorF.White;
+			sprite.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
 
-//			Renderable2DParameters param3 = new Renderable2DParameters();
-//			param3.Name = null;
-//			param3.Size = new Vector2(.1f, .1f);
-//			param3.Rotation = 0;
-//			param3.Color = squareColor;
-//			//param3.Texture = null;
-//			param3.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
-//			for (int i = 0; i < instanceCount; i++)
-//			{
-//				param3.Position = new Vector3(-.11f * (i % 1000), -.11f * (i / 1000), .5f);
-//				Renderer2D.Instance.SetupQuadDraw(ref param3);
-//			}
+			var quad3 = ActiveScene.CreateEntity(quad, "Quad2");
+			ref var transform3 = ref quad3.GetComponent<TransformComponent>();
+			transform3.Position = new Vector3(1, 0, .5f);
+			transform3.Scale = Vector3.One;
+			transform3.Rotation = Vector3.Zero;
+			ref var sprite2 = ref quad2.GetComponent<SpriteComponent>();
+			sprite2.Color = ColorF.Cyan;
+
+			var quad4 = ActiveScene.CreateEntity(quad);
+			ref var transform4 = ref quad4.GetComponent<TransformComponent>();
+			transform4.Position = new Vector3(1, 0, .5f);
+			transform4.Scale = Vector3.One * .1f;
+			transform4.Rotation = Vector3.Zero;
+			ref var sprite3 = ref quad2.GetComponent<SpriteComponent>();
+			sprite3.Color = squareColor;
+			sprite.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
+
+			for (int i = 0; i < instanceCount; i++)
+			{
+				var quad5 = ActiveScene.CreateEntity(quad4);
+				ref var transform5 = ref quad5.GetComponent<TransformComponent>();
+				transform5.Position = new Vector3(-.11f * (i % 1000), -.11f * (i / 1000), .5f);
+			}
 		}
 
 		public override void OnUpdate(float deltaSeconds)
 		{
-//#if DEBUG
-//			using Profiler fullProfiler = new Profiler(GetType());
-//#endif
-//			Renderer2D.Instance.ResetStats();
-//			_frametime[99] = deltaSeconds * 1000;
-//			for (int i = 0; i < 99;)
-//			{
-//				_frametime[i] = _frametime[++i];
-//			}
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
+			Renderer2D.Instance.ResetStats();
+			_frametime[99] = deltaSeconds * 1000;
+			for (int i = 0; i < 99;)
+			{
+				_frametime[i] = _frametime[++i];
+			}
 
-//			cameraController.Update(deltaSeconds);
-//			Renderer2D renderer = Renderer2D.Instance;
-//			renderer.BeginScene(cameraController.Camera);
-//			renderer.UpdatePosition("Quad2", new Vector3(squareColor.X, squareColor.Y, squareColor.Z));
+			var filter = (EcsFilter<TransformComponent, TagComponent, SpriteComponent>)ActiveScene.GetFilter(typeof(EcsFilter<TransformComponent, TagComponent, SpriteComponent>));
+			foreach (var item in filter)
+			{
+				if (filter.Get2(item).Tag == "Quad2")
+				{
+					ref var transform = ref filter.Get1(item);
+					transform.Position = new Vector3(squareColor.X, squareColor.Y, squareColor.Z);
+				}
+			}
 
-//#if DEBUG
-//			using (Profiler updateProfiler = new Profiler("Update"))
-//#endif
-//			Parallel.For(0, renderer.InstanceCount, (i) =>
-//			{
-//				renderer.UpdateColor(i, squareColor);
-//				renderer.UpdateRotation(i, Utils.Util.Deg2Rad(rot));
-//			});
-//			//for (int i = 0; i < renderer.InstanceCount; i++)
-//			//{
-//			//	renderer.UpdateColor(i, _squareColor);
-//			//	renderer.UpdateRotation(i, (float)Utils.Util.Deg2Rad(temp));
-//			//}
-//			rot++;
+#if DEBUG
+			using (Profiler updateProfiler = new Profiler("Update"))
+#endif
+				foreach (int item in filter)
+				{
+					ref var transform = ref filter.Get1(item);
+					ref var sprite = ref filter.Get3(item);
+					transform.Rotation = new Vector3(0, 0, Util.Deg2Rad(rot));
+					sprite.Color = squareColor;
+				}
+			rot++;
 
-//			if (renderer.InstanceCount < instanceCount)
-//			{
-//				var param = new Renderable2DParameters();
-//				param.Size = new Vector2(.1f, .1f);
-//				param.Rotation = 0;
-//				param.Color = squareColor;
-//				param.Texture = AssetManager.LoadTexture2D("assets/textures/sampleDog.png", TextureUsage.Sampled);
-//				for (int i = renderer.InstanceCount; i < instanceCount; i++)
-//				{
-//						param.Position = new Vector3(-.11f * (i % 1000), -.11f * (i / 1000), .5f);
-//						renderer.SetupQuadDraw(ref param);
-//				}
-//			}
-//			else if (renderer.InstanceCount > instanceCount)
-//			{
-//				for (int i = renderer.InstanceCount; i > instanceCount;)
-//					renderer.RemoveQuadDraw(--i);
-//			}
+			ActiveScene.Update();
 
-//#if DEBUG
-//			using (Profiler camProfiler = new Profiler("Rendering"))
-//#endif
-//				renderer.Render();
-//			renderer.EndScene();
+			//if (renderer.InstanceCount < instanceCount)
+			//{
+			//	var param = new Renderable2DParameters();
+			//	param.Size = new Vector2(.1f, .1f);
+			//	param.Rotation = 0;
+			//	param.Color = squareColor;
+			//	param.Texture = AssetManager.LoadTexture2D("assets/textures/sampleDog.png", TextureUsage.Sampled);
+			//	for (int i = renderer.InstanceCount; i < instanceCount; i++)
+			//	{
+			//		param.Position = new Vector3(-.11f * (i % 1000), -.11f * (i / 1000), .5f);
+			//		renderer.SetupQuadDraw(ref param);
+			//	}
+			//}
+			//else if (renderer.InstanceCount > instanceCount)
+			//{
+			//	for (int i = renderer.InstanceCount; i > instanceCount;)
+			//		renderer.RemoveQuadDraw(--i);
+			//}
 		}
 
 		public override void OnGuiRender()
 		{
-//#if DEBUG
-//			using Profiler fullProfiler = new Profiler(GetType());
-//#endif
-//			ImGui.Begin("Settings 2D");
-//			ImGui.ColorEdit4("Square Color 2D", ref squareColor);
-//			ImGui.End();
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(GetType());
+#endif
+			ImGui.Begin("Settings 2D");
+			ImGui.ColorEdit4("Square Color 2D", ref squareColor);
+			ImGui.End();
 
-//			ImGui.Begin("FPS Counter");
-//			ImGui.PlotLines("", ref _frametime[0], 100, 0, "Frametime (ms)", 0, 66.6f, new Vector2(250, 50));
-//			ImGui.Text("FPS: " + (1000f / _frametime.Average()));
-//			ImGui.End();
+			ImGui.Begin("FPS Counter");
+			ImGui.PlotLines("", ref _frametime[0], 100, 0, "Frametime (ms)", 0, 66.6f, new Vector2(250, 50));
+			ImGui.Text("FPS: " + (1000f / _frametime.Average()).ToString());
+			ImGui.End();
 
-//			ImGui.Begin("QuadDraw Config");
-//			ImGui.DragInt("QuadCount", ref instanceCount, 1, 0, 3000000);
-//			ImGui.End();
-		}
-
-		public override void OnEvent(EventBase @event)
-		{
-			//cameraController.OnEvent(@event);
+			ImGui.Begin("QuadDraw Config");
+			ImGui.DragInt("QuadCount", ref instanceCount, 1, 0, 3000000);
+			ImGui.End();
 		}
 
 		public override void OnDetach()
