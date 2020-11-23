@@ -48,8 +48,7 @@ namespace Shoelace.Layers
 				.Init();
 
 			var cam = ActiveScene.CreateEntity("Main Camera");
-			var camera = new OrthoCamera(1, -1, 1);
-			camera.ResizeViewport(Width, Height);
+			var camera = new OrthoCamera(1, -1, 1, Width, Height);
 			cam.AddComponent(new CameraComponent()
 			{
 				Camera = camera
@@ -146,7 +145,7 @@ namespace Shoelace.Layers
 			ImGui.Begin("Stats");
 			ImGui.Text("Renderer Stats:");
 			ImGui.Text("Draw Calls: " + Renderer2D.Instance.Stats.DrawCalls.ToString());
-			ImGui.Text("Instance Count: " + Renderer2D.Instance.InstanceCount.ToString());
+			ImGui.Text("Instance Count: " + Renderer2D.Instance.Stats.InstanceCount.ToString());
 
 			ImGui.Separator();
 

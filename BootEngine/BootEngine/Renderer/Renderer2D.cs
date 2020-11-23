@@ -163,8 +163,10 @@ namespace BootEngine.Renderer
 			throw new NotImplementedException();
 		}
 
+		// TODO: Optimize this function
 		public void QueueQuad(Vector3 position, Vector3 scale, Vector3 rotation, Vector4 color, Texture tex = null)
 		{
+			var info = new InstanceVertexInfo(position, scale, rotation, color);
 			if (tex != null)
 			{
 				if (!DataPerTexture.ContainsKey(tex))
@@ -184,24 +186,12 @@ namespace BootEngine.Renderer
 				{
 					DataPerTexture[tex].Count++;
 				}
-				instanceList.Insert((int)DataPerTexture[tex].LastInstanceIndex - 1, new InstanceVertexInfo()
-				{
-					Color = color,
-					Position = position,
-					Scale = scale,
-					Rotation = rotation
-				});
+				instanceList.Insert((int)DataPerTexture[tex].LastInstanceIndex - 1, info);
 			}
 			else
 			{
 				DataPerTexture[WhiteTexture].Count++;
-				instanceList.Insert((int)DataPerTexture[WhiteTexture].LastInstanceIndex - 1, new InstanceVertexInfo()
-				{
-					Color = color,
-					Position = position,
-					Scale = scale,
-					Rotation = rotation
-				});
+				instanceList.Insert((int)DataPerTexture[WhiteTexture].LastInstanceIndex - 1, info);
 			}
 
 			InstanceCount++;
@@ -276,6 +266,7 @@ namespace BootEngine.Renderer
 		{
 			cl.End();
 			_gd.SubmitCommands(cl);
+			Stats.InstanceCount = InstanceCount;
 			InstanceCount = 0;
 			foreach (var entry in DataPerTexture)
 			{
@@ -343,14 +334,22 @@ namespace BootEngine.Renderer
 			}
 		}
 
-		private struct InstanceVertexInfo
+		private readonly struct InstanceVertexInfo
 		{
 			public const uint SizeInBytes = 52;
 
-			public Vector3 Position { get; set; }
-			public Vector3 Scale { get; set; }
-			public Vector3 Rotation { get; set; }
-			public Vector4 Color { get; set; }
+			public InstanceVertexInfo(Vector3 position, Vector3 scale, Vector3 rotation, Vector4 color)
+			{
+				Position = position;
+				Scale = scale;
+				Rotation = rotation;
+				Color = color;
+			}
+
+			public readonly Vector3 Position { get; }
+			public readonly Vector3 Scale { get; }
+			public readonly Vector3 Rotation { get; }
+			public readonly Vector4 Color { get; }
 		}
 
 		private class InstancingTextureData
@@ -365,7 +364,8 @@ namespace BootEngine.Renderer
 	#region Aux
 	public class RenderStats
 	{
-		public int DrawCalls { get; set; }
+		public int InstanceCount { get; internal set; }
+		public int DrawCalls { get; internal set; }
 	}
 
 	public ref struct Renderable2DParameters

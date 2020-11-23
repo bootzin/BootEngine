@@ -1,5 +1,7 @@
-﻿using BootEngine.ECS;
+﻿using BootEngine.AssetsManager;
+using BootEngine.ECS;
 using BootEngine.ECS.Components;
+using BootEngine.Utils;
 using Leopotam.Ecs;
 using Sandbox.Services;
 using System.Numerics;
@@ -50,7 +52,8 @@ namespace Sandbox.Systems
 				var ent = _scene.CreateEntity();
 				ent.AddComponent(new SpriteComponent()
 				{
-					Color = _quadInfoService.SquareColor
+					Color = _quadInfoService.SquareColor,
+					Texture = AssetManager.LoadTexture2D("assets/textures/sampleDog.png", TextureUsage.Sampled)
 				});
 				ref var transform = ref ent.GetComponent<TransformComponent>();
 				transform.Scale *= .1f;
