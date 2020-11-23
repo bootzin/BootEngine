@@ -1,28 +1,26 @@
-﻿using BootEngine;
-using BootEngine.Utils;
-using BootEngine.AssetsManager;
+﻿using BootEngine.AssetsManager;
+using BootEngine.ECS.Components;
+using BootEngine.ECS.Components.Events;
+using BootEngine.ECS.Systems;
 using BootEngine.Events;
 using BootEngine.Layers;
 using BootEngine.Renderer;
 using BootEngine.Renderer.Cameras;
+using BootEngine.Utils;
 using BootEngine.Utils.ProfilingTools;
 using ImGuiNET;
+using Sandbox.Services;
+using Sandbox.Systems;
 using System.Linq;
 using System.Numerics;
-using System.Threading.Tasks;
-using BootEngine.ECS.Systems;
-using BootEngine.ECS.Components;
-using Leopotam.Ecs;
 
 namespace Sandbox.Layers
 {
-	 //TODO: Adjust Sandbox2DLayer Layer to conform with new ECS patterns
+	//TODO: Adjust Sandbox2DLayer Layer to conform with new ECS patterns
 	public class Sandbox2DLayer : LayerBase
 	{
 		#region Properties
-		private Vector4 squareColor = ColorF.DarkRed;
-		private float rot;
-		private int instanceCount = 10;
+		private readonly QuadInfoService _quadData = new QuadInfoService();
 		private readonly float[] _frametime = new float[100];
 		#endregion
 
@@ -35,8 +33,12 @@ namespace Sandbox.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
+			_quadData.SquareColor = ColorF.DarkRed;
+			_quadData.QuadCount = 10;
 			ActiveScene
 				.AddSystem(new VelocitySystem())
+				.AddSystem(new QuadUpdateSystem())
+				.Inject(_quadData)
 				.Init();
 
 			var cam = ActiveScene.CreateEntity("Main Camera");
@@ -51,12 +53,16 @@ namespace Sandbox.Layers
 			var quad = ActiveScene.CreateEntity("Quad");
 			quad.AddComponent(new SpriteComponent()
 			{
-				Color = squareColor
+				Color = _quadData.SquareColor
 			});
 			ref var transform = ref quad.GetComponent<TransformComponent>();
 			transform.Position = new Vector3(-1, 0, .5f);
 			transform.Scale = new Vector3(.5f, .5f, 1);
 			transform.Rotation = Vector3.Zero;
+			quad.AddComponent(new VelocityComponent()
+			{
+				RotationSpeed = new Vector3(0, 0, 1f)
+			});
 
 			var quad2 = ActiveScene.CreateEntity(quad, "Tex");
 			ref var transform2 = ref quad2.GetComponent<TransformComponent>();
@@ -71,8 +77,8 @@ namespace Sandbox.Layers
 			ref var transform3 = ref quad3.GetComponent<TransformComponent>();
 			transform3.Position = new Vector3(1, 0, .5f);
 			transform3.Scale = Vector3.One;
-			transform3.Rotation = Vector3.Zero;
-			ref var sprite2 = ref quad2.GetComponent<SpriteComponent>();
+			transform3.Rotation = new Vector3(0, 0, 45f);
+			ref var sprite2 = ref quad3.GetComponent<SpriteComponent>();
 			sprite2.Color = ColorF.Cyan;
 
 			var quad4 = ActiveScene.CreateEntity(quad);
@@ -80,11 +86,11 @@ namespace Sandbox.Layers
 			transform4.Position = new Vector3(1, 0, .5f);
 			transform4.Scale = Vector3.One * .1f;
 			transform4.Rotation = Vector3.Zero;
-			ref var sprite3 = ref quad2.GetComponent<SpriteComponent>();
-			sprite3.Color = squareColor;
-			sprite.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
+			ref var sprite3 = ref quad4.GetComponent<SpriteComponent>();
+			sprite3.Color = _quadData.SquareColor;
+			sprite3.Texture = AssetManager.LoadTexture2D("assets/textures/sampleDog.png", TextureUsage.Sampled);
 
-			for (int i = 0; i < instanceCount; i++)
+			for (int i = 0; i < _quadData.QuadCount; i++)
 			{
 				var quad5 = ActiveScene.CreateEntity(quad4);
 				ref var transform5 = ref quad5.GetComponent<TransformComponent>();
@@ -104,48 +110,7 @@ namespace Sandbox.Layers
 				_frametime[i] = _frametime[++i];
 			}
 
-			var filter = (EcsFilter<TransformComponent, TagComponent, SpriteComponent>)ActiveScene.GetFilter(typeof(EcsFilter<TransformComponent, TagComponent, SpriteComponent>));
-			foreach (var item in filter)
-			{
-				if (filter.Get2(item).Tag == "Quad2")
-				{
-					ref var transform = ref filter.Get1(item);
-					transform.Position = new Vector3(squareColor.X, squareColor.Y, squareColor.Z);
-				}
-			}
-
-#if DEBUG
-			using (Profiler updateProfiler = new Profiler("Update"))
-#endif
-				foreach (int item in filter)
-				{
-					ref var transform = ref filter.Get1(item);
-					ref var sprite = ref filter.Get3(item);
-					transform.Rotation = new Vector3(0, 0, Util.Deg2Rad(rot));
-					sprite.Color = squareColor;
-				}
-			rot++;
-
 			ActiveScene.Update();
-
-			//if (renderer.InstanceCount < instanceCount)
-			//{
-			//	var param = new Renderable2DParameters();
-			//	param.Size = new Vector2(.1f, .1f);
-			//	param.Rotation = 0;
-			//	param.Color = squareColor;
-			//	param.Texture = AssetManager.LoadTexture2D("assets/textures/sampleDog.png", TextureUsage.Sampled);
-			//	for (int i = renderer.InstanceCount; i < instanceCount; i++)
-			//	{
-			//		param.Position = new Vector3(-.11f * (i % 1000), -.11f * (i / 1000), .5f);
-			//		renderer.SetupQuadDraw(ref param);
-			//	}
-			//}
-			//else if (renderer.InstanceCount > instanceCount)
-			//{
-			//	for (int i = renderer.InstanceCount; i > instanceCount;)
-			//		renderer.RemoveQuadDraw(--i);
-			//}
 		}
 
 		public override void OnGuiRender()
@@ -154,7 +119,7 @@ namespace Sandbox.Layers
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
 			ImGui.Begin("Settings 2D");
-			ImGui.ColorEdit4("Square Color 2D", ref squareColor);
+			ImGui.ColorEdit4("Square Color 2D", ref _quadData.SquareColor);
 			ImGui.End();
 
 			ImGui.Begin("FPS Counter");
@@ -163,8 +128,21 @@ namespace Sandbox.Layers
 			ImGui.End();
 
 			ImGui.Begin("QuadDraw Config");
-			ImGui.DragInt("QuadCount", ref instanceCount, 1, 0, 3000000);
+			ImGui.DragInt("QuadCount", ref _quadData.QuadCount, 1, 0, 3000000);
 			ImGui.End();
+		}
+
+		public override void OnEvent(EventBase @event)
+		{
+			if (@event is WindowResizeEvent)
+			{
+				var ev = @event as WindowResizeEvent;
+				ActiveScene.CreateEntity().AddComponent(new ViewportResizedEvent()
+				{
+					Height = ev.Height,
+					Width = ev.Width
+				});
+			}
 		}
 
 		public override void OnDetach()

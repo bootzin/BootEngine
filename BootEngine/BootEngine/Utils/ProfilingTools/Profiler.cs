@@ -20,7 +20,7 @@ namespace BootEngine.Utils.ProfilingTools
 		public Profiler(string name)
 		{
 #if !DEBUG
-			Log.Logger.CoreWarn("Profiler should not be called without the DEBUG compilation flag.");
+			Logging.Logger.CoreWarn("Profiler should not be called without the DEBUG compilation flag.");
 #endif
 			Name = name;
 			Init();
@@ -29,7 +29,7 @@ namespace BootEngine.Utils.ProfilingTools
 		public Profiler(Type type, [System.Runtime.CompilerServices.CallerMemberName] string name = null)
 		{
 #if !DEBUG
-			Log.Logger.CoreWarn("Profiler should not be called without the DEBUG compilation flag.");
+			Logging.Logger.CoreWarn("Profiler should not be called without the DEBUG compilation flag.");
 #endif
 			Name = type.Name + "_" + name;
 			Init();

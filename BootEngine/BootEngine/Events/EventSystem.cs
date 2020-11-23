@@ -57,7 +57,6 @@ namespace BootEngine.Events
 					kev.Event = ke;
 					break;
 				case WindowResizeEvent we:
-					Application.App.Window.Swapchain.Resize((uint)we.Width, (uint)we.Height);
 					ref var wev = ref _world.NewEntity().Get<EcsWindowResizeEvent>();
 					wev.Event = we;
 					break;

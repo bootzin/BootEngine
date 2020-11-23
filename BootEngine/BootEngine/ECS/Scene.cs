@@ -16,9 +16,7 @@ namespace BootEngine.ECS
 		{
 			Systems = new EcsSystems(World, "MainEcsSystems");
 			Systems
-				.Add(new EventSystem(), "Event System")
-				.Add(new CameraSystem(), "Camera System")
-				.Add(new RenderSystem(), "Rendering System");
+				.Add(new EventSystem(), "Event System");
 		}
 
 		public Entity CreateEntity(string name = null)
@@ -56,6 +54,9 @@ namespace BootEngine.ECS
 
 		public void Init(params object[] injects)
 		{
+			Systems
+				.Add(new CameraSystem(), "Camera System")
+				.Add(new RenderSystem(), "Rendering System");
 			for (int i = 0; i < injects.Length; i++)
 			{
 				Systems.Inject(injects[i]);

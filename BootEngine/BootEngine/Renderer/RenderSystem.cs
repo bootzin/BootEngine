@@ -22,11 +22,17 @@ namespace BootEngine.Renderer
 						// TODO: Maybe filter quads within camera fustrum
 						ref var transform = ref QuadsFilter.Get1(quad);
 						ref var sprite = ref QuadsFilter.Get2(quad);
+						// TODO: Find a way to avoid calling this function every time. It is the main FPS hog
 						Renderer2D.Instance.QueueQuad(transform.Position, transform.Scale, transform.Rotation, sprite.Color, sprite.Texture);
 					}
 					Renderer2D.Instance.Render();
 					Renderer2D.Instance.EndScene();
 				}
+			}
+
+			foreach (var ev in _windowResizeEvents)
+			{
+				Renderer2D.Instance.ResizeSwapchain(_windowResizeEvents.Get1(ev).Event);
 			}
 		}
 	}

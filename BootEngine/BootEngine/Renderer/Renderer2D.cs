@@ -1,4 +1,5 @@
 ﻿using BootEngine.AssetsManager;
+using BootEngine.Events;
 using BootEngine.Layers.GUI;
 using BootEngine.Renderer.Cameras;
 using BootEngine.Utils.ProfilingTools;
@@ -33,7 +34,6 @@ namespace BootEngine.Renderer
 		internal DeviceBuffer InstancesVertexBuffer { get; set; }
 		internal DeviceBuffer CameraBuffer { get; set; }
 		internal ResourceLayout ResourceLayout { get; set; }
-
 		public GraphicsPipelineDescription PipelineDescrition { get; private set; }
 		internal Pipeline ActivePipeline { get; private set; }
 		internal Framebuffer ActiveFramebuffer { get; private set; }
@@ -123,7 +123,7 @@ namespace BootEngine.Renderer
 			pipelineDescription.ShaderSet = new ShaderSetDescription(
 				vertexLayouts: new VertexLayoutDescription[] { sharedVertexLayout, instanceVertexLayout },
 				shaders: AssetManager.GenerateShadersFromFile("TexturedInstancing.glsl"));
-			pipelineDescription.Outputs = _gd.MainSwapchain.Framebuffer.OutputDescription;
+			pipelineDescription.Outputs = _gd.SwapchainFramebuffer.OutputDescription;
 
 			SetPipelineDescrition(pipelineDescription, _gd.SwapchainFramebuffer);
 
@@ -165,9 +165,6 @@ namespace BootEngine.Renderer
 
 		public void QueueQuad(Vector3 position, Vector3 scale, Vector3 rotation, Vector4 color, Texture tex = null)
 		{
-#if DEBUG
-			using Profiler fullProfiler = new Profiler(GetType());
-#endif
 			if (tex != null)
 			{
 				if (!DataPerTexture.ContainsKey(tex))
@@ -282,7 +279,10 @@ namespace BootEngine.Renderer
 			InstanceCount = 0;
 			foreach (var entry in DataPerTexture)
 			{
-				entry.Value.Count = 0u;
+				if (entry.Key != WhiteTexture)
+					DataPerTexture.Remove(entry.Key);
+				else
+					entry.Value.Count = 0u;
 			}
 			instanceList = new List<InstanceVertexInfo>(MAX_QUADS);
 		}
@@ -294,6 +294,21 @@ namespace BootEngine.Renderer
 			PipelineDescrition = pd;
 			ActivePipeline = _gd.ResourceFactory.CreateGraphicsPipeline(pd);
 			ImGuiLayer.ShouldClearBuffers = clearMainFramebuffer; // TODO: This shouldn't be here, but I'm unsure on how to do it properly
+		}
+
+		internal void ResizeSwapchain(WindowResizeEvent we)
+		{
+			// Necessary logic to deall with DirectX framebuffer recreation
+			if (ActiveFramebuffer == _gd.SwapchainFramebuffer)
+			{
+				Application.App.Window.GraphicsDevice.MainSwapchain.Resize((uint)we.Width, (uint)we.Height);
+				if (ActiveFramebuffer != _gd.SwapchainFramebuffer)
+					ActiveFramebuffer = _gd.SwapchainFramebuffer;
+			}
+			else
+			{
+				Application.App.Window.GraphicsDevice.MainSwapchain.Resize((uint)we.Width, (uint)we.Height);
+			}
 		}
 
 		public void Dispose()

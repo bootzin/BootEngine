@@ -32,6 +32,12 @@ namespace BootEngine.ECS
 			return this;
 		}
 
+		public Entity ReplaceComponent<T>(T item) where T : struct
+		{
+			entityHandle.Replace(in item);
+			return this;
+		}
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public ref T GetOrCreateComponent<T>() where T : struct => ref entityHandle.Get<T>();
 
