@@ -16,10 +16,10 @@ namespace BootEngine.Renderer.Cameras
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			float left = -orthoSize * aspectRatio * ZoomLevel;
-			float right = orthoSize * aspectRatio * ZoomLevel;
-			float bottom = -orthoSize * ZoomLevel;
-			float top = orthoSize * ZoomLevel;
+			float left = -OrthoSize * aspectRatio * ZoomLevel;
+			float right = OrthoSize * aspectRatio * ZoomLevel;
+			float bottom = -OrthoSize * ZoomLevel;
+			float top = OrthoSize * ZoomLevel;
 
 			if (useReverseDepth)
 			{

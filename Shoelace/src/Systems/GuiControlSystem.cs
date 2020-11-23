@@ -4,9 +4,9 @@ using BootEngine.Events;
 using BootEngine.Input;
 using BootEngine.Utils;
 using Leopotam.Ecs;
-using Shoelace.src.Services;
+using Shoelace.Services;
 
-namespace Shoelace.src.Systems
+namespace Shoelace.Systems
 {
 	public sealed class GuiControlSystem : IEcsRunSystem
 	{

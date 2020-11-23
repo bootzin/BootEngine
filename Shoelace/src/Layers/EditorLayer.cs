@@ -9,8 +9,8 @@ using BootEngine.Renderer.Cameras;
 using BootEngine.Utils;
 using BootEngine.Utils.ProfilingTools;
 using ImGuiNET;
-using Shoelace.src.Services;
-using Shoelace.src.Systems;
+using Shoelace.Services;
+using Shoelace.Systems;
 using System;
 using System.Linq;
 using System.Numerics;
@@ -93,7 +93,6 @@ namespace Shoelace.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			Renderer2D.Instance.ResetStats();
 			_frametime[99] = deltaSeconds * 1000;
 			for (int i = 0; i < 99;)
 			{
@@ -146,6 +145,7 @@ namespace Shoelace.Layers
 			ImGui.Text("Renderer Stats:");
 			ImGui.Text("Draw Calls: " + Renderer2D.Instance.Stats.DrawCalls.ToString());
 			ImGui.Text("Instance Count: " + Renderer2D.Instance.Stats.InstanceCount.ToString());
+			Renderer2D.Instance.ResetStats();
 
 			ImGui.Separator();
 

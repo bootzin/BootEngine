@@ -22,7 +22,7 @@ namespace BootEngine.Renderer.Cameras
 		protected float perspectiveNear = 0.01f;
 		protected float perspectiveFar = 1000f;
 
-		protected float orthoSize = 1f;
+		public float OrthoSize { get; private set; } = 1f;
 		protected float orthoNear = -1;
 		protected float orthoFar = 1;
 
@@ -38,7 +38,7 @@ namespace BootEngine.Renderer.Cameras
 		public void SetOrthographic(float size, float nearClip, float farClip)
 		{
 			ProjectionType = ProjectionType.Orthographic;
-			orthoSize = size;
+			OrthoSize = size;
 			orthoNear = nearClip;
 			orthoFar = farClip;
 			RecalculateProjection();

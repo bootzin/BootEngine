@@ -1,12 +1,13 @@
 ﻿using BootEngine.ECS.Components;
 using BootEngine.ECS.Components.Events.Ecs;
 using BootEngine.Input;
+using BootEngine.Renderer.Cameras;
 using BootEngine.Utils;
 using Leopotam.Ecs;
-using Shoelace.src.Services;
+using Shoelace.Services;
 using System.Numerics;
 
-namespace Shoelace.src.Systems
+namespace Shoelace.Systems
 {
 	public sealed class EditorCameraSystem : IEcsRunSystem
 	{
@@ -14,6 +15,7 @@ namespace Shoelace.src.Systems
 		private readonly EcsFilter<VelocityComponent, CameraComponent> _cameraTranslationFilter = default;
 		private readonly EcsFilter<EcsMouseScrolledEvent> _mouseScrollEvents = default;
 		private readonly GuiService _guiService = default;
+
 		private const float CAMERA_ROTATION_SPEED = 60f;
 		private const float CAMERA_MOVEMENT_SPEED = 2f;
 
@@ -24,25 +26,26 @@ namespace Shoelace.src.Systems
 				ref var speed = ref _cameraTranslationFilter.Get1(camera);
 				if (_guiService.ViewportFocused && _guiService.ViewportHovered)
 				{
-					var zoomLevel = CalculateZoom(camera);
+					var cam = _cameraTranslationFilter.Get2(camera).Camera;
+					var zoomLevel = CalculateZoom(cam);
 					float xVeloc = 0;
 					if (InputManager.Instance.GetKeyDown(KeyCodes.A))
 					{
-						xVeloc = -zoomLevel * CAMERA_MOVEMENT_SPEED;
+						xVeloc = -zoomLevel * CAMERA_MOVEMENT_SPEED * cam.OrthoSize;
 					}
 					else if (InputManager.Instance.GetKeyDown(KeyCodes.D))
 					{
-						xVeloc = zoomLevel * CAMERA_MOVEMENT_SPEED;
+						xVeloc = zoomLevel * CAMERA_MOVEMENT_SPEED * cam.OrthoSize;
 					}
 
 					float yVeloc = 0;
 					if (InputManager.Instance.GetKeyDown(KeyCodes.S))
 					{
-						yVeloc = -zoomLevel;
+						yVeloc = -zoomLevel * CAMERA_MOVEMENT_SPEED * cam.OrthoSize;
 					}
 					else if (InputManager.Instance.GetKeyDown(KeyCodes.W))
 					{
-						yVeloc = zoomLevel;
+						yVeloc = zoomLevel * CAMERA_MOVEMENT_SPEED * cam.OrthoSize;
 					}
 					speed.Velocity = new Vector3(xVeloc, yVeloc, 0);
 
@@ -64,9 +67,8 @@ namespace Shoelace.src.Systems
 			}
 		}
 
-		private float CalculateZoom(int camera)
+		private float CalculateZoom(Camera cam)
 		{
-			var cam = _cameraTranslationFilter.Get2(camera).Camera;
 			foreach (var mse in _mouseScrollEvents)
 			{
 				var ev = _mouseScrollEvents.Get1(mse).Event;

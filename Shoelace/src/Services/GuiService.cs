@@ -1,4 +1,4 @@
-﻿namespace Shoelace.src.Services
+﻿namespace Shoelace.Services
 {
 	internal sealed class GuiService
 	{

@@ -14,14 +14,17 @@ namespace BootEngine.Renderer.Cameras
 			foreach (int camera in _cameraFilter)
 			{
 				ref var cam = ref _cameraFilter.Get1(camera);
-				foreach (var resize in _viewportResized)
+				if (cam.Camera.Active)
 				{
-					ref var entt = ref _viewportResized.GetEntity(resize);
-					ref var newSize = ref _viewportResized.Get1(resize);
-					cam.Camera.ResizeViewport(newSize.Width, newSize.Height);
-					entt.Destroy();
+					foreach (var resize in _viewportResized)
+					{
+						ref var entt = ref _viewportResized.GetEntity(resize);
+						ref var newSize = ref _viewportResized.Get1(resize);
+						cam.Camera.ResizeViewport(newSize.Width, newSize.Height);
+						entt.Destroy();
+					}
 				}
-			}	
+			}
 		}
 	}
 }
