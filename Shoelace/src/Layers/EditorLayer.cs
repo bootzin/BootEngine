@@ -27,6 +27,7 @@ namespace Shoelace.Layers
 		private IntPtr renderTargetAddr;
 		private Framebuffer fb;
 		private bool dockspaceOpen = true;
+		private bool systemManagerEnabled = false;
 		private Vector2 lastSize = Vector2.Zero;
 		private readonly float[] _frametime = new float[100];
 		private readonly GuiService _guiService = new GuiService();
@@ -46,19 +47,20 @@ namespace Shoelace.Layers
 			ActiveScene
 				.AddSystem(new GuiControlSystem(), "GUI Control System")
 				.AddSystem(new EditorCameraSystem(), "Editor Camera")
-				.AddRuntimeSystem(new VelocitySystem(), "Velocity System")
 				.AddSystem(_sceneHierarchyPanel)
 				.AddSystem(_propertiesPanel)
+				.AddRuntimeSystem(new VelocitySystem(), "Velocity System")
 				.Inject(_guiService)
 				.Init();
 
-			var cam = ActiveScene.CreateEntity("Main Camera");
+			//TODO: Main Camera should be a "special" entity
+			var editorCam = ActiveScene.CreateEntity("Main Camera");
 			var camera = new OrthoCamera(1, -1, 1, Width, Height);
-			cam.AddComponent(new CameraComponent()
+			editorCam.AddComponent(new CameraComponent()
 			{
 				Camera = camera
 			});
-			cam.AddComponent<VelocityComponent>();
+			//editorCam.AddComponent<TransformComponent>();
 
 			var redQuad = ActiveScene.CreateEntity("Red Textured Quad");
 			ref var sprite = ref redQuad.AddComponent<SpriteComponent>();
@@ -70,6 +72,10 @@ namespace Shoelace.Layers
 			transform.Position = new Vector3(0f, 0f, -.5f);
 			transform.Scale = new Vector3(.5f, .5f, .5f);
 			transform.Rotation = new Vector3(0, 0, 45);
+			pinkQuad.AddComponent(new VelocityComponent()
+			{
+				RotationSpeed = new Vector3(0, 0, 1f)
+			});
 
 			var currentPipeline = Renderer2D.Instance.PipelineDescrition;
 			fbTex = ResourceFactory.CreateTexture(TextureDescription.Texture2D(
@@ -140,6 +146,14 @@ namespace Shoelace.Layers
 						Close();
 					ImGui.EndMenu();
 				}
+
+				if (ImGui.BeginMenu("Windows"))
+				{
+					if (ImGui.MenuItem("System Manager"))
+						systemManagerEnabled = !systemManagerEnabled;
+					ImGui.EndMenu();
+				}
+
 				ImGui.EndMenuBar();
 			}
 
@@ -180,7 +194,7 @@ namespace Shoelace.Layers
 			if (viewportPanelSize != lastSize)
 			{
 				lastSize = viewportPanelSize;
-				ActiveScene.CreateEntity().AddComponent(new ViewportResizedEvent()
+				ActiveScene.CreateEmptyEntity().AddComponent(new ViewportResizedEvent()
 				{
 					Width = (int)viewportPanelSize.X,
 					Height = (int)viewportPanelSize.Y
@@ -188,6 +202,14 @@ namespace Shoelace.Layers
 			}
 			ImGui.End(); //Viewport
 			ImGui.PopStyleVar();
+
+			if (systemManagerEnabled)
+			{
+				ImGui.Begin("System Manager");
+				// TODO: Add systems controls
+				ImGui.End();
+			}
+
 			ImGui.End(); // Dockspace
 		}
 

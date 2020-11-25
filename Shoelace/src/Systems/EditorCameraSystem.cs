@@ -1,5 +1,6 @@
 ﻿using BootEngine.ECS.Components;
 using BootEngine.ECS.Components.Events.Ecs;
+using BootEngine.ECS.Services;
 using BootEngine.Input;
 using BootEngine.Renderer.Cameras;
 using BootEngine.Utils;
@@ -12,9 +13,10 @@ namespace Shoelace.Systems
 	public sealed class EditorCameraSystem : IEcsRunSystem
 	{
 		// auto injected fields
-		private readonly EcsFilter<VelocityComponent, CameraComponent> _cameraTranslationFilter = default;
+		private readonly EcsFilter<TransformComponent, CameraComponent> _cameraTranslationFilter = default;
 		private readonly EcsFilter<EcsMouseScrolledEvent> _mouseScrollEvents = default;
 		private readonly GuiService _guiService = default;
+		private readonly TimeService _time = default;
 
 		private const float CAMERA_ROTATION_SPEED = 60f;
 		private const float CAMERA_MOVEMENT_SPEED = 2f;
@@ -23,7 +25,9 @@ namespace Shoelace.Systems
 		{
 			foreach (var camera in _cameraTranslationFilter)
 			{
-				ref var speed = ref _cameraTranslationFilter.Get1(camera);
+				ref var transform = ref _cameraTranslationFilter.Get1(camera);
+				var velocity = Vector3.Zero;
+				var rotationSpeed = Vector3.Zero;
 				if (_guiService.ViewportFocused && _guiService.ViewportHovered)
 				{
 					var cam = _cameraTranslationFilter.Get2(camera).Camera;
@@ -47,23 +51,20 @@ namespace Shoelace.Systems
 					{
 						yVeloc = zoomLevel * CAMERA_MOVEMENT_SPEED * cam.OrthoSize;
 					}
-					speed.Velocity = new Vector3(xVeloc, yVeloc, 0);
+					velocity = new Vector3(xVeloc, yVeloc, 0);
 
-					speed.RotationSpeed = Vector3.Zero;
+					rotationSpeed = Vector3.Zero;
 					if (InputManager.Instance.GetKeyDown(KeyCodes.Q))
 					{
-						speed.RotationSpeed += Vector3.UnitZ * Util.Deg2Rad(CAMERA_ROTATION_SPEED);
+						rotationSpeed += Vector3.UnitZ * Util.Deg2Rad(CAMERA_ROTATION_SPEED);
 					}
 					if (InputManager.Instance.GetKeyDown(KeyCodes.E))
 					{
-						speed.RotationSpeed -= Vector3.UnitZ * Util.Deg2Rad(CAMERA_ROTATION_SPEED);
+						rotationSpeed -= Vector3.UnitZ * Util.Deg2Rad(CAMERA_ROTATION_SPEED);
 					}
 				}
-				else
-				{
-					speed.Velocity = Vector3.Zero;
-					speed.RotationSpeed = Vector3.Zero;
-				}
+				transform.Position += velocity * _time.DeltaSeconds;
+				transform.Rotation += rotationSpeed * _time.DeltaSeconds;
 			}
 		}
 

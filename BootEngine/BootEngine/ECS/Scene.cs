@@ -12,7 +12,7 @@ namespace BootEngine.ECS
 	{
 		internal readonly EcsWorld World = new EcsWorld();
 		internal readonly EcsSystems Systems;
-		internal readonly EcsSystems RuntimeSystems;
+		public EcsSystems RuntimeSystems { get; }
 		public Scene()
 		{
 			Systems = new EcsSystems(World, "MainEcsSystems");
@@ -20,8 +20,6 @@ namespace BootEngine.ECS
 			Systems
 				.Add(new EventSystem(), "Event System")
 				.Add(RuntimeSystems, "Runtime Systems");
-			// TODO: Disable runtime systems once runtime mode is available
-			Systems.SetRunSystemState(Systems.GetNamedRunSystem(RuntimeSystems.Name), true);
 		}
 
 		public Entity CreateEmptyEntity() => new Entity(World.NewEntity());
@@ -76,6 +74,12 @@ namespace BootEngine.ECS
 			}
 			Systems.Inject(Application.TimeService);
 			Systems.Inject(this);
+			// TODO: disable runtime systems when runtime is implemented
+			foreach (var sys in RuntimeSystems.GetRunSystems().Items)
+			{
+				if (sys != null)
+					sys.Active = true;
+			}
 			Systems.Init();
 		}
 

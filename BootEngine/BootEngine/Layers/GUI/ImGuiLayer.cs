@@ -1,4 +1,5 @@
-﻿using BootEngine.Utils.ProfilingTools;
+﻿using BootEngine.Utils;
+using BootEngine.Utils.ProfilingTools;
 using Veldrid;
 
 namespace BootEngine.Layers.GUI
@@ -61,7 +62,7 @@ namespace BootEngine.Layers.GUI
 			if (ShouldClearBuffers)
 			{
 				cl.ClearDepthStencil(1f);
-				cl.ClearColorTarget(0, RgbaFloat.Grey);
+				cl.ClearColorTarget(0, ColorF.DarkGrey);
 			}
 			Controller.Render(gd, cl);
 

@@ -229,7 +229,7 @@ namespace BootEngine.Renderer
 			cl.SetFullViewport(0);
 			if (shouldClearBuffers)
 			{
-				cl.ClearColorTarget(0, RgbaFloat.Grey);
+				cl.ClearColorTarget(0, Utils.ColorF.DarkGrey);
 				cl.ClearDepthStencil(1f);
 			}
 			cl.SetPipeline(ActivePipeline);

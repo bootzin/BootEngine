@@ -22,7 +22,7 @@ namespace BootEngine.AssetsManager
 		/// <param name="texturePath">Path to the texture.</param>
 		/// <param name="usage">A collection of flags determining the <see cref="Utils.TextureUsage"/></param>
 		/// <returns>The update <see cref="Texture"/></returns>
-		public static Texture LoadTexture2D(string texturePath, Utils.TextureUsage usage, bool cached = true)
+		public static Texture LoadTexture2D(string texturePath, Utils.TextureUsage usage, bool cached = true, string name = null)
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(typeof(AssetManager));
@@ -50,6 +50,7 @@ namespace BootEngine.AssetsManager
 					1,  // Depth
 					0,  // Miplevel
 					0); // ArrayLayer
+				tex.Name = string.IsNullOrWhiteSpace(name) ? texturePath[(texturePath.LastIndexOf('/') + 1)..] : name;
 				if (cached)
 					ResourceCache.AddTexture(tex, texturePath);
 			}

@@ -7,6 +7,11 @@ namespace BootEngine.Renderer.Cameras
 	{
 		protected Matrix4x4 projectionMatrix;
 		public bool Active { get; set; } = true;
+		public ProjectionType ProjectionType
+		{
+			get { return projectionType; }
+			set { projectionType = value; RecalculateProjection(); }
+		}
 		public ref readonly Matrix4x4 ProjectionMatrix => ref projectionMatrix;
 		public float ZoomLevel
 		{
@@ -15,19 +20,74 @@ namespace BootEngine.Renderer.Cameras
 		}
 
 		protected float aspectRatio;
-		private ProjectionType ProjectionType;
 		private float zoomLevel = 1f;
 
-		protected float perspectiveFov = Util.Deg2Rad(45);
-		protected float perspectiveNear = 0.01f;
-		protected float perspectiveFar = 1000f;
+		public float PerspectiveFov
+		{
+			get { return perspectiveFov; }
+			set
+			{
+				perspectiveFov = value;
+				RecalculateProjection();
+			}
+		}
+		public float PerspectiveNear
+		{
+			get { return perspectiveNear; }
+			set
+			{
+				perspectiveNear = value;
+				RecalculateProjection();
+			}
+		}
+		public float PerspectiveFar
+		{
+			get { return perspectiveFar; }
+			set
+			{
+				perspectiveFar = value;
+				RecalculateProjection();
+			}
+		}
 
-		public float OrthoSize { get; private set; } = 1f;
-		protected float orthoNear = -1;
-		protected float orthoFar = 1;
+		public float OrthoSize
+		{
+			get { return orthoSize; }
+			set
+			{
+				orthoSize = value;
+				RecalculateProjection();
+			}
+		}
+		public float OrthoNear
+		{
+			get { return orthoNear; }
+			set
+			{
+				orthoNear = value;
+				RecalculateProjection();
+			}
+		}
+		public float OrthoFar
+		{
+			get { return orthoFar; }
+			set
+			{
+				orthoFar = value;
+				RecalculateProjection();
+			}
+		}
 
 		protected readonly bool useReverseDepth = Application.App.Window.GraphicsDevice.IsDepthRangeZeroToOne;
 		protected readonly bool swapYAxis = Application.App.Window.GraphicsDevice.IsClipSpaceYInverted;
+
+		private float perspectiveFov = Util.Deg2Rad(45);
+		private float perspectiveNear = 0.01f;
+		private float perspectiveFar = 1000f;
+		private float orthoSize = 1f;
+		private float orthoFar = 1;
+		private float orthoNear = -1;
+		private ProjectionType projectionType;
 
 		public void ResizeViewport(int width, int height)
 		{
@@ -39,17 +99,17 @@ namespace BootEngine.Renderer.Cameras
 		{
 			ProjectionType = ProjectionType.Orthographic;
 			OrthoSize = size;
-			orthoNear = nearClip;
-			orthoFar = farClip;
+			OrthoNear = nearClip;
+			OrthoFar = farClip;
 			RecalculateProjection();
 		}
 
 		public void SetPerspective(float verticalFOV, float nearClip, float farClip)
 		{
 			ProjectionType = ProjectionType.Perspective;
-			perspectiveFov = verticalFOV;
-			perspectiveNear = nearClip;
-			perspectiveFar = farClip;
+			PerspectiveFov = verticalFOV;
+			PerspectiveNear = nearClip;
+			PerspectiveFar = farClip;
 			RecalculateProjection();
 		}
 
@@ -58,7 +118,7 @@ namespace BootEngine.Renderer.Cameras
 		{
 			if (ProjectionType == ProjectionType.Perspective)
 			{
-				projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(perspectiveFov, aspectRatio, perspectiveNear, perspectiveFar);
+				projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(PerspectiveFov, aspectRatio, PerspectiveNear, PerspectiveFar);
 			}
 		}
 	}

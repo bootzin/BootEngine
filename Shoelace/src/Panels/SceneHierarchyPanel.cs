@@ -27,6 +27,14 @@ namespace Shoelace.Panels
 			if (ImGui.IsMouseDown(0) && ImGui.IsWindowHovered())
 				_guiService.SelectedEntity = default;
 
+			if (ImGui.BeginPopupContextWindow("", 2, false))
+			{
+				if (ImGui.MenuItem("Create Entity"))
+					_scene.CreateEntity("New Entity");
+
+				ImGui.EndPopup();
+			}
+
 			ImGui.End();
 		}
 

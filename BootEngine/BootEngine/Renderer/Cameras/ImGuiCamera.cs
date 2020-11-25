@@ -27,11 +27,11 @@ namespace BootEngine.Renderer.Cameras
 #endif
 			if (useReverseDepth)
 			{
-				projectionMatrix = Matrix4x4.CreateOrthographicOffCenter(left, right, bottom, top, orthoFar, orthoNear);
+				projectionMatrix = Matrix4x4.CreateOrthographicOffCenter(left, right, bottom, top, OrthoFar, OrthoNear);
 			}
 			else
 			{
-				projectionMatrix = Matrix4x4.CreateOrthographicOffCenter(left, right, bottom, top, orthoNear, orthoFar);
+				projectionMatrix = Matrix4x4.CreateOrthographicOffCenter(left, right, bottom, top, OrthoNear, OrthoFar);
 			}
 			if (swapYAxis)
 			{
