@@ -37,7 +37,7 @@ namespace Shoelace.Systems
 					break;
 				case KeyCodes.Q:
 					if (control)
-						_scene.CreateEntity().AddComponent<EcsWindowCloseEvent>();
+						_scene.CreateEmptyEntity().AddComponent<EcsWindowCloseEvent>();
 					break;
 			}
 		}

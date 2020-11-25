@@ -12,12 +12,19 @@ namespace BootEngine.ECS
 	{
 		internal readonly EcsWorld World = new EcsWorld();
 		internal readonly EcsSystems Systems;
+		internal readonly EcsSystems RuntimeSystems;
 		public Scene()
 		{
 			Systems = new EcsSystems(World, "MainEcsSystems");
+			RuntimeSystems = new EcsSystems(World, "Runtime Systems");
 			Systems
-				.Add(new EventSystem(), "Event System");
+				.Add(new EventSystem(), "Event System")
+				.Add(RuntimeSystems, "Runtime Systems");
+			// TODO: Disable runtime systems once runtime mode is available
+			Systems.SetRunSystemState(Systems.GetNamedRunSystem(RuntimeSystems.Name), true);
 		}
+
+		public Entity CreateEmptyEntity() => new Entity(World.NewEntity());
 
 		public Entity CreateEntity(string name = null)
 		{
@@ -34,7 +41,7 @@ namespace BootEngine.ECS
 			Logging.Logger.Assert(Systems.GetAllSystems().Count > 0, "A system must be added before creating entities!");
 			Entity e = new Entity(entity);
 			ref var tag = ref e.GetComponent<TagComponent>();
-			tag.Tag = string.IsNullOrEmpty(name) ? "Entity" : name;
+			tag.Tag = string.IsNullOrEmpty(name) ? "Copy of " + nameof(entity) : name;
 			return e;
 		}
 
@@ -43,6 +50,12 @@ namespace BootEngine.ECS
 		public Scene AddSystem(IEcsSystem sys, string name = null)
 		{
 			Systems.Add(sys, name);
+			return this;
+		}
+
+		public Scene AddRuntimeSystem(IEcsSystem sys, string name = null)
+		{
+			RuntimeSystems.Add(sys, name);
 			return this;
 		}
 

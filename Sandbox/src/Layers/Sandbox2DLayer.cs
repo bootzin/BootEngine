@@ -136,7 +136,7 @@ namespace Sandbox.Layers
 			if (@event is WindowResizeEvent)
 			{
 				var ev = @event as WindowResizeEvent;
-				ActiveScene.CreateEntity().AddComponent(new ViewportResizedEvent()
+				ActiveScene.CreateEmptyEntity().AddComponent(new ViewportResizedEvent()
 				{
 					Height = ev.Height,
 					Width = ev.Width

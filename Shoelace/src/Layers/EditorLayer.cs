@@ -9,6 +9,7 @@ using BootEngine.Renderer.Cameras;
 using BootEngine.Utils;
 using BootEngine.Utils.ProfilingTools;
 using ImGuiNET;
+using Shoelace.Panels;
 using Shoelace.Services;
 using Shoelace.Systems;
 using System;
@@ -22,13 +23,15 @@ namespace Shoelace.Layers
 	{
 		#region Properties
 		private Vector4 squareColor = ColorF.Pink;
-		private readonly float[] _frametime = new float[100];
 		private Texture fbTex, fbDepthTex;
 		private IntPtr renderTargetAddr;
 		private Framebuffer fb;
 		private bool dockspaceOpen = true;
 		private Vector2 lastSize = Vector2.Zero;
-		private readonly GuiService guiService = new GuiService();
+		private readonly float[] _frametime = new float[100];
+		private readonly GuiService _guiService = new GuiService();
+		private readonly SceneHierarchyPanel _sceneHierarchyPanel = new SceneHierarchyPanel();
+		private readonly PropertiesPanel _propertiesPanel = new PropertiesPanel();
 		#endregion
 
 		#region Constructor
@@ -41,10 +44,12 @@ namespace Shoelace.Layers
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
 			ActiveScene
-				.AddSystem(new GuiControlSystem(), "GUI System")
+				.AddSystem(new GuiControlSystem(), "GUI Control System")
 				.AddSystem(new EditorCameraSystem(), "Editor Camera")
-				.AddSystem(new VelocitySystem(), "Velocity System")
-				.Inject(guiService)
+				.AddRuntimeSystem(new VelocitySystem(), "Velocity System")
+				.AddSystem(_sceneHierarchyPanel)
+				.AddSystem(_propertiesPanel)
+				.Inject(_guiService)
 				.Init();
 
 			var cam = ActiveScene.CreateEntity("Main Camera");
@@ -158,11 +163,14 @@ namespace Shoelace.Layers
 			ImGui.End(); // Stats
 			ImGui.End(); // Settings 2D
 
+			_sceneHierarchyPanel.OnGuiRender();
+			_propertiesPanel.OnGuiRender();
+
 			ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
 			ImGui.Begin("Viewport");
-			guiService.ViewportFocused = ImGui.IsWindowFocused();
-			guiService.ViewportHovered = ImGui.IsWindowHovered();
-			guiService.BlockEvents = !guiService.ViewportFocused || !ImGui.IsWindowHovered();
+			_guiService.ViewportFocused = ImGui.IsWindowFocused();
+			_guiService.ViewportHovered = ImGui.IsWindowHovered();
+			_guiService.BlockEvents = !_guiService.ViewportFocused || !ImGui.IsWindowHovered();
 
 			var viewportPanelSize = ImGui.GetContentRegionAvail();
 			if (!GraphicsDevice.IsUvOriginTopLeft)
