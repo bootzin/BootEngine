@@ -53,6 +53,8 @@ namespace Shoelace.Layers
 				.Inject(_guiService)
 				.Init();
 
+			Styles.SetDarkTheme();
+
 			//TODO: Main Camera should be a "special" entity
 			var editorCam = ActiveScene.CreateEntity("Main Camera");
 			var camera = new OrthoCamera(1, -1, 1, Width, Height);
@@ -64,8 +66,8 @@ namespace Shoelace.Layers
 
 			var redQuad = ActiveScene.CreateEntity("Red Textured Quad");
 			ref var sprite = ref redQuad.AddComponent<SpriteComponent>();
-			sprite.Color = ColorF.Red;
-			sprite.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", BootEngine.Utils.TextureUsage.Sampled);
+			sprite.Color = ColorF.HoverRed;
+			sprite.Texture = AssetManager.LoadTexture2D("assets/textures/sampleBoot.png", BootEngine.Utils.TextureUsage.Sampled);
 
 			var pinkQuad = ActiveScene.CreateEntity("Pink Quad").AddComponent(new SpriteComponent(squareColor));
 			ref var transform = ref pinkQuad.GetComponent<TransformComponent>();
@@ -137,7 +139,14 @@ namespace Shoelace.Layers
 			ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
 			ImGui.Begin("Dockspace", ref dockspaceOpen, dockspaceFlags);
 			ImGui.PopStyleVar(3);
+
+			var style = ImGui.GetStyle();
+			Vector2 minWinSize = style.WindowMinSize;
+			style.WindowMinSize = new Vector2(300.0f, style.WindowMinSize.Y);
+
 			ImGui.DockSpace(ImGui.GetID("MyDockspace"), Vector2.Zero);
+			style.WindowMinSize = minWinSize;
+
 			if (ImGui.BeginMenuBar())
 			{
 				if (ImGui.BeginMenu("File"))
@@ -205,9 +214,10 @@ namespace Shoelace.Layers
 
 			if (systemManagerEnabled)
 			{
-				ImGui.Begin("System Manager");
-				// TODO: Add systems controls
-				ImGui.End();
+				//ImGui.Begin("System Manager");
+				//// TODO: Add systems controls
+				//ImGui.End();
+				ImGui.ShowDemoWindow();
 			}
 
 			ImGui.End(); // Dockspace

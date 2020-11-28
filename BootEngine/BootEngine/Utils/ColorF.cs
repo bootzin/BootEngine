@@ -39,6 +39,11 @@ namespace BootEngine.Utils
 			_channels = new Vector4(r, g, b, a);
 		}
 
+		public ColorF(float r, float g, float b)
+		{
+			_channels = new Vector4(r, g, b, 1);
+		}
+
 		public ColorF(string hex)
 		{
 			hex = hex.TrimStart('#');
@@ -83,6 +88,14 @@ namespace BootEngine.Utils
 		/// </summary>
 		public static readonly ColorF DarkRed = new ColorF(0.6f, 0, 0, 1);
 		/// <summary>
+		/// Active Red (0.64f, 0.11f, 0.11f, 1)
+		/// </summary>
+		public static readonly ColorF ActiveRed = new ColorF(0.64f, 0.11f, 0.11f, 1.00f);
+		/// <summary>
+		/// Hover Red (0.76f, 0.21f, 0.26f, 1)
+		/// </summary>
+		public static readonly ColorF HoverRed = new ColorF(0.76f, 0.21f, 0.26f, 1.00f);
+		/// <summary>
 		/// Green (0, 1, 0, 1)
 		/// </summary>
 		public static readonly ColorF Green = new ColorF(0, 1, 0, 1);
@@ -99,13 +112,21 @@ namespace BootEngine.Utils
 		/// </summary>
 		public static readonly ColorF Grey = new ColorF(.25f, .25f, .25f, 1);
 		/// <summary>
-		/// Dark Grey (#212121)
+		/// Dark Grey (.13f, .13f, .13f, 1)
 		/// </summary>
-		public static readonly ColorF DarkGrey = new ColorF("212121");
+		public static readonly ColorF DarkGrey = new ColorF(.13f, .13f, .13f, 1);
 		/// <summary>
-		/// Light Grey (0.65f, 0.65f, 0.65f, 1)
+		/// Background Grey (.18f, .18f, .18f)
 		/// </summary>
-		public static readonly ColorF LightGrey = new ColorF(.65f, .65f, .65f, 1);
+		public static readonly ColorF BackgroundGrey = new ColorF(.18f, .18f, .18f, 1);
+		/// <summary>
+		/// Light Grey (.31f, .31f, .31f, 1)
+		/// </summary>
+		public static readonly ColorF LightGrey = new ColorF(.31f, .31f, .31f, 1);
+		/// <summary>
+		/// Lighter Grey (0.65f, 0.65f, 0.65f, 1)
+		/// </summary>
+		public static readonly ColorF LighterGrey = new ColorF(.65f, .65f, .65f, 1);
 		/// <summary>
 		/// Cyan (0, 1, 1, 1)
 		/// </summary>

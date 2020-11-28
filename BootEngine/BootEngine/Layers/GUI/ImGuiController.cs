@@ -184,7 +184,20 @@ namespace BootEngine.Layers.GUI
 			vertexBuffer.Name = "ImGui.NET Vertex Buffer";
 			indexBuffer = gd.ResourceFactory.CreateBuffer(new BufferDescription(2000, BufferUsage.IndexBuffer | BufferUsage.Dynamic));
 			indexBuffer.Name = "ImGui.NET Index Buffer";
-			RecreateFontDeviceTexture(gd);
+			unsafe
+			{
+				var nativeConfig = ImGuiNative.ImFontConfig_ImFontConfig();
+				(*nativeConfig).OversampleH = 1;
+				(*nativeConfig).OversampleV = 1;
+				(*nativeConfig).RasterizerMultiply = 1f;
+				(*nativeConfig).GlyphExtraSpacing = Vector2.Zero;
+				(*nativeConfig).MergeMode = 0;
+				var io = ImGui.GetIO();
+				io.Fonts.AddFontFromFileTTF(Path.Combine(AppContext.BaseDirectory, "assets/fonts/WorkSans/static/WorkSans-Regular.ttf"), 14f);
+				io.Fonts.AddFontFromFileTTF(Path.Combine(AppContext.BaseDirectory, "assets/fonts/WorkSans/static/WorkSans-SemiBold.ttf"), 14f);
+				ImGuiNative.ImFontConfig_destroy(nativeConfig);
+				RecreateFontDeviceTexture(gd);
+			}
 
 			projMatrixBuffer = gd.ResourceFactory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
 			projMatrixBuffer.Name = "ImGui.NET Projection Buffer";
@@ -784,7 +797,6 @@ namespace BootEngine.Layers.GUI
 				io.NativePtr->BackendPlatformName = (byte*)new FixedAsciiString("Veldrid.SDL2 Backend").DataPtr;
 				io.NativePtr->ConfigViewportsNoTaskBarIcon = 1;
 			}
-			io.Fonts.AddFontDefault();
 
 			io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard | ImGuiConfigFlags.DockingEnable;
 

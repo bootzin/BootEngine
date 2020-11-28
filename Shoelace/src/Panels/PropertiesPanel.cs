@@ -23,13 +23,13 @@ namespace Shoelace.Panels
 				{
 					if (ImGui.BeginMenu("Add Component"))
 					{
-						if (ImGui.MenuItem("Transform") && !_guiService.SelectedEntity.Has<TransformComponent>())
+						if (!_guiService.SelectedEntity.Has<TransformComponent>() && ImGui.MenuItem("Transform"))
 							_guiService.SelectedEntity.Get<TransformComponent>();
-						if (ImGui.MenuItem("Sprite") && !_guiService.SelectedEntity.Has<SpriteComponent>())
+						if (!_guiService.SelectedEntity.Has<SpriteComponent>() && ImGui.MenuItem("Sprite"))
 							_guiService.SelectedEntity.Get<SpriteComponent>();
-						if (ImGui.MenuItem("Velocity") && !_guiService.SelectedEntity.Has<VelocityComponent>())
+						if (!_guiService.SelectedEntity.Has<VelocityComponent>() && ImGui.MenuItem("Velocity"))
 							_guiService.SelectedEntity.Get<VelocityComponent>();
-						if (ImGui.MenuItem("Camera") && !_guiService.SelectedEntity.Has<CameraComponent>())
+						if (!_guiService.SelectedEntity.Has<CameraComponent>() && ImGui.MenuItem("Camera"))
 						{
 							CameraComponent cam = new CameraComponent()
 							{
@@ -219,6 +219,8 @@ namespace Shoelace.Panels
 
 		private Vector3 DrawVec3Control(string label, Vector3 values, float resetValue = 0, float dragAmnt = 0.1f, float columnWidth = 100f)
 		{
+			var io = ImGui.GetIO();
+			var boldFont = io.Fonts.Fonts[1];
 			ImGui.PushID(label);
 
 			ImGui.Columns(2);
@@ -232,43 +234,49 @@ namespace Shoelace.Panels
 			float lineHeight = ImGui.GetFontSize() + (ImGui.GetStyle().FramePadding.Y * 2f);
 			Vector2 buttonSize = new Vector2(lineHeight + 3f, lineHeight);
 
-			ImGui.PushStyleColor(ImGuiCol.Button, new ColorF("#C62828"));
-			ImGui.PushStyleColor(ImGuiCol.ButtonActive, new ColorF("#C62828"));
-			ImGui.PushStyleColor(ImGuiCol.ButtonHovered, new ColorF("#FF5858"));
+			ImGui.PushStyleColor(ImGuiCol.Button, ColorF.ActiveRed);
+			ImGui.PushStyleColor(ImGuiCol.ButtonActive, ColorF.ActiveRed);
+			ImGui.PushStyleColor(ImGuiCol.ButtonHovered, new ColorF(0.84f, 0.29f, 0.34f));
+			ImGui.PushFont(boldFont);
 			float valX = values.X;
 			if (ImGui.Button("X", buttonSize))
 			{
 				valX = resetValue;
 			}
 			ImGui.PopStyleColor(3);
+			ImGui.PopFont();
 
 			ImGui.SameLine();
 			ImGui.DragFloat("##X", ref valX, dragAmnt, 0.0f, 0.0f, "%.2f");
 			ImGui.SameLine();
 
-			ImGui.PushStyleColor(ImGuiCol.Button, new ColorF("#303F9F"));
-			ImGui.PushStyleColor(ImGuiCol.ButtonActive, new ColorF("#303F9F"));
-			ImGui.PushStyleColor(ImGuiCol.ButtonHovered, new ColorF("#606FCF"));
+			ImGui.PushStyleColor(ImGuiCol.Button, new ColorF(.188f, .247f, .624f));
+			ImGui.PushStyleColor(ImGuiCol.ButtonActive, new ColorF(.188f, .247f, .624f));
+			ImGui.PushStyleColor(ImGuiCol.ButtonHovered, new ColorF(0.29f, 0.34f, 0.84f));
+			ImGui.PushFont(boldFont);
 			float valY = values.Y;
 			if (ImGui.Button("Y", buttonSize))
 			{
 				valY = resetValue;
 			}
 			ImGui.PopStyleColor(3);
+			ImGui.PopFont();
 
 			ImGui.SameLine();
 			ImGui.DragFloat("##Y", ref valY, dragAmnt, 0.0f, 0.0f, "%.2f");
 			ImGui.SameLine();
 
-			ImGui.PushStyleColor(ImGuiCol.Button, new ColorF("#00897B"));
-			ImGui.PushStyleColor(ImGuiCol.ButtonActive, new ColorF("#00897B"));
-			ImGui.PushStyleColor(ImGuiCol.ButtonHovered, new ColorF("#00B9AB"));
+			ImGui.PushStyleColor(ImGuiCol.Button, new ColorF(.11f, .64f, .11f));
+			ImGui.PushStyleColor(ImGuiCol.ButtonActive, new ColorF(.11f, .64f, .11f));
+			ImGui.PushStyleColor(ImGuiCol.ButtonHovered, new ColorF(0.29f, 0.84f, 0.34f));
+			ImGui.PushFont(boldFont);
 			float valZ = values.Z;
 			if (ImGui.Button("Z", buttonSize))
 			{
 				valZ = resetValue;
 			}
 			ImGui.PopStyleColor(3);
+			ImGui.PopFont();
 
 			ImGui.SameLine();
 			ImGui.DragFloat("##Z", ref valZ, dragAmnt, 0.0f, 0.0f, "%.2f");

@@ -15,37 +15,24 @@
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\x64</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutputPath>bin\Release\x64</OutputPath>
     <Optimize>false</Optimize>
     <DefineConstants>TRACE</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Dist|x64'">
     <OutputPath>bin\Dist\x64</OutputPath>
     <Optimize>true</Optimize>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\BootEngine\BootEngine.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="$(AssetsDir)\shaders\**">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <Link>assets\shaders\%(RecursiveDir)\%(FileName)%(Extension)</Link>
-    </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="assets\shaders\TexturedInstancing.glsl" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="assets\shaders\TexturedInstancing.glsl" />
   </ItemGroup>
 
   <ItemGroup>
@@ -77,9 +64,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="assets\textures\sampleFly.png">
+    <Content Include="$(AssetsDir)\shaders\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+      <Link>assets\shaders\%(RecursiveDir)\%(FileName)%(Extension)</Link>
+    </Content>
+
+    <Content Include="$(AssetsDir)\textures\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>assets\textures\%(RecursiveDir)\%(FileName)%(Extension)</Link>
+    </Content>
+
+    <Content Include="$(AssetsDir)\fonts\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>assets\fonts\%(RecursiveDir)\%(FileName)%(Extension)</Link>
+    </Content>
   </ItemGroup>
 
 </Project>

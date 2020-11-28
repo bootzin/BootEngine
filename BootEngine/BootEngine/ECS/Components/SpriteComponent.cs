@@ -5,24 +5,30 @@ namespace BootEngine.ECS.Components
 {
 	public struct SpriteComponent
 	{
-		public ColorF Color { get; set; }
+		private ColorF? color;
+
+		public ColorF Color
+		{
+			get { return color ?? ColorF.White; }
+			set { color = value; }
+		}
 		public Texture Texture { get; set; }
 
 		public SpriteComponent(ColorF color)
 		{
-			Color = color;
+			this.color = color;
 			Texture = null;
 		}
 
 		public SpriteComponent(Texture tex)
 		{
-			Color = ColorF.White;
+			this.color = ColorF.White;
 			Texture = tex;
 		}
 
 		public SpriteComponent(Texture tex, ColorF color)
 		{
-			Color = color;
+			this.color = color;
 			Texture = tex;
 		}
 	}
