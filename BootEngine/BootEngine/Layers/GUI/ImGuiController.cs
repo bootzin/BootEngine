@@ -147,8 +147,17 @@ namespace BootEngine.Layers.GUI
 			windowWidth = sdlWindow.Width;
 			windowHeight = sdlWindow.Height;
 
-			IntPtr ctx = ImGui.CreateContext();
-			ImGui.SetCurrentContext(ctx);
+			IntPtr implotCtx = ImPlot.CreateContext();
+			ImPlot.SetCurrentContext(implotCtx);
+
+			ImNodes.Initialize();
+
+			IntPtr imguiCtx = ImGui.CreateContext();
+			ImGui.SetCurrentContext(imguiCtx);
+			ImPlot.SetImGuiContext(imguiCtx);
+			ImNodes.SetImGuiContext(imguiCtx);
+			ImGuizmo.SetImGuiContext(imguiCtx);
+
 			ImGui.StyleColorsDark();
 
 			CreateDeviceResources(gd, outputDescription);
@@ -482,6 +491,7 @@ namespace BootEngine.Layers.GUI
 #endif
 			frameBegun = true;
 			ImGui.NewFrame();
+			ImGuizmo.BeginFrame();
 		}
 
 		/// <summary>
@@ -565,8 +575,8 @@ namespace BootEngine.Layers.GUI
 				{
 					uint buttons = Sdl_GetGlobalMouseState(&x, &y);
 					io.MouseDown[0] = (buttons & 0b00001) != 0;
-					io.MouseDown[1] = (buttons & 0b00010) != 0;
-					io.MouseDown[2] = (buttons & 0b00100) != 0;
+					io.MouseDown[1] = (buttons & 0b00100) != 0;
+					io.MouseDown[2] = (buttons & 0b00010) != 0;
 					io.MouseDown[3] = (buttons & 0b01000) != 0;
 					io.MouseDown[4] = (buttons & 0b10000) != 0;
 				}
@@ -771,6 +781,8 @@ namespace BootEngine.Layers.GUI
 			ClearCachedImageResources();
 
 			ImGui.DestroyContext();
+			ImPlot.DestroyContext();
+			ImNodes.Shutdown();
 
 			pipeline.Dispose();
 			vertexBuffer.Dispose();

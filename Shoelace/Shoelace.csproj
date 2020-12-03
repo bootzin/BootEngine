@@ -58,6 +58,15 @@
     <Reference Include="ImGui.NET">
       <HintPath>..\BootEngine\_deps\ImGui.NET\ImGui.NET.dll</HintPath>
     </Reference>
+    <Reference Include="ImGuizmo.NET">
+      <HintPath>..\BootEngine\_deps\ImGui.NET\ImGuizmo.NET.dll</HintPath>
+    </Reference>
+    <Reference Include="ImNodes.NET">
+      <HintPath>..\BootEngine\_deps\ImGui.NET\ImNodes.NET.dll</HintPath>
+    </Reference>
+    <Reference Include="ImPlot.NET">
+      <HintPath>..\BootEngine\_deps\ImGui.NET\ImPlot.NET.dll</HintPath>
+    </Reference>
     <Reference Include="Leopotam.Ecs">
       <HintPath>..\BootEngine\_deps\Leo.ECS\Leopotam.Ecs.dll</HintPath>
     </Reference>

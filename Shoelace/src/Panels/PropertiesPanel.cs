@@ -19,7 +19,7 @@ namespace Shoelace.Panels
 			if (_guiService.SelectedEntity != default)
 			{
 				DrawComponents(_guiService.SelectedEntity);
-				if (ImGui.BeginPopupContextWindow("", 2, false))
+				if (ImGui.BeginPopupContextWindow("", ImGuiPopupFlags.MouseButtonRight | ImGuiPopupFlags.NoOpenOverItems))
 				{
 					if (ImGui.BeginMenu("Add Component"))
 					{
@@ -139,7 +139,7 @@ namespace Shoelace.Panels
 			bool open = ImGui.TreeNodeEx(id, flags);
 			ImGui.PopStyleVar();
 
-			if (ImGui.BeginPopupContextItem(id, 2))
+			if (ImGui.BeginPopupContextItem(id))
 			{
 				if (ImGui.MenuItem("Remove Component"))
 				{

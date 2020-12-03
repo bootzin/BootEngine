@@ -27,7 +27,7 @@ namespace Shoelace.Panels
 			if (ImGui.IsMouseDown(0) && ImGui.IsWindowHovered())
 				_guiService.SelectedEntity = default;
 
-			if (ImGui.BeginPopupContextWindow("", 2, false))
+			if (ImGui.BeginPopupContextWindow("", ImGuiPopupFlags.MouseButtonRight | ImGuiPopupFlags.NoOpenOverItems))
 			{
 				if (ImGui.MenuItem("Create Entity"))
 					_scene.CreateEntity("New Entity");
@@ -50,7 +50,7 @@ namespace Shoelace.Panels
 				_guiService.SelectedEntity = entt;
 			}
 
-			if (ImGui.BeginPopupContextItem(entt.GetInternalId().ToString(), 2))
+			if (ImGui.BeginPopupContextItem(entt.GetInternalId().ToString()))
 			{
 				if (ImGui.MenuItem("Delete Entity"))
 				{

@@ -90,12 +90,22 @@
     <Reference Include="ImGui.NET">
       <HintPath>deps\ImGui.NET\ImGui.NET.dll</HintPath>
     </Reference>
+    <Reference Include="ImGuizmo.NET">
+      <HintPath>_deps\ImGui.NET\ImGuizmo.NET.dll</HintPath>
+    </Reference>
+    <Reference Include="ImNodes.NET">
+      <HintPath>_deps\ImGui.NET\ImNodes.NET.dll</HintPath>
+    </Reference>
+    <Reference Include="ImPlot.NET">
+      <HintPath>_deps\ImGui.NET\ImPlot.NET.dll</HintPath>
+    </Reference>
     <Reference Include="Leopotam.Ecs">
       <HintPath>_deps\Leo.ECS\Leopotam.Ecs.dll</HintPath>
     </Reference>
   </ItemGroup>
 
   <ItemGroup>
+    <!--imgui-->
     <ContentWithTargetPath Include="_deps\ImGui.NET\cimgui\linux-x64\cimgui.so" Condition="'$(IsLinux)'=='true'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>cimgui.so</TargetPath>
@@ -111,6 +121,60 @@
     <ContentWithTargetPath Include="_deps\ImGui.NET\cimgui\win-x86\cimgui.dll" Condition="'$(IsWindows)'=='true' And '$(Platform)'=='x86'">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>cimgui.dll</TargetPath>
+    </ContentWithTargetPath>
+    
+    <!--implot-->
+    <ContentWithTargetPath Include="_deps\ImGui.NET\cimplot\linux-x64\cimplot.so" Condition="'$(IsLinux)'=='true'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>cimplot.so</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="_deps\ImGui.NET\cimplot\osx-x64\cimplot.dylib" Condition="'$(IsOSX)'=='true'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>cimplot.dylib</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="_deps\ImGui.NET\cimplot\win-x64\cimplot.dll" Condition="'$(IsWindows)'=='true' And '$(Platform)'=='x64'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>cimplot.dll</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="_deps\ImGui.NET\cimplot\win-x86\cimplot.dll" Condition="'$(IsWindows)'=='true' And '$(Platform)'=='x86'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>cimplot.dll</TargetPath>
+    </ContentWithTargetPath>
+    
+    <!--imguizmo-->
+    <ContentWithTargetPath Include="_deps\ImGui.NET\cimguizmo\linux-x64\cimguizmo.so" Condition="'$(IsLinux)'=='true'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>cimguizmo.so</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="_deps\ImGui.NET\cimguizmo\osx-x64\cimguizmo.dylib" Condition="'$(IsOSX)'=='true'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>cimguizmo.dylib</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="_deps\ImGui.NET\cimguizmo\win-x64\cimguizmo.dll" Condition="'$(IsWindows)'=='true' And '$(Platform)'=='x64'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>cimguizmo.dll</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="_deps\ImGui.NET\cimguizmo\win-x86\cimguizmo.dll" Condition="'$(IsWindows)'=='true' And '$(Platform)'=='x86'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>cimguizmo.dll</TargetPath>
+    </ContentWithTargetPath>
+    
+    <!--imnodes-->
+    <ContentWithTargetPath Include="_deps\ImGui.NET\cimnodes\linux-x64\cimnodes.so" Condition="'$(IsLinux)'=='true'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>cimnodes.so</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="_deps\ImGui.NET\cimnodes\osx-x64\cimnodes.dylib" Condition="'$(IsOSX)'=='true'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>cimnodes.dylib</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="_deps\ImGui.NET\cimnodes\win-x64\cimnodes.dll" Condition="'$(IsWindows)'=='true' And '$(Platform)'=='x64'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>cimnodes.dll</TargetPath>
+    </ContentWithTargetPath>
+    <ContentWithTargetPath Include="_deps\ImGui.NET\cimnodes\win-x86\cimnodes.dll" Condition="'$(IsWindows)'=='true' And '$(Platform)'=='x86'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>cimnodes.dll</TargetPath>
     </ContentWithTargetPath>
   </ItemGroup>
 
