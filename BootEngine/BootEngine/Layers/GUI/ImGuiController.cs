@@ -807,10 +807,12 @@ namespace BootEngine.Layers.GUI
 			unsafe
 			{
 				io.NativePtr->BackendPlatformName = (byte*)new FixedAsciiString("Veldrid.SDL2 Backend").DataPtr;
-				io.NativePtr->ConfigViewportsNoTaskBarIcon = 1;
 			}
 
 			io.ConfigFlags |= ImGuiConfigFlags.NavEnableKeyboard | ImGuiConfigFlags.DockingEnable;
+
+			io.ConfigWindowsMoveFromTitleBarOnly = true;
+			io.ConfigViewportsNoTaskBarIcon = true;
 
 			io.BackendFlags |= ImGuiBackendFlags.HasMouseCursors | ImGuiBackendFlags.HasSetMousePos | ImGuiBackendFlags.RendererHasVtxOffset;
 

@@ -70,31 +70,31 @@ namespace Shoelace.Systems
 						{
 							cameraProj = (cam.Camera.ProjectionMatrix).ToFloatArray();
 						}
-						float[] dummyDelta = new float[16];
+						float[] deltaTransform = new float[16];
 
 						if (snap)
-							ImGuizmo.Manipulate(ref cameraView[0], ref cameraProj[0], _guiService.GizmoType, MODE.LOCAL, ref transform[0], ref dummyDelta[0], ref snapValues[0]);
+							ImGuizmo.Manipulate(ref cameraView[0], ref cameraProj[0], _guiService.GizmoType, MODE.LOCAL, ref transform[0], ref deltaTransform[0], ref snapValues[0]);
 						else
-							ImGuizmo.Manipulate(ref cameraView[0], ref cameraProj[0], _guiService.GizmoType, MODE.LOCAL, ref transform[0], ref dummyDelta[0]);
+							ImGuizmo.Manipulate(ref cameraView[0], ref cameraProj[0], _guiService.GizmoType, MODE.LOCAL, ref transform[0], ref deltaTransform[0]);
 
-						if (ImGuizmo.IsUsing())
+						if (ImGuizmo.IsOver() && ImGuizmo.IsUsing())
 						{
 							float[] translation = new float[3];
 							float[] rotation = new float[3];
 							float[] scale = new float[3];
 
-							ImGuizmo.DecomposeMatrixToComponents(ref transform[0], ref translation[0], ref rotation[0], ref scale[0]);
+							ImGuizmo.DecomposeMatrixToComponents(ref deltaTransform[0], ref translation[0], ref rotation[0], ref scale[0]);
 
 							switch (_guiService.GizmoType)
 							{
 								case OPERATION.TRANSLATE:
-									tc.Position = new Vector3(translation[0], translation[1], translation[2]);
+									tc.Position += new Vector3(translation[0], translation[1], translation[2]);
 									break;
 								case OPERATION.ROTATE:
-									tc.Rotation += MathUtil.Deg2Rad(new Vector3(rotation[0], rotation[1], rotation[2])) - tc.Rotation;
+									tc.Rotation -= MathUtil.Deg2Rad(new Vector3(rotation[0], rotation[1], rotation[2]));
 									break;
 								case OPERATION.SCALE:
-									tc.Scale = new Vector3(scale[0], scale[1], scale[2]);
+									tc.Scale += new Vector3(scale[0], scale[1], scale[2]);
 									break;
 							}
 						}

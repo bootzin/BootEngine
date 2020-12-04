@@ -74,7 +74,7 @@ namespace Shoelace.Layers
 				Position = new Vector3(.1f, .1f, -2.5f)
 			});
 			sprite.Color = ColorF.HoverRed;
-			sprite.Texture = AssetManager.LoadTexture2D("assets/textures/sampleBoot.png", BootEngine.Utils.TextureUsage.Sampled);
+			sprite.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", BootEngine.Utils.TextureUsage.Sampled);
 
 			var pinkQuad = ActiveScene.CreateEntity("Pink Quad").AddComponent(new SpriteComponent(squareColor));
 			ref var transform = ref pinkQuad.GetComponent<TransformComponent>();
