@@ -24,6 +24,7 @@ namespace Shoelace.Systems
 					ref var cam = ref _cameras.Get1(camera);
 					if (cam.Camera.Active)
 					{
+						ImGuizmo.SetID(camera);
 						ImGuizmo.SetOrthographic(cam.Camera.ProjectionType == BootEngine.Renderer.Cameras.ProjectionType.Orthographic);
 						ImGuizmo.SetDrawlist(ImGui.GetWindowDrawList());
 
@@ -68,7 +69,7 @@ namespace Shoelace.Systems
 						}
 						else
 						{
-							cameraProj = (cam.Camera.ProjectionMatrix).ToFloatArray();
+							cameraProj = cam.Camera.ProjectionMatrix.ToFloatArray();
 						}
 						float[] deltaTransform = new float[16];
 
