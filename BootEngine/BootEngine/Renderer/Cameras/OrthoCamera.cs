@@ -32,7 +32,7 @@ namespace BootEngine.Renderer.Cameras
 				{
 					projectionMatrix = Matrix4x4.CreateOrthographicOffCenter(left, right, bottom, top, OrthoNear, OrthoFar);
 				}
-				if (swapYAxis)
+				if (SwapYAxis)
 				{
 					projectionMatrix *= new Matrix4x4(
 						1, 0, 0, 0,

@@ -119,14 +119,14 @@ namespace Shoelace.Panels
 		private void DrawVelocityComponent(ref VelocityComponent velocityComponent)
 		{
 			velocityComponent.Velocity = DrawVec3Control("Velocity", velocityComponent.Velocity);
-			velocityComponent.RotationSpeed = Util.Deg2Rad(DrawVec3Control("Rot. Speed", Util.Rad2Deg(velocityComponent.RotationSpeed), dragAmnt: 1));
+			velocityComponent.RotationSpeed = MathUtil.Deg2Rad(DrawVec3Control("Rot. Speed", MathUtil.Rad2Deg(velocityComponent.RotationSpeed), dragAmnt: 1));
 		}
 
 		private void DrawTransformComponent(ref TransformComponent transformComponent)
 		{
 			ImGui.Indent(-8);
 			transformComponent.Position = DrawVec3Control("Translation", transformComponent.Position);
-			transformComponent.Rotation = Util.Deg2Rad(DrawVec3Control("Rotation", Util.Rad2Deg(transformComponent.Rotation), dragAmnt: 1));
+			transformComponent.Rotation = MathUtil.Deg2Rad(DrawVec3Control("Rotation", MathUtil.Rad2Deg(transformComponent.Rotation), dragAmnt: 1));
 			transformComponent.Scale = DrawVec3Control("Scale", transformComponent.Scale, 1);
 		}
 
@@ -193,13 +193,13 @@ namespace Shoelace.Panels
 
 			if (cam.ProjectionType == ProjectionType.Perspective)
 			{
-				float perspectiveFov = Util.Rad2Deg(cam.PerspectiveFov);
+				float perspectiveFov = MathUtil.Rad2Deg(cam.PerspectiveFov);
 				if (ImGui.DragFloat("Vertical Fov", ref perspectiveFov))
-					cam.PerspectiveFov = Util.Deg2Rad(Util.Clamp(perspectiveFov, 1f, 179f));
+					cam.PerspectiveFov = MathUtil.Deg2Rad(MathUtil.Clamp(perspectiveFov, 1f, 179f));
 
 				float perspectiveNear = cam.PerspectiveNear;
 				if (ImGui.DragFloat("Near", ref perspectiveNear))
-					cam.PerspectiveNear = Util.Clamp(perspectiveNear, 0.01f, cam.PerspectiveFar - 0.01f);
+					cam.PerspectiveNear = MathUtil.Clamp(perspectiveNear, 0.01f, cam.PerspectiveFar - 0.01f);
 
 				float perspectiveFar = cam.PerspectiveFar;
 				if (ImGui.DragFloat("Far", ref perspectiveFar))

@@ -147,8 +147,7 @@ namespace BootEngine.Layers.GUI
 			windowWidth = sdlWindow.Width;
 			windowHeight = sdlWindow.Height;
 
-			IntPtr implotCtx = ImPlot.CreateContext();
-			ImPlot.SetCurrentContext(implotCtx);
+			ImPlot.CreateContext();
 
 			ImNodes.Initialize();
 

@@ -79,9 +79,9 @@ namespace BootEngine.Renderer.Cameras
 		}
 
 		protected readonly bool useReverseDepth = Application.App.Window.GraphicsDevice.IsDepthRangeZeroToOne;
-		protected readonly bool swapYAxis = Application.App.Window.GraphicsDevice.IsClipSpaceYInverted;
+		public readonly bool SwapYAxis = Application.App.Window.GraphicsDevice.IsClipSpaceYInverted;
 
-		private float perspectiveFov = Util.Deg2Rad(45);
+		private float perspectiveFov = MathUtil.Deg2Rad(45);
 		private float perspectiveNear = 0.01f;
 		private float perspectiveFar = 1000f;
 		private float orthoSize = 1f;
@@ -119,6 +119,14 @@ namespace BootEngine.Renderer.Cameras
 			if (ProjectionType == ProjectionType.Perspective)
 			{
 				projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(PerspectiveFov, aspectRatio, PerspectiveNear, PerspectiveFar);
+			}
+			if (SwapYAxis)
+			{
+				projectionMatrix *= new Matrix4x4(
+					1, 0, 0, 0,
+					0, -1, 0, 0,
+					0, 0, 1, 0,
+					0, 0, 0, 1);
 			}
 		}
 	}

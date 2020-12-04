@@ -3,7 +3,7 @@ using System.Numerics;
 
 namespace BootEngine.Renderer.Cameras
 {
-	//TODO: Check the viability of merging this with OrthoCamera
+	//TODO: Check the viability of merging this with Camera
 	internal sealed class ImGuiCamera : Camera
 	{
 		private readonly float left;
@@ -33,7 +33,7 @@ namespace BootEngine.Renderer.Cameras
 			{
 				projectionMatrix = Matrix4x4.CreateOrthographicOffCenter(left, right, bottom, top, OrthoNear, OrthoFar);
 			}
-			if (swapYAxis)
+			if (SwapYAxis)
 			{
 				projectionMatrix *= new Matrix4x4(
 					1, 0, 0, 0,

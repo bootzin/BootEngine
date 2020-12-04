@@ -7,6 +7,8 @@ namespace BootEngine.ECS.Components
 		private Vector3? scale;
 
 		public Vector3 Position { get; set; }
+
+		// angles in radians
 		public Vector3 Rotation { get; set; }
 		public Vector3 Scale
 		{

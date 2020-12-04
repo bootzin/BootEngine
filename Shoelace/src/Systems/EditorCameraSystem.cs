@@ -56,11 +56,11 @@ namespace Shoelace.Systems
 					rotationSpeed = Vector3.Zero;
 					if (InputManager.Instance.GetKeyDown(KeyCodes.Q))
 					{
-						rotationSpeed += Vector3.UnitZ * Util.Deg2Rad(CAMERA_ROTATION_SPEED);
+						rotationSpeed += Vector3.UnitZ * MathUtil.Deg2Rad(CAMERA_ROTATION_SPEED);
 					}
 					if (InputManager.Instance.GetKeyDown(KeyCodes.E))
 					{
-						rotationSpeed -= Vector3.UnitZ * Util.Deg2Rad(CAMERA_ROTATION_SPEED);
+						rotationSpeed -= Vector3.UnitZ * MathUtil.Deg2Rad(CAMERA_ROTATION_SPEED);
 					}
 				}
 				transform.Position += velocity * _time.DeltaSeconds;

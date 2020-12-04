@@ -33,6 +33,7 @@ namespace Shoelace.Layers
 		private readonly GuiService _guiService = new GuiService();
 		private readonly SceneHierarchyPanel _sceneHierarchyPanel = new SceneHierarchyPanel();
 		private readonly PropertiesPanel _propertiesPanel = new PropertiesPanel();
+		private readonly GuizmoSystem _guizmoSystem = new GuizmoSystem();
 		#endregion
 
 		#region Constructor
@@ -49,6 +50,7 @@ namespace Shoelace.Layers
 				.AddSystem(new EditorCameraSystem(), "Editor Camera")
 				.AddSystem(_sceneHierarchyPanel)
 				.AddSystem(_propertiesPanel)
+				.AddSystem(_guizmoSystem)
 				.AddRuntimeSystem(new VelocitySystem(), "Velocity System")
 				.Inject(_guiService)
 				.Init();
@@ -58,6 +60,7 @@ namespace Shoelace.Layers
 			//TODO: Main Camera should be a "special" entity
 			var editorCam = ActiveScene.CreateEntity("Main Camera");
 			var camera = new OrthoCamera(1, -1, 1, Width, Height);
+			camera.SetPerspective(MathUtil.Deg2Rad(70), .0001f, 1000f);
 			editorCam.AddComponent(new CameraComponent()
 			{
 				Camera = camera
@@ -66,17 +69,21 @@ namespace Shoelace.Layers
 
 			var redQuad = ActiveScene.CreateEntity("Red Textured Quad");
 			ref var sprite = ref redQuad.AddComponent<SpriteComponent>();
+			redQuad.ReplaceComponent(new TransformComponent()
+			{
+				Position = new Vector3(.1f, .1f, -2.5f)
+			});
 			sprite.Color = ColorF.HoverRed;
 			sprite.Texture = AssetManager.LoadTexture2D("assets/textures/sampleBoot.png", BootEngine.Utils.TextureUsage.Sampled);
 
 			var pinkQuad = ActiveScene.CreateEntity("Pink Quad").AddComponent(new SpriteComponent(squareColor));
 			ref var transform = ref pinkQuad.GetComponent<TransformComponent>();
-			transform.Position = new Vector3(0f, 0f, -.5f);
-			transform.Scale = new Vector3(.5f, .5f, .5f);
-			transform.Rotation = new Vector3(0, 0, 45);
+			transform.Position = new Vector3(0f, 0f, -3.5f);
+			transform.Scale = new Vector3(1f, 1f, .5f);
+			transform.Rotation = new Vector3(0,0, MathUtil.Deg2Rad(45));
 			pinkQuad.AddComponent(new VelocityComponent()
 			{
-				RotationSpeed = new Vector3(0, 0, 1f)
+				//RotationSpeed = new Vector3(0, 0, MathUtil.Deg2Rad(10))
 			});
 
 			var currentPipeline = Renderer2D.Instance.PipelineDescrition;
@@ -166,9 +173,6 @@ namespace Shoelace.Layers
 				ImGui.EndMenuBar();
 			}
 
-			ImGui.Begin("Settings 2D");
-			ImGui.ColorEdit4("Square Color 2D", ref squareColor);
-
 			ImGui.Begin("Stats");
 			ImGui.Text("Renderer Stats:");
 			ImGui.Text("Draw Calls: " + Renderer2D.Instance.Stats.DrawCalls.ToString());
@@ -184,7 +188,6 @@ namespace Shoelace.Layers
 			ImGui.Separator();
 
 			ImGui.End(); // Stats
-			ImGui.End(); // Settings 2D
 
 			_sceneHierarchyPanel.OnGuiRender();
 			_propertiesPanel.OnGuiRender();
@@ -200,6 +203,7 @@ namespace Shoelace.Layers
 				ImGui.Image(renderTargetAddr, viewportPanelSize, new Vector2(0,1), new Vector2(1,0));
 			else
 				ImGui.Image(renderTargetAddr, viewportPanelSize);
+
 			if (viewportPanelSize != lastSize)
 			{
 				lastSize = viewportPanelSize;
@@ -209,6 +213,9 @@ namespace Shoelace.Layers
 					Height = (int)viewportPanelSize.Y
 				});
 			}
+
+			_guizmoSystem.ProcessGizmos();
+
 			ImGui.End(); //Viewport
 			ImGui.PopStyleVar();
 
