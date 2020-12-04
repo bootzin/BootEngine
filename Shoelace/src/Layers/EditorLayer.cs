@@ -215,9 +215,8 @@ namespace Shoelace.Layers
 			if (systemManagerEnabled)
 			{
 				//ImGui.Begin("System Manager");
-				//// TODO: Add systems controls
+				//// TODO: Add system controls
 				//ImGui.End();
-				ImGui.ShowDemoWindow();
 			}
 
 			ImGui.End(); // Dockspace

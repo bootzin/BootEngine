@@ -202,6 +202,7 @@ namespace BootEngine.Layers.GUI
 				(*nativeConfig).GlyphExtraSpacing = Vector2.Zero;
 				(*nativeConfig).MergeMode = 0;
 				var io = ImGui.GetIO();
+				// TODO: Add icon fonts
 				io.Fonts.AddFontFromFileTTF(Path.Combine(AppContext.BaseDirectory, "assets/fonts/WorkSans/static/WorkSans-Regular.ttf"), 14f);
 				io.Fonts.AddFontFromFileTTF(Path.Combine(AppContext.BaseDirectory, "assets/fonts/WorkSans/static/WorkSans-SemiBold.ttf"), 14f);
 				ImGuiNative.ImFontConfig_destroy(nativeConfig);
