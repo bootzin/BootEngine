@@ -84,18 +84,20 @@ namespace Shoelace.Systems
 							float[] rotation = new float[3];
 							float[] scale = new float[3];
 
-							ImGuizmo.DecomposeMatrixToComponents(ref deltaTransform[0], ref translation[0], ref rotation[0], ref scale[0]);
-
 							switch (_guiService.GizmoType)
 							{
 								case OPERATION.TRANSLATE:
+									ImGuizmo.DecomposeMatrixToComponents(ref deltaTransform[0], ref translation[0], ref rotation[0], ref scale[0]);
 									tc.Position += new Vector3(translation[0], translation[1], translation[2]);
 									break;
 								case OPERATION.ROTATE:
+									ImGuizmo.DecomposeMatrixToComponents(ref deltaTransform[0], ref translation[0], ref rotation[0], ref scale[0]);
 									tc.Rotation -= MathUtil.Deg2Rad(new Vector3(rotation[0], rotation[1], rotation[2]));
 									break;
 								case OPERATION.SCALE:
-									tc.Scale += new Vector3(scale[0], scale[1], scale[2]);
+									// for some reason, scale part from deltaTransform does not return deltaScale
+									ImGuizmo.DecomposeMatrixToComponents(ref transform[0], ref translation[0], ref rotation[0], ref scale[0]);
+									tc.Scale = new Vector3(scale[0], scale[1], scale[2]);
 									break;
 							}
 						}
