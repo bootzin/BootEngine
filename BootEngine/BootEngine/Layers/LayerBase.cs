@@ -14,7 +14,7 @@ namespace BootEngine.Layers
 		protected GraphicsDevice GraphicsDevice => Application.App.Window.GraphicsDevice;
 		protected ResourceFactory ResourceFactory => Application.App.Window.GraphicsDevice.ResourceFactory;
 
-		protected Scene ActiveScene { get; } = new Scene();
+		protected Scene ActiveScene { get; set; } = new Scene();
 		#endregion
 
 		#region Constructor

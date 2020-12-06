@@ -125,7 +125,7 @@ namespace Shoelace.Panels
 		private void DrawTransformComponent(ref TransformComponent transformComponent)
 		{
 			ImGui.Indent(-8);
-			transformComponent.Position = DrawVec3Control("Translation", transformComponent.Position);
+			transformComponent.Translation = DrawVec3Control("Translation", transformComponent.Translation);
 			transformComponent.Rotation = MathUtil.Deg2Rad(DrawVec3Control("Rotation", MathUtil.Rad2Deg(transformComponent.Rotation), dragAmnt: 1));
 			transformComponent.Scale = DrawVec3Control("Scale", transformComponent.Scale, 1);
 		}

@@ -6,6 +6,7 @@ using BootEngine.Layers;
 using BootEngine.Layers.GUI;
 using BootEngine.Renderer;
 using BootEngine.Renderer.Cameras;
+using BootEngine.Serializers;
 using BootEngine.Utils;
 using BootEngine.Utils.ProfilingTools;
 using ImGuiNET;
@@ -58,33 +59,33 @@ namespace Shoelace.Layers
 			Styles.SetDarkTheme();
 
 			//TODO: Main Camera should be a "special" entity
-			var editorCam = ActiveScene.CreateEntity("Main Camera");
-			var camera = new OrthoCamera(1, -1, 1, Width, Height);
-			camera.SetPerspective(MathUtil.Deg2Rad(70), .0001f, 1000f);
-			editorCam.AddComponent(new CameraComponent()
-			{
-				Camera = camera
-			});
-			//editorCam.AddComponent<TransformComponent>();
+			//var editorCam = ActiveScene.CreateEntity("Main Camera");
+			//var camera = new OrthoCamera(1, -1, 1, Width, Height);
+			//camera.SetPerspective(MathUtil.Deg2Rad(70), .0001f, 1000f);
+			//editorCam.AddComponent(new CameraComponent()
+			//{
+			//	Camera = camera
+			//});
+			////editorCam.AddComponent<TransformComponent>();
 
-			var redQuad = ActiveScene.CreateEntity("Red Textured Quad");
-			ref var sprite = ref redQuad.AddComponent<SpriteComponent>();
-			redQuad.ReplaceComponent(new TransformComponent()
-			{
-				Position = new Vector3(.1f, .1f, -2.5f)
-			});
-			sprite.Color = ColorF.HoverRed;
-			sprite.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", BootEngine.Utils.TextureUsage.Sampled);
+			//var redQuad = ActiveScene.CreateEntity("Red Textured Quad");
+			//ref var sprite = ref redQuad.AddComponent<SpriteComponent>();
+			//redQuad.ReplaceComponent(new TransformComponent()
+			//{
+			//	Translation = new Vector3(.1f, .1f, -2.5f)
+			//});
+			//sprite.Color = ColorF.HoverRed;
+			//sprite.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", BootEngine.Utils.TextureUsage.Sampled);
 
-			var pinkQuad = ActiveScene.CreateEntity("Pink Quad").AddComponent(new SpriteComponent(squareColor));
-			ref var transform = ref pinkQuad.GetComponent<TransformComponent>();
-			transform.Position = new Vector3(0f, 0f, -3.5f);
-			transform.Scale = new Vector3(1f, 1f, .5f);
-			transform.Rotation = new Vector3(0,0, MathUtil.Deg2Rad(45));
-			pinkQuad.AddComponent(new VelocityComponent()
-			{
-				//RotationSpeed = new Vector3(0, 0, MathUtil.Deg2Rad(10))
-			});
+			//var pinkQuad = ActiveScene.CreateEntity("Pink Quad").AddComponent(new SpriteComponent(squareColor));
+			//ref var transform = ref pinkQuad.GetComponent<TransformComponent>();
+			//transform.Translation = new Vector3(0f, 0f, -3.5f);
+			//transform.Scale = new Vector3(1f, 1f, .5f);
+			//transform.Rotation = new Vector3(0,0, MathUtil.Deg2Rad(45));
+			//pinkQuad.AddComponent(new VelocityComponent()
+			//{
+			//	//RotationSpeed = new Vector3(0, 0, MathUtil.Deg2Rad(10))
+			//});
 
 			var currentPipeline = Renderer2D.Instance.PipelineDescrition;
 			fbTex = ResourceFactory.CreateTexture(TextureDescription.Texture2D(
@@ -158,8 +159,21 @@ namespace Shoelace.Layers
 			{
 				if (ImGui.BeginMenu("File"))
 				{
+					if (ImGui.MenuItem("Save Scene", "Ctrl+S"))
+					{
+						new YamlSerializer().Serialize($"assets/scenes/{ActiveScene.Title}.boot", ActiveScene);
+					}
+
+					if (ImGui.MenuItem("Load Scene...", "Ctrl+O"))
+					{
+						LoadScene();
+					}
+
 					if (ImGui.MenuItem("Exit", "Ctrl+Q"))
+					{
 						Close();
+					}
+
 					ImGui.EndMenu();
 				}
 
@@ -196,7 +210,7 @@ namespace Shoelace.Layers
 			ImGui.Begin("Viewport");
 			_guiService.ViewportFocused = ImGui.IsWindowFocused();
 			_guiService.ViewportHovered = ImGui.IsWindowHovered();
-			_guiService.BlockEvents = !_guiService.ViewportFocused || !ImGui.IsWindowHovered();
+			_guiService.BlockEvents = !_guiService.ViewportFocused || !_guiService.ViewportHovered;
 
 			var viewportPanelSize = ImGui.GetContentRegionAvail();
 			if (!GraphicsDevice.IsUvOriginTopLeft)
@@ -229,11 +243,17 @@ namespace Shoelace.Layers
 			ImGui.End(); // Dockspace
 		}
 
+		private void LoadScene()
+		{
+			ActiveScene = new SceneDeserializer().Deserialize("assets/scenes/Untitled.boot", ActiveScene);
+		}
+
 		public override void OnDetach()
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
+			new YamlSerializer().Serialize($"assets/scenes/{ActiveScene.Title}.boot", ActiveScene);
 			fb.Dispose();
 			fbTex.Dispose();
 			fbDepthTex.Dispose();

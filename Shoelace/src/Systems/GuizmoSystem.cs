@@ -43,7 +43,7 @@ namespace Shoelace.Systems
 						ref var tc = ref selected.Get<TransformComponent>();
 
 						var rotTmp = MathUtil.Rad2Deg(tc.Rotation);
-						float[] pos = new float[] { tc.Position.X, tc.Position.Y, tc.Position.Z };
+						float[] pos = new float[] { tc.Translation.X, tc.Translation.Y, tc.Translation.Z };
 						float[] rot = new float[] { rotTmp.X, rotTmp.Y, rotTmp.Z };
 						float[] sca = new float[] { tc.Scale.X, tc.Scale.Y, tc.Scale.Z };
 						float[] transform = new float[16];
@@ -88,7 +88,7 @@ namespace Shoelace.Systems
 							{
 								case OPERATION.TRANSLATE:
 									ImGuizmo.DecomposeMatrixToComponents(ref deltaTransform[0], ref translation[0], ref rotation[0], ref scale[0]);
-									tc.Position += new Vector3(translation[0], translation[1], translation[2]);
+									tc.Translation += new Vector3(translation[0], translation[1], translation[2]);
 									break;
 								case OPERATION.ROTATE:
 									ImGuizmo.DecomposeMatrixToComponents(ref deltaTransform[0], ref translation[0], ref rotation[0], ref scale[0]);

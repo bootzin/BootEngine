@@ -41,15 +41,12 @@ namespace Shoelace.Systems
 					break;
 				case KeyCodes.F1:
 					_guiService.GizmoType = ImGuiNET.OPERATION.TRANSLATE;
-					e.Handled = true;
 					break;
 				case KeyCodes.F2:
 					_guiService.GizmoType = ImGuiNET.OPERATION.SCALE;
-					e.Handled = true;
 					break;
 				case KeyCodes.F3:
 					_guiService.GizmoType = ImGuiNET.OPERATION.ROTATE;
-					e.Handled = true;
 					break;
 			}
 		}

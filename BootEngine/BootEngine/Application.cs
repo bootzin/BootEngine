@@ -7,6 +7,7 @@ using BootEngine.Utils.ProfilingTools;
 using BootEngine.Window;
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using Veldrid;
 
 namespace BootEngine
@@ -29,6 +30,8 @@ namespace BootEngine
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
+			CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+			CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
 			Logger.Init();
 			Logger.Assert(App == null, "App already initialized");
 			App = this;
@@ -44,6 +47,8 @@ namespace BootEngine
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
+			CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+			CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
 			Logger.Init();
 			Logger.Assert(App == null, "App already initialized");
 			App = this;
@@ -59,6 +64,8 @@ namespace BootEngine
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
+			CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+			CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
 			Logger.Init();
 			Logger.Assert(App == null, "App already initialized");
 			App = this;

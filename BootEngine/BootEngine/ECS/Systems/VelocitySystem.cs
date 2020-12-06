@@ -14,7 +14,7 @@ namespace BootEngine.ECS.Systems
 			{
 				ref var transform = ref _movables.Get1(movable);
 				ref var velocity = ref _movables.Get2(movable);
-				transform.Position += velocity.Velocity * _time.DeltaSeconds;
+				transform.Translation += velocity.Velocity * _time.DeltaSeconds;
 				transform.Rotation += velocity.RotationSpeed * _time.DeltaSeconds;
 			}
 		}

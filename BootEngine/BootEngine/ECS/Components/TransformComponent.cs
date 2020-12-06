@@ -6,7 +6,7 @@ namespace BootEngine.ECS.Components
 	{
 		private Vector3? scale;
 
-		public Vector3 Position { get; set; }
+		public Vector3 Translation { get; set; }
 
 		// angles in radians
 		public Vector3 Rotation { get; set; }
@@ -18,7 +18,7 @@ namespace BootEngine.ECS.Components
 
 		public TransformComponent(Vector3 position)
 		{
-			Position = position;
+			Translation = position;
 			Rotation = Vector3.Zero;
 			scale = Vector3.One;
 		}
@@ -30,7 +30,7 @@ namespace BootEngine.ECS.Components
 				Matrix4x4 rotation = Matrix4x4.CreateRotationX(Rotation.X)
 					* Matrix4x4.CreateRotationY(Rotation.Y)
 					* Matrix4x4.CreateRotationZ(Rotation.Z);
-				return Matrix4x4.CreateTranslation(Position) * rotation * Matrix4x4.CreateScale(Scale);
+				return Matrix4x4.CreateTranslation(Translation) * rotation * Matrix4x4.CreateScale(Scale);
 			}
 		}
 	}

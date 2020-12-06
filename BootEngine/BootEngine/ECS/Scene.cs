@@ -12,9 +12,23 @@ namespace BootEngine.ECS
 	{
 		internal readonly EcsWorld World = new EcsWorld();
 		internal readonly EcsSystems Systems;
+
 		public EcsSystems RuntimeSystems { get; }
+		public string Title { get; set; }
+
 		public Scene()
 		{
+			Title = "Untitled";
+			Systems = new EcsSystems(World, "MainEcsSystems");
+			RuntimeSystems = new EcsSystems(World, "Runtime Systems");
+			Systems
+				.Add(new EventSystem(), "Event System")
+				.Add(RuntimeSystems, "Runtime Systems");
+		}
+
+		public Scene(string title)
+		{
+			Title = title;
 			Systems = new EcsSystems(World, "MainEcsSystems");
 			RuntimeSystems = new EcsSystems(World, "Runtime Systems");
 			Systems

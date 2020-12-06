@@ -95,7 +95,7 @@ namespace BootEngine.Layers.GUI
 		{
 			get
 			{
-				return p_sdl_GetNumVideoDisplays ?? (p_sdl_GetNumVideoDisplays = Sdl2Native.LoadFunction<SDL_GetNumVideoDisplays_t>("SDL_GetNumVideoDisplays"));
+				return p_sdl_GetNumVideoDisplays ??= Sdl2Native.LoadFunction<SDL_GetNumVideoDisplays_t>("SDL_GetNumVideoDisplays");
 			}
 		}
 
@@ -103,7 +103,7 @@ namespace BootEngine.Layers.GUI
 		{
 			get
 			{
-				return p_sdl_RaiseWindow ?? (p_sdl_RaiseWindow = Sdl2Native.LoadFunction<SDL_RaiseWindow_t>("SDL_RaiseWindow"));
+				return p_sdl_RaiseWindow ??= Sdl2Native.LoadFunction<SDL_RaiseWindow_t>("SDL_RaiseWindow");
 			}
 		}
 
@@ -111,7 +111,7 @@ namespace BootEngine.Layers.GUI
 		{
 			get
 			{
-				return p_sdl_GetGlobalMouseState ?? (p_sdl_GetGlobalMouseState = Sdl2Native.LoadFunction<SDL_GetGlobalMouseState_t>("SDL_GetGlobalMouseState"));
+				return p_sdl_GetGlobalMouseState ??= Sdl2Native.LoadFunction<SDL_GetGlobalMouseState_t>("SDL_GetGlobalMouseState");
 			}
 		}
 
@@ -119,7 +119,7 @@ namespace BootEngine.Layers.GUI
 		{
 			get
 			{
-				return p_sdl_GetDisplayUsableBounds_t ?? (p_sdl_GetDisplayUsableBounds_t = Sdl2Native.LoadFunction<SDL_GetDisplayUsableBounds_t>("SDL_GetDisplayUsableBounds"));
+				return p_sdl_GetDisplayUsableBounds_t ??= Sdl2Native.LoadFunction<SDL_GetDisplayUsableBounds_t>("SDL_GetDisplayUsableBounds");
 			}
 		}
 		#endregion

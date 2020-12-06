@@ -11,6 +11,7 @@ namespace BootEngine.Renderer.Cameras
 
 		public void Run()
 		{
+			EcsEntity resizeEvent = default;
 			foreach (int camera in _cameraFilter)
 			{
 				ref var cam = ref _cameraFilter.Get1(camera);
@@ -18,13 +19,14 @@ namespace BootEngine.Renderer.Cameras
 				{
 					foreach (var resize in _viewportResized)
 					{
-						ref var entt = ref _viewportResized.GetEntity(resize);
+						resizeEvent = _viewportResized.GetEntity(resize);
 						ref var newSize = ref _viewportResized.Get1(resize);
 						cam.Camera.ResizeViewport(newSize.Width, newSize.Height);
-						entt.Destroy();
 					}
 				}
 			}
+			if (resizeEvent.IsAlive())
+				resizeEvent.Destroy();
 		}
 	}
 }

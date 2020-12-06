@@ -63,7 +63,7 @@ namespace Shoelace.Systems
 						rotationSpeed -= Vector3.UnitZ * MathUtil.Deg2Rad(CAMERA_ROTATION_SPEED);
 					}
 				}
-				transform.Position += velocity * _time.DeltaSeconds;
+				transform.Translation += velocity * _time.DeltaSeconds;
 				transform.Rotation += rotationSpeed * _time.DeltaSeconds;
 			}
 		}

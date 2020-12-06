@@ -37,7 +37,7 @@ namespace Sandbox.Systems
 
 				if (_quads.Get2(item).Tag == "Quad2")
 				{
-					transform.Position = new Vector3(_quadInfoService.SquareColor.X, _quadInfoService.SquareColor.Y, _quadInfoService.SquareColor.Z);
+					transform.Translation = new Vector3(_quadInfoService.SquareColor.X, _quadInfoService.SquareColor.Y, _quadInfoService.SquareColor.Z);
 				}
 			}
 
@@ -57,7 +57,7 @@ namespace Sandbox.Systems
 				});
 				ref var transform = ref ent.GetComponent<TransformComponent>();
 				transform.Scale *= .1f;
-				transform.Position = new Vector3(-.11f * (instanceCount % 1000), -.11f * (instanceCount / 1000), .5f);
+				transform.Translation = new Vector3(-.11f * (instanceCount % 1000), -.11f * (instanceCount / 1000), .5f);
 			}
 		}
 	}

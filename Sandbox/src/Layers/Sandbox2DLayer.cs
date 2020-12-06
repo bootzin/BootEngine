@@ -55,7 +55,7 @@ namespace Sandbox.Layers
 				Color = _quadData.SquareColor
 			});
 			ref var transform = ref quad.GetComponent<TransformComponent>();
-			transform.Position = new Vector3(-1, 0, .5f);
+			transform.Translation = new Vector3(-1, 0, .5f);
 			transform.Scale = new Vector3(.5f, .5f, 1);
 			transform.Rotation = Vector3.Zero;
 			quad.AddComponent(new VelocityComponent()
@@ -65,7 +65,7 @@ namespace Sandbox.Layers
 
 			var quad2 = ActiveScene.CreateEntity(quad, "Tex");
 			ref var transform2 = ref quad2.GetComponent<TransformComponent>();
-			transform2.Position = new Vector3(0, 0, .4f);
+			transform2.Translation = new Vector3(0, 0, .4f);
 			transform2.Scale = new Vector3(.25f, .25f, 1);
 			transform2.Rotation = Vector3.Zero;
 			ref var sprite = ref quad2.GetComponent<SpriteComponent>();
@@ -74,7 +74,7 @@ namespace Sandbox.Layers
 
 			var quad3 = ActiveScene.CreateEntity(quad, "Quad2");
 			ref var transform3 = ref quad3.GetComponent<TransformComponent>();
-			transform3.Position = new Vector3(1, 0, .5f);
+			transform3.Translation = new Vector3(1, 0, .5f);
 			transform3.Scale = Vector3.One;
 			transform3.Rotation = new Vector3(0, 0, 45f);
 			ref var sprite2 = ref quad3.GetComponent<SpriteComponent>();
@@ -82,7 +82,7 @@ namespace Sandbox.Layers
 
 			var quad4 = ActiveScene.CreateEntity(quad);
 			ref var transform4 = ref quad4.GetComponent<TransformComponent>();
-			transform4.Position = new Vector3(1, 0, .5f);
+			transform4.Translation = new Vector3(1, 0, .5f);
 			transform4.Scale = Vector3.One * .1f;
 			transform4.Rotation = Vector3.Zero;
 			ref var sprite3 = ref quad4.GetComponent<SpriteComponent>();
@@ -93,7 +93,7 @@ namespace Sandbox.Layers
 			{
 				var quad5 = ActiveScene.CreateEntity(quad4);
 				ref var transform5 = ref quad5.GetComponent<TransformComponent>();
-				transform5.Position = new Vector3(-.11f * (i % 1000), -.11f * (i / 1000), .5f);
+				transform5.Translation = new Vector3(-.11f * (i % 1000), -.11f * (i / 1000), .5f);
 			}
 		}
 
