@@ -17,6 +17,7 @@ using System;
 using System.Linq;
 using System.Numerics;
 using Veldrid;
+using BootEngine.Window;
 
 namespace Shoelace.Layers
 {
@@ -30,11 +31,14 @@ namespace Shoelace.Layers
 		private bool dockspaceOpen = true;
 		private bool systemManagerEnabled = false;
 		private Vector2 lastSize = Vector2.Zero;
+		private bool shouldLoadScene;
+		private bool shouldSaveScene;
 		private readonly float[] _frametime = new float[100];
 		private readonly GuiService _guiService = new GuiService();
 		private readonly SceneHierarchyPanel _sceneHierarchyPanel = new SceneHierarchyPanel();
 		private readonly PropertiesPanel _propertiesPanel = new PropertiesPanel();
 		private readonly GuizmoSystem _guizmoSystem = new GuizmoSystem();
+		private readonly FileDialog _fileDialog = new FileDialog();
 		#endregion
 
 		#region Constructor
@@ -46,15 +50,7 @@ namespace Shoelace.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			ActiveScene
-				.AddSystem(new GuiControlSystem(), "GUI Control System")
-				.AddSystem(new EditorCameraSystem(), "Editor Camera")
-				.AddSystem(_sceneHierarchyPanel)
-				.AddSystem(_propertiesPanel)
-				.AddSystem(_guizmoSystem)
-				.AddRuntimeSystem(new VelocitySystem(), "Velocity System")
-				.Inject(_guiService)
-				.Init();
+			LoadScene();
 
 			Styles.SetDarkTheme();
 
@@ -155,18 +151,35 @@ namespace Shoelace.Layers
 			ImGui.DockSpace(ImGui.GetID("MyDockspace"), Vector2.Zero);
 			style.WindowMinSize = minWinSize;
 
+			if (_fileDialog.ShowFileDialog(ref shouldLoadScene, out string loadPath, FileDialog.DialogType.Open, "*.boot"))
+			{
+				LoadScene(loadPath);
+				shouldLoadScene = false;
+			}
+
+			if (_fileDialog.ShowFileDialog(ref shouldSaveScene, out string savePath, FileDialog.DialogType.Save))
+			{
+				SaveScene(savePath);
+				shouldSaveScene = false;
+			}
+
 			if (ImGui.BeginMenuBar())
 			{
 				if (ImGui.BeginMenu("File"))
 				{
 					if (ImGui.MenuItem("Save Scene", "Ctrl+S"))
 					{
-						new YamlSerializer().Serialize($"assets/scenes/{ActiveScene.Title}.boot", ActiveScene);
+						SaveScene($"assets/scenes/{ActiveScene.Title}.boot");
+					}
+
+					if (ImGui.MenuItem("Save Scene As...", "Ctrl+Shift+S"))
+					{
+						shouldSaveScene = true;
 					}
 
 					if (ImGui.MenuItem("Load Scene...", "Ctrl+O"))
 					{
-						LoadScene();
+						shouldLoadScene = true;
 					}
 
 					if (ImGui.MenuItem("Exit", "Ctrl+Q"))
@@ -223,8 +236,8 @@ namespace Shoelace.Layers
 				lastSize = viewportPanelSize;
 				ActiveScene.CreateEmptyEntity().AddComponent(new ViewportResizedEvent()
 				{
-					Width = (int)viewportPanelSize.X,
-					Height = (int)viewportPanelSize.Y
+					Width = (int)lastSize.X,
+					Height = (int)lastSize.Y
 				});
 			}
 
@@ -243,9 +256,32 @@ namespace Shoelace.Layers
 			ImGui.End(); // Dockspace
 		}
 
-		private void LoadScene()
+		private void SaveScene(string savePath)
 		{
-			ActiveScene = new SceneDeserializer().Deserialize("assets/scenes/Untitled.boot", ActiveScene);
+			new YamlSerializer().Serialize(savePath, ActiveScene);
+		}
+
+		private void LoadScene(string path = null)
+		{
+			ActiveScene = new BootEngine.ECS.Scene();
+			ActiveScene
+				.AddSystem(new GuiControlSystem(), "GUI Control System")
+				.AddSystem(new EditorCameraSystem(), "Editor Camera")
+				.AddSystem(_sceneHierarchyPanel)
+				.AddSystem(_propertiesPanel)
+				.AddSystem(_guizmoSystem)
+				.AddRuntimeSystem(new VelocitySystem(), "Velocity System")
+				.Inject(_guiService)
+				.Init();
+
+			if (path != null)
+				ActiveScene = new SceneDeserializer().Deserialize(path, ActiveScene);
+
+			ActiveScene.CreateEmptyEntity().AddComponent(new ViewportResizedEvent()
+			{
+				Width = (int)lastSize.X,
+				Height = (int)lastSize.Y
+			});
 		}
 
 		public override void OnDetach()
@@ -253,7 +289,6 @@ namespace Shoelace.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			new YamlSerializer().Serialize($"assets/scenes/{ActiveScene.Title}.boot", ActiveScene);
 			fb.Dispose();
 			fbTex.Dispose();
 			fbDepthTex.Dispose();
