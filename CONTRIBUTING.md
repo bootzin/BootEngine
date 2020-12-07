@@ -10,6 +10,7 @@ These are some guidelines for contributing, but they're not rules, so please use
 - If you're unable to find an open issue addressing the problem, [open a new one](https://github.com/bootzin/BootEngine/issues/new/choose). Be sure to include a **title and clear description**, as much relevant information as possible, and a **code sample** or an **executable test case** demonstrating the expected behavior that is not occurring.
 
 ## Pull Requests
+- First check the [project's roadmap](https://trello.com/b/Wga1vu5Y/boot-engine) to see if the functionality/fix you want to add is not already being worked on
 - If you've written a fix to a bug or added a new functionality, feel free to open a new pull request with it!
 - Ensure the PR description clearly describes the problem and solution. Include the relevant issue number if applicable.
 - Please try to follow the coding style of the rest of the project. Following a pattern is important for code maintenance. If you feel like the style used is not good, feel free to open an Issue to discuss it
