@@ -37,7 +37,7 @@ namespace Shoelace.Layers
 		private readonly GuiService _guiService = new GuiService();
 		private readonly SceneHierarchyPanel _sceneHierarchyPanel = new SceneHierarchyPanel();
 		private readonly PropertiesPanel _propertiesPanel = new PropertiesPanel();
-		private readonly GuizmoSystem _guizmoSystem = new GuizmoSystem();
+		private readonly GizmoSystem _guizmoSystem = new GizmoSystem();
 		private readonly FileDialog _fileDialog = new FileDialog();
 		#endregion
 

@@ -1,4 +1,5 @@
-﻿using BootEngine.ECS.Components;
+﻿using BootEngine.ECS;
+using BootEngine.ECS.Components;
 using BootEngine.Input;
 using BootEngine.Utils;
 using ImGuiNET;
@@ -8,12 +9,13 @@ using System.Numerics;
 
 namespace Shoelace.Systems
 {
-	internal sealed class GuizmoSystem : IEcsSystem
+	internal sealed class GizmoSystem : IEcsSystem
 	{
+		private readonly Scene _scene = default;
 		private readonly GuiService _guiService = default;
 		private readonly EcsFilter<CameraComponent, TransformComponent> _cameras = default;
 
-		// TODO: Consider making my own gizmo library, ImGuizmo.NET is glitchy as hell
+		// TODO: Consider making my own gizmo library
 		public void ProcessGizmos()
 		{
 			var selected = _guiService.SelectedEntity;
@@ -50,9 +52,8 @@ namespace Shoelace.Systems
 
 						ImGuizmo.RecomposeMatrixFromComponents(ref pos[0], ref rot[0], ref sca[0], ref transform[0]);
 
-						// using the component's transform breaks guizmos since the decomposition 
-						// expects angle in degree, and transform uses radians
-						// TODO: either change decomposition (preferred) or change transform to use degrees
+						// using the component's transform breaks guizmos for some reason
+						// TODO: investigate
 						//transform = tc.Transform.ToFloatArray();
 
 						ref var cameraTc = ref _cameras.Get2(camera);
@@ -61,6 +62,7 @@ namespace Shoelace.Systems
 						float[] cameraProj;
 						if (cam.Camera.SwapYAxis)
 						{
+							// de-swapping Y axis for gizmo rendering
 							cameraProj = (cam.Camera.ProjectionMatrix * new Matrix4x4(
 													1, 0, 0, 0,
 													0, -1, 0, 0,
@@ -80,6 +82,10 @@ namespace Shoelace.Systems
 
 						if (ImGuizmo.IsOver() && ImGuizmo.IsUsing())
 						{
+							if (InputManager.Instance.GetKeyDown(KeyCodes.AltLeft))
+							{
+								// copy current entity
+							}
 							float[] translation = new float[3];
 							float[] rotation = new float[3];
 							float[] scale = new float[3];
