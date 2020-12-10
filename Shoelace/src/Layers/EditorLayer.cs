@@ -18,6 +18,8 @@ using System.Linq;
 using System.Numerics;
 using Veldrid;
 using BootEngine.Window;
+using BootEngine.Input;
+using BootEngine.Events;
 
 namespace Shoelace.Layers
 {
@@ -31,14 +33,12 @@ namespace Shoelace.Layers
 		private bool dockspaceOpen = true;
 		private bool systemManagerEnabled = false;
 		private Vector2 lastSize = Vector2.Zero;
-		private bool shouldLoadScene;
-		private bool shouldSaveScene;
 		private readonly float[] _frametime = new float[100];
-		private readonly GuiService _guiService = new GuiService();
-		private readonly SceneHierarchyPanel _sceneHierarchyPanel = new SceneHierarchyPanel();
-		private readonly PropertiesPanel _propertiesPanel = new PropertiesPanel();
+		private SceneHierarchyPanel _sceneHierarchyPanel = new SceneHierarchyPanel();
+		private PropertiesPanel _propertiesPanel = new PropertiesPanel();
 		private readonly GizmoSystem _guizmoSystem = new GizmoSystem();
 		private readonly FileDialog _fileDialog = new FileDialog();
+		private readonly GuiService _guiService = new GuiService();
 		#endregion
 
 		#region Constructor
@@ -151,22 +151,31 @@ namespace Shoelace.Layers
 			ImGui.DockSpace(ImGui.GetID("MyDockspace"), Vector2.Zero);
 			style.WindowMinSize = minWinSize;
 
-			if (_fileDialog.ShowFileDialog(ref shouldLoadScene, out string loadPath, FileDialog.DialogType.Open, "*.boot"))
+			if (_fileDialog.ShowFileDialog(ref _guiService.ShouldLoadScene, out string loadPath, FileDialog.DialogType.Open, "*.boot"))
 			{
 				LoadScene(loadPath);
-				shouldLoadScene = false;
+				_guiService.ShouldLoadScene = false;
 			}
 
-			if (_fileDialog.ShowFileDialog(ref shouldSaveScene, out string savePath, FileDialog.DialogType.Save))
+			if (_fileDialog.ShowFileDialog(ref _guiService.ShouldSaveScene, out string savePath, FileDialog.DialogType.Save))
 			{
 				SaveScene(savePath);
-				shouldSaveScene = false;
+				_guiService.ShouldSaveScene = false;
+			}
+
+			if (_guiService.NewScene)
+			{
+				LoadScene();
 			}
 
 			if (ImGui.BeginMenuBar())
 			{
 				if (ImGui.BeginMenu("File"))
 				{
+					if (ImGui.MenuItem("New Scene", "Ctrl+N"))
+					{
+						LoadScene();
+					}
 					if (ImGui.MenuItem("Save Scene", "Ctrl+S"))
 					{
 						SaveScene($"assets/scenes/{ActiveScene.Title}.boot");
@@ -174,12 +183,12 @@ namespace Shoelace.Layers
 
 					if (ImGui.MenuItem("Save Scene As...", "Ctrl+Shift+S"))
 					{
-						shouldSaveScene = true;
+						_guiService.ShouldSaveScene = true;
 					}
 
 					if (ImGui.MenuItem("Load Scene...", "Ctrl+O"))
 					{
-						shouldLoadScene = true;
+						_guiService.ShouldLoadScene = true;
 					}
 
 					if (ImGui.MenuItem("Exit", "Ctrl+Q"))
@@ -264,6 +273,9 @@ namespace Shoelace.Layers
 		private void LoadScene(string path = null)
 		{
 			ActiveScene = new BootEngine.ECS.Scene();
+			_sceneHierarchyPanel = new SceneHierarchyPanel();
+			_propertiesPanel = new PropertiesPanel();
+			_guiService.SelectedEntity = default;
 			ActiveScene
 				.AddSystem(new GuiControlSystem(), "GUI Control System")
 				.AddSystem(new EditorCameraSystem(), "Editor Camera")
@@ -282,6 +294,8 @@ namespace Shoelace.Layers
 				Width = (int)lastSize.X,
 				Height = (int)lastSize.Y
 			});
+
+			_guiService.NewScene = false;
 		}
 
 		public override void OnDetach()

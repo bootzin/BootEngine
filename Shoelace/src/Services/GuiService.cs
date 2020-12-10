@@ -10,5 +10,8 @@ namespace Shoelace.Services
 		internal bool BlockEvents { get; set; }
 		internal bool ViewportFocused { get; set; }
 		internal EcsEntity SelectedEntity { get; set; }
+		internal bool NewScene { get; set; }
+		internal bool ShouldLoadScene;
+		internal bool ShouldSaveScene;
 	}
 }

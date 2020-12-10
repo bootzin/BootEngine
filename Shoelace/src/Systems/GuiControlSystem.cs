@@ -2,6 +2,7 @@
 using BootEngine.ECS.Components.Events.Ecs;
 using BootEngine.Events;
 using BootEngine.Input;
+using BootEngine.Serializers;
 using BootEngine.Utils;
 using Leopotam.Ecs;
 using Shoelace.Services;
@@ -24,7 +25,7 @@ namespace Shoelace.Systems
 			}
 		}
 
-		private void HandleKeyEvents(KeyEvent e)
+		private void HandleKeyEvents(BootEngine.Events.KeyEvent e)
 		{
 			bool control = InputManager.Instance.GetKeyDown(KeyCodes.ControlLeft) || InputManager.Instance.GetKeyDown(KeyCodes.ControlRight);
 			bool shift = InputManager.Instance.GetKeyDown(KeyCodes.ShiftLeft) || InputManager.Instance.GetKeyDown(KeyCodes.ShiftRight);
@@ -32,8 +33,25 @@ namespace Shoelace.Systems
 			switch (e.KeyCode)
 			{
 				case KeyCodes.N:
+					if (control)
+						_guiService.NewScene = true;
+					break;
 				case KeyCodes.O:
+					if (control)
+						_guiService.ShouldLoadScene = true;
+					break;
 				case KeyCodes.S:
+					if (control)
+					{
+						if (shift)
+						{
+							_guiService.ShouldSaveScene = true;
+						}
+						else
+						{
+							new YamlSerializer().Serialize($"assets/scenes/{_scene.Title}.boot", _scene);
+						}
+					}
 					break;
 				case KeyCodes.Q:
 					if (control)
