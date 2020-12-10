@@ -14,6 +14,7 @@ namespace Shoelace.Systems
 		private readonly Scene _scene = default;
 		private readonly GuiService _guiService = default;
 		private readonly EcsFilter<CameraComponent, TransformComponent> _cameras = default;
+		private bool duplicated;
 
 		// TODO: Consider making my own gizmo library
 		public void ProcessGizmos()
@@ -26,6 +27,11 @@ namespace Shoelace.Systems
 					ref var cam = ref _cameras.Get1(camera);
 					if (cam.Camera.Active)
 					{
+						if (duplicated && !InputManager.Instance.GetKeyDown(KeyCodes.AltLeft))
+						{
+							duplicated = false;
+						}
+
 						ImGuizmo.SetID(camera);
 						ImGuizmo.SetOrthographic(cam.Camera.ProjectionType == BootEngine.Renderer.Cameras.ProjectionType.Orthographic);
 						ImGuizmo.SetDrawlist(ImGui.GetWindowDrawList());
@@ -82,9 +88,11 @@ namespace Shoelace.Systems
 
 						if (ImGuizmo.IsOver() && ImGuizmo.IsUsing())
 						{
-							if (InputManager.Instance.GetKeyDown(KeyCodes.AltLeft))
+							if (InputManager.Instance.GetKeyDown(KeyCodes.AltLeft) && !duplicated)
 							{
 								// copy current entity
+								_guiService.SelectedEntity =_guiService.SelectedEntity.Copy();
+								duplicated = true;
 							}
 							float[] translation = new float[3];
 							float[] rotation = new float[3];
