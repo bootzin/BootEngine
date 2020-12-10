@@ -27,7 +27,7 @@ namespace Shoelace.Systems
 					ref var cam = ref _cameras.Get1(camera);
 					if (cam.Camera.Active)
 					{
-						if (duplicated && !InputManager.Instance.GetKeyDown(KeyCodes.AltLeft))
+						if (duplicated && (!InputManager.Instance.GetKeyDown(KeyCodes.AltLeft) || InputManager.Instance.GetMouseButtonUp(MouseButtonCodes.Left)))
 						{
 							duplicated = false;
 						}
@@ -92,6 +92,8 @@ namespace Shoelace.Systems
 							{
 								// copy current entity
 								_guiService.SelectedEntity =_guiService.SelectedEntity.Copy();
+								ref var tag = ref _guiService.SelectedEntity.Get<TagComponent>();
+								tag.Tag += " (Copy)";
 								duplicated = true;
 							}
 							float[] translation = new float[3];

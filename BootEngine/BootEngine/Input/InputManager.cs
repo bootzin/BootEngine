@@ -111,5 +111,15 @@ namespace BootEngine.Input
 				}
 			}
 		}
+
+		public virtual bool GetMouseButtonUp(MouseButtonCodes button)
+		{
+			for (int i = 0; i < snapshot.MouseEvents.Count; i++)
+			{
+				if ((int)snapshot.MouseEvents[i].MouseButton == (int)button && !snapshot.MouseEvents[i].Down)
+					return true;
+			}
+			return false;
+		}
 	}
 }
