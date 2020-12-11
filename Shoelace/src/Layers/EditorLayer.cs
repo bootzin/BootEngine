@@ -31,11 +31,11 @@ namespace Shoelace.Layers
 		private IntPtr renderTargetAddr;
 		private Framebuffer fb;
 		private bool dockspaceOpen = true;
-		private bool systemManagerEnabled = false;
 		private Vector2 lastSize = Vector2.Zero;
 		private readonly float[] _frametime = new float[100];
 		private SceneHierarchyPanel _sceneHierarchyPanel = new SceneHierarchyPanel();
 		private PropertiesPanel _propertiesPanel = new PropertiesPanel();
+		private bool runtimeActive;
 		private readonly GizmoSystem _guizmoSystem = new GizmoSystem();
 		private readonly FileDialog _fileDialog = new FileDialog();
 		private readonly GuiService _guiService = new GuiService();
@@ -64,25 +64,7 @@ namespace Shoelace.Layers
 			//});
 			////editorCam.AddComponent<TransformComponent>();
 
-			//var redQuad = ActiveScene.CreateEntity("Red Textured Quad");
-			//ref var sprite = ref redQuad.AddComponent<SpriteComponent>();
-			//redQuad.ReplaceComponent(new TransformComponent()
-			//{
-			//	Translation = new Vector3(.1f, .1f, -2.5f)
-			//});
-			//sprite.Color = ColorF.HoverRed;
-			//sprite.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", BootEngine.Utils.TextureUsage.Sampled);
-
-			//var pinkQuad = ActiveScene.CreateEntity("Pink Quad").AddComponent(new SpriteComponent(squareColor));
-			//ref var transform = ref pinkQuad.GetComponent<TransformComponent>();
-			//transform.Translation = new Vector3(0f, 0f, -3.5f);
-			//transform.Scale = new Vector3(1f, 1f, .5f);
-			//transform.Rotation = new Vector3(0,0, MathUtil.Deg2Rad(45));
-			//pinkQuad.AddComponent(new VelocityComponent()
-			//{
-			//	//RotationSpeed = new Vector3(0, 0, MathUtil.Deg2Rad(10))
-			//});
-
+			#region Rendering Framebuffer Setup
 			var currentPipeline = Renderer2D.Instance.PipelineDescrition;
 			fbTex = ResourceFactory.CreateTexture(TextureDescription.Texture2D(
 				(uint)Width, // Width
@@ -103,6 +85,7 @@ namespace Shoelace.Layers
 			fb = ResourceFactory.CreateFramebuffer(new FramebufferDescription(fbDepthTex, fbTex));
 			currentPipeline.Outputs = fb.OutputDescription;
 			Renderer2D.Instance.SetPipelineDescrition(currentPipeline, fb, true);
+			#endregion
 		}
 
 		public override void OnUpdate(float deltaSeconds)
@@ -131,6 +114,7 @@ namespace Shoelace.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
+			#region Dockspace Setup
 			var viewport = ImGui.GetMainViewport();
 			ImGui.SetNextWindowPos(viewport.Pos);
 			ImGui.SetNextWindowSize(viewport.Size);
@@ -146,11 +130,13 @@ namespace Shoelace.Layers
 
 			var style = ImGui.GetStyle();
 			Vector2 minWinSize = style.WindowMinSize;
-			style.WindowMinSize = new Vector2(300.0f, style.WindowMinSize.Y);
+			style.WindowMinSize = new Vector2(330.0f, style.WindowMinSize.Y);
 
-			ImGui.DockSpace(ImGui.GetID("MyDockspace"), Vector2.Zero);
+			ImGui.DockSpace(ImGui.GetID("MainDockspace"), Vector2.Zero);
 			style.WindowMinSize = minWinSize;
+			#endregion
 
+			#region File Dialogs
 			if (_fileDialog.ShowFileDialog(ref _guiService.ShouldLoadScene, out string loadPath, FileDialog.DialogType.Open, "*.boot"))
 			{
 				LoadScene(loadPath);
@@ -167,7 +153,9 @@ namespace Shoelace.Layers
 			{
 				LoadScene();
 			}
+			#endregion
 
+			#region MainMenuBar
 			if (ImGui.BeginMenuBar())
 			{
 				if (ImGui.BeginMenu("File"))
@@ -199,16 +187,23 @@ namespace Shoelace.Layers
 					ImGui.EndMenu();
 				}
 
-				if (ImGui.BeginMenu("Windows"))
+				// TODO: Implement a proper "play" button
+				if (ImGui.BeginMenu("Runtime"))
 				{
-					if (ImGui.MenuItem("System Manager"))
-						systemManagerEnabled = !systemManagerEnabled;
+					ImGui.Checkbox("", ref runtimeActive);
+					ImGui.SameLine();
+					if (ImGui.MenuItem("Enabled"))
+					{
+						runtimeActive = !runtimeActive;
+						ActiveScene.EnableRuntimeSystems(runtimeActive);
+					}
 					ImGui.EndMenu();
 				}
-
 				ImGui.EndMenuBar();
 			}
+			#endregion
 
+			#region Debug Data
 			ImGui.Begin("Stats");
 			ImGui.Text("Renderer Stats:");
 			ImGui.Text("Draw Calls: " + Renderer2D.Instance.Stats.DrawCalls.ToString());
@@ -224,10 +219,12 @@ namespace Shoelace.Layers
 			ImGui.Separator();
 
 			ImGui.End(); // Stats
+			#endregion
 
 			_sceneHierarchyPanel.OnGuiRender();
 			_propertiesPanel.OnGuiRender();
 
+			#region Scene Viewport
 			ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
 			ImGui.Begin("Viewport");
 			_guiService.ViewportFocused = ImGui.IsWindowFocused();
@@ -236,7 +233,7 @@ namespace Shoelace.Layers
 
 			var viewportPanelSize = ImGui.GetContentRegionAvail();
 			if (!GraphicsDevice.IsUvOriginTopLeft)
-				ImGui.Image(renderTargetAddr, viewportPanelSize, new Vector2(0,1), new Vector2(1,0));
+				ImGui.Image(renderTargetAddr, viewportPanelSize, new Vector2(0, 1), new Vector2(1, 0));
 			else
 				ImGui.Image(renderTargetAddr, viewportPanelSize);
 
@@ -249,18 +246,12 @@ namespace Shoelace.Layers
 					Height = (int)lastSize.Y
 				});
 			}
+			#endregion
 
 			_guizmoSystem.ProcessGizmos();
 
 			ImGui.End(); //Viewport
 			ImGui.PopStyleVar();
-
-			if (systemManagerEnabled)
-			{
-				//ImGui.Begin("System Manager");
-				//// TODO: Add system controls
-				//ImGui.End();
-			}
 
 			ImGui.End(); // Dockspace
 		}

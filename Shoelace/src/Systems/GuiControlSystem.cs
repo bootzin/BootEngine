@@ -56,14 +56,16 @@ namespace Shoelace.Systems
 				case KeyCodes.Q:
 					if (control)
 						_scene.CreateEmptyEntity().AddComponent<EcsWindowCloseEvent>();
+					else
+						_guiService.GizmoType = null;
 					break;
-				case KeyCodes.F1:
+				case KeyCodes.W:
 					_guiService.GizmoType = ImGuiNET.OPERATION.TRANSLATE;
 					break;
-				case KeyCodes.F2:
+				case KeyCodes.E:
 					_guiService.GizmoType = ImGuiNET.OPERATION.SCALE;
 					break;
-				case KeyCodes.F3:
+				case KeyCodes.R:
 					_guiService.GizmoType = ImGuiNET.OPERATION.ROTATE;
 					break;
 			}

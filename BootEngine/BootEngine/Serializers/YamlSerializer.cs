@@ -110,7 +110,7 @@ namespace BootEngine.Serializers
 				e.Emit(new Scalar("Entities"));
 				e.Emit(new SequenceStart(null, null, false, SequenceStyle.Block));
 				{
-					var taggedEntities = scene.World.GetFilter(typeof(EcsFilter<TagComponent>));
+					var taggedEntities = scene.GetFilter(typeof(EcsFilter<TagComponent>));
 					foreach (var entity in taggedEntities)
 					{
 						Serialize(e, new Entity(taggedEntities.GetEntity(entity)));

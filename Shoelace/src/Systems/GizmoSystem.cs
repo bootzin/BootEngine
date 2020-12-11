@@ -25,7 +25,7 @@ namespace Shoelace.Systems
 				foreach (var camera in _cameras)
 				{
 					ref var cam = ref _cameras.Get1(camera);
-					if (cam.Camera.Active)
+					if (cam.Camera.Active && _guiService.GizmoType.HasValue)
 					{
 						if (duplicated && (!InputManager.Instance.GetKeyDown(KeyCodes.AltLeft) || InputManager.Instance.GetMouseButtonUp(MouseButtonCodes.Left)))
 						{
@@ -82,9 +82,9 @@ namespace Shoelace.Systems
 						float[] deltaTransform = new float[16];
 
 						if (snap)
-							ImGuizmo.Manipulate(ref cameraView[0], ref cameraProj[0], _guiService.GizmoType, MODE.LOCAL, ref transform[0], ref deltaTransform[0], ref snapValues[0]);
+							ImGuizmo.Manipulate(ref cameraView[0], ref cameraProj[0], _guiService.GizmoType.Value, MODE.LOCAL, ref transform[0], ref deltaTransform[0], ref snapValues[0]);
 						else
-							ImGuizmo.Manipulate(ref cameraView[0], ref cameraProj[0], _guiService.GizmoType, MODE.LOCAL, ref transform[0], ref deltaTransform[0]);
+							ImGuizmo.Manipulate(ref cameraView[0], ref cameraProj[0], _guiService.GizmoType.Value, MODE.LOCAL, ref transform[0], ref deltaTransform[0]);
 
 						if (ImGuizmo.IsOver() && ImGuizmo.IsUsing())
 						{

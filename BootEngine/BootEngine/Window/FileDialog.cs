@@ -40,7 +40,7 @@ namespace BootEngine.Window
 				ImGui.SetNextWindowSize(windowSize, ImGuiCond.Appearing);
 				var mainViewport = ImGui.GetMainViewport();
 				ImGui.SetNextWindowPos(mainViewport.Pos + mainViewport.Size / 2f - windowSize / 2f, ImGuiCond.Appearing);
-				ImGui.Begin("Select a file", ref isOpen, ImGuiWindowFlags.NoCollapse);
+				ImGui.Begin("Select a file", ref isOpen, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking);
 
 				var curDirInfo = new DirectoryInfo(curPath);
 				var directories = curDirInfo.GetDirectories();

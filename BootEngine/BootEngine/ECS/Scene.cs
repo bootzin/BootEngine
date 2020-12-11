@@ -10,10 +10,10 @@ namespace BootEngine.ECS
 {
 	public sealed class Scene : IDisposable
 	{
-		internal readonly EcsWorld World = new EcsWorld();
-		internal readonly EcsSystems Systems;
+		private readonly EcsWorld World = new EcsWorld();
+		private readonly EcsSystems Systems;
+		private readonly EcsSystems RuntimeSystems;
 
-		public EcsSystems RuntimeSystems { get; }
 		public string Title { get; set; }
 
 		public Scene()
@@ -57,6 +57,7 @@ namespace BootEngine.ECS
 			return e;
 		}
 
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public void Update() => Systems.Run();
 
 		public Scene AddSystem(IEcsSystem sys, string name = null)
@@ -88,14 +89,11 @@ namespace BootEngine.ECS
 			}
 			Systems.Inject(Application.TimeService);
 			Systems.Inject(this);
-			// TODO: disable runtime systems when runtime is implemented
-			foreach (var sys in RuntimeSystems.GetRunSystems().Items)
-			{
-				if (sys != null)
-					sys.Active = true;
-			}
+			EnableRuntimeSystems(false);
 			Systems.Init();
 		}
+
+		public void EnableRuntimeSystems(bool enabled) => Systems.SetRunSystemState(Systems.GetNamedRunSystem("Runtime Systems"), enabled);
 
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public EcsFilter GetFilter(Type filterType) => World.GetFilter(filterType);

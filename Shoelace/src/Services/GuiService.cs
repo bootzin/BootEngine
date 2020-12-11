@@ -5,7 +5,7 @@ namespace Shoelace.Services
 {
 	internal sealed class GuiService
 	{
-		internal OPERATION GizmoType { get; set; }
+		internal OPERATION? GizmoType { get; set; } = OPERATION.TRANSLATE;
 		internal bool ViewportHovered { get; set; }
 		internal bool BlockEvents { get; set; }
 		internal bool ViewportFocused { get; set; }

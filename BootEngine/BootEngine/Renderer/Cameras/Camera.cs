@@ -1,4 +1,5 @@
 ﻿using BootEngine.Utils;
+using BootEngine.Utils.ProfilingTools;
 using System.Numerics;
 
 namespace BootEngine.Renderer.Cameras
@@ -120,6 +121,26 @@ namespace BootEngine.Renderer.Cameras
 			{
 				projectionMatrix = Matrix4x4.CreatePerspectiveFieldOfView(PerspectiveFov, aspectRatio, PerspectiveNear, PerspectiveFar);
 			}
+			else
+			{
+#if DEBUG
+				using Profiler fullProfiler = new Profiler(GetType());
+#endif
+				float left = -OrthoSize * aspectRatio * ZoomLevel;
+				float right = OrthoSize * aspectRatio * ZoomLevel;
+				float bottom = -OrthoSize * ZoomLevel;
+				float top = OrthoSize * ZoomLevel;
+
+				if (useReverseDepth)
+				{
+					projectionMatrix = Matrix4x4.CreateOrthographicOffCenter(left, right, bottom, top, OrthoFar, OrthoNear);
+				}
+				else
+				{
+					projectionMatrix = Matrix4x4.CreateOrthographicOffCenter(left, right, bottom, top, OrthoNear, OrthoFar);
+				}
+			}
+
 			if (SwapYAxis)
 			{
 				projectionMatrix *= new Matrix4x4(
