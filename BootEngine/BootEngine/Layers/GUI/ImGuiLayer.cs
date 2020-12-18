@@ -10,7 +10,7 @@ namespace BootEngine.Layers.GUI
 		private GraphicsDevice gd;
 		private CommandList cl;
 		internal static ImGuiController Controller { get; private set; }
-		internal static bool ShouldClearBuffers { get; set; }
+		public static bool ShouldClearBuffers { get; set; }
 		#endregion
 
 		#region Constructor

@@ -6,21 +6,13 @@ namespace BootEngine.ECS.Components
 	{
 		private Vector3? scale;
 
-		public Vector3 Translation { get; set; }
-
 		// angles in radians
 		public Vector3 Rotation { get; set; }
+		public Vector3 Translation { get; set; }
 		public Vector3 Scale
 		{
 			get { return scale ?? Vector3.One; }
 			set { scale = value; }
-		}
-
-		public TransformComponent(Vector3 position)
-		{
-			Translation = position;
-			Rotation = Vector3.Zero;
-			scale = Vector3.One;
 		}
 
 		public Matrix4x4 Transform

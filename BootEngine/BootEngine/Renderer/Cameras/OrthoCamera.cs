@@ -2,7 +2,6 @@
 {
 	public sealed class OrthoCamera : Camera
 	{
-		public OrthoCamera() { }
 		public OrthoCamera(float size, float nearClip, float farClip, int width, int height)
 		{
 			SetOrthographic(size, nearClip, farClip);

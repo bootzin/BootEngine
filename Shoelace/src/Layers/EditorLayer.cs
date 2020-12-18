@@ -26,10 +26,7 @@ namespace Shoelace.Layers
 	public sealed class EditorLayer : LayerBase
 	{
 		#region Properties
-		private Vector4 squareColor = ColorF.Pink;
-		private Texture fbTex, fbDepthTex;
 		private IntPtr renderTargetAddr;
-		private Framebuffer fb;
 		private bool dockspaceOpen = true;
 		private Vector2 lastSize = Vector2.Zero;
 		private readonly float[] _frametime = new float[100];
@@ -50,42 +47,20 @@ namespace Shoelace.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			LoadScene();
-
 			Styles.SetDarkTheme();
 
-			//TODO: Main Camera should be a "special" entity
-			//var editorCam = ActiveScene.CreateEntity("Main Camera");
-			//var camera = new OrthoCamera(1, -1, 1, Width, Height);
-			//camera.SetPerspective(MathUtil.Deg2Rad(70), .0001f, 1000f);
-			//editorCam.AddComponent(new CameraComponent()
-			//{
-			//	Camera = camera
-			//});
-			////editorCam.AddComponent<TransformComponent>();
+			EditorData.LoadStandardShaders();
 
-			#region Rendering Framebuffer Setup
-			var currentPipeline = Renderer2D.Instance.PipelineDescrition;
-			fbTex = ResourceFactory.CreateTexture(TextureDescription.Texture2D(
-				(uint)Width, // Width
-				(uint)Height, // Height
-				1,  // Miplevel
-				1,  // ArrayLayers
-				PixelFormat.R8_G8_B8_A8_UNorm,
-				Veldrid.TextureUsage.RenderTarget | Veldrid.TextureUsage.Sampled));
-			renderTargetAddr = ImGuiLayer.GetOrCreateImGuiBinding(ResourceFactory, fbTex);
+			LoadScene();
 
-			fbDepthTex = ResourceFactory.CreateTexture(TextureDescription.Texture2D(
-				(uint)Width, // Width
-				(uint)Height, // Height
-				1,  // Miplevel
-				1,  // ArrayLayers
-				PixelFormat.R16_UNorm,
-				Veldrid.TextureUsage.DepthStencil));
-			fb = ResourceFactory.CreateFramebuffer(new FramebufferDescription(fbDepthTex, fbTex));
-			currentPipeline.Outputs = fb.OutputDescription;
-			Renderer2D.Instance.SetPipelineDescrition(currentPipeline, fb, true);
-			#endregion
+			var e = ActiveScene.CreateEntity("White");
+			e.AddComponent(new SpriteRendererComponent(ColorF.White, new Material("Standard2D"), RenderData2D.QuadData));
+			ref var tc = ref e.GetComponent<TransformComponent>();
+			tc.Rotation = new Vector3(.5f);
+			tc.Scale = new Vector3(.5f);
+			tc.Translation = new Vector3(-.5f);
+			var e2 = ActiveScene.CreateEntity("Red");
+			e2.AddComponent(new SpriteRendererComponent(ColorF.Red, new Material("Standard3D"), RenderData2D.QuadData));
 		}
 
 		public override void OnUpdate(float deltaSeconds)
@@ -277,6 +252,8 @@ namespace Shoelace.Layers
 				.Inject(_guiService)
 				.Init();
 
+			renderTargetAddr = EditorData.SetupEditorCamera(Width, Height, ActiveScene);
+
 			if (path != null)
 				ActiveScene = new SceneDeserializer().Deserialize(path, ActiveScene);
 
@@ -294,10 +271,8 @@ namespace Shoelace.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			fb.Dispose();
-			fbTex.Dispose();
-			fbDepthTex.Dispose();
 			Renderer2D.Instance.Dispose();
+			EditorData.FreeResources();
 		}
 	}
 }

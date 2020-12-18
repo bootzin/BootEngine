@@ -10,7 +10,7 @@ namespace Sandbox.Systems
 {
 	public class QuadUpdateSystem : IEcsRunSystem, IEcsInitSystem
 	{
-		private readonly EcsFilter<TransformComponent, TagComponent, SpriteComponent> _quads = default;
+		private readonly EcsFilter<TransformComponent, TagComponent, SpriteRendererComponent> _quads = default;
 		private readonly QuadInfoService _quadInfoService = default;
 		private readonly Scene _scene = default;
 		private int instanceCount = 10;
@@ -50,10 +50,9 @@ namespace Sandbox.Systems
 			for (; instanceCount < _quadInfoService.QuadCount; instanceCount++)
 			{
 				var ent = _scene.CreateEntity();
-				ent.AddComponent(new SpriteComponent()
+				ent.AddComponent(new SpriteRendererComponent()
 				{
 					Color = _quadInfoService.SquareColor,
-					Texture = AssetManager.LoadTexture2D("assets/textures/sampleDog.png", TextureUsage.Sampled)
 				});
 				ref var transform = ref ent.GetComponent<TransformComponent>();
 				transform.Scale *= .1f;

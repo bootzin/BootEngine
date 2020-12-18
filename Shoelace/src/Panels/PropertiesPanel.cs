@@ -1,4 +1,5 @@
 ﻿using BootEngine.ECS.Components;
+using BootEngine.Renderer;
 using BootEngine.Renderer.Cameras;
 using BootEngine.Utils;
 using ImGuiNET;
@@ -25,15 +26,19 @@ namespace Shoelace.Panels
 					{
 						if (!_guiService.SelectedEntity.Has<TransformComponent>() && ImGui.MenuItem("Transform"))
 							_guiService.SelectedEntity.Get<TransformComponent>();
-						if (!_guiService.SelectedEntity.Has<SpriteComponent>() && ImGui.MenuItem("Sprite"))
-							_guiService.SelectedEntity.Get<SpriteComponent>();
+						if (!_guiService.SelectedEntity.Has<SpriteRendererComponent>() && ImGui.MenuItem("Sprite Renderer"))
+						{
+							ref var sc = ref _guiService.SelectedEntity.Get<SpriteRendererComponent>();
+							sc.Material = new Material("Standard2D");
+							sc.SpriteData = RenderData2D.QuadData;
+						}
 						if (!_guiService.SelectedEntity.Has<VelocityComponent>() && ImGui.MenuItem("Velocity"))
 							_guiService.SelectedEntity.Get<VelocityComponent>();
 						if (!_guiService.SelectedEntity.Has<CameraComponent>() && ImGui.MenuItem("Camera"))
 						{
 							CameraComponent cam = new CameraComponent()
 							{
-								Camera = new OrthoCamera()
+								Camera = new Camera()
 							};
 							_guiService.SelectedEntity.Replace(in cam);
 						}
@@ -79,17 +84,17 @@ namespace Shoelace.Panels
 					entity.Del<TransformComponent>();
 			}
 
-			if (entity.Has<SpriteComponent>())
+			if (entity.Has<SpriteRendererComponent>())
 			{
 				ImGui.Separator();
 				bool open = DrawComponentBase("Sprite Component", out bool removeComponent);
 				if (open)
 				{
-					DrawSpriteComponent(ref entity.Get<SpriteComponent>());
+					DrawSpriteComponent(ref entity.Get<SpriteRendererComponent>());
 					ImGui.TreePop();
 				}
 				if (removeComponent)
-					entity.Del<SpriteComponent>();
+					entity.Del<SpriteRendererComponent>();
 			}
 
 			if (entity.Has<VelocityComponent>())
@@ -106,9 +111,9 @@ namespace Shoelace.Panels
 			}
 		}
 
-		private void DrawSpriteComponent(ref SpriteComponent spriteComponent)
+		private void DrawSpriteComponent(ref SpriteRendererComponent spriteComponent)
 		{
-			string texName = string.IsNullOrWhiteSpace(spriteComponent.Texture?.Name) ? "None" : spriteComponent.Texture?.Name;
+			string texName = string.IsNullOrWhiteSpace(spriteComponent.SpriteData.Texture?.Name) ? "None" : spriteComponent.SpriteData.Texture?.Name;
 			ImGui.Text("Texture: " + texName);
 
 			Vector4 color = spriteComponent.Color;

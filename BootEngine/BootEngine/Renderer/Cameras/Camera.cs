@@ -1,27 +1,40 @@
 ﻿using BootEngine.Utils;
 using BootEngine.Utils.ProfilingTools;
+using System;
 using System.Numerics;
+using Veldrid;
 
 namespace BootEngine.Renderer.Cameras
 {
-	public class Camera
+	public class Camera : IDisposable
 	{
+		protected float aspectRatio;
 		protected Matrix4x4 projectionMatrix;
+		protected readonly bool useReverseDepth = Application.App.Window.GraphicsDevice.IsDepthRangeZeroToOne;
+		protected readonly GraphicsDevice _gd = Application.App.Window.GraphicsDevice;
+
+		public readonly bool SwapYAxis = Application.App.Window.GraphicsDevice.IsClipSpaceYInverted;
+		public ref readonly Matrix4x4 ProjectionMatrix => ref projectionMatrix;
+
 		public bool Active { get; set; } = true;
+		#region RenderingData
+		public BlendStateDescription BlendState { get; set; }
+		public DepthStencilStateDescription DepthStencilState { get; set; }
+		public RasterizerStateDescription RasterizerState { get; set; }
+		public Framebuffer RenderTarget { get; set; }
+		#endregion
+
+		#region Ortho/Perspective properties
 		public ProjectionType ProjectionType
 		{
 			get { return projectionType; }
 			set { projectionType = value; RecalculateProjection(); }
 		}
-		public ref readonly Matrix4x4 ProjectionMatrix => ref projectionMatrix;
 		public float ZoomLevel
 		{
 			get { return zoomLevel; }
 			set { zoomLevel = value; RecalculateProjection(); }
 		}
-
-		protected float aspectRatio;
-		private float zoomLevel = 1f;
 
 		public float PerspectiveFov
 		{
@@ -79,16 +92,15 @@ namespace BootEngine.Renderer.Cameras
 			}
 		}
 
-		protected readonly bool useReverseDepth = Application.App.Window.GraphicsDevice.IsDepthRangeZeroToOne;
-		public readonly bool SwapYAxis = Application.App.Window.GraphicsDevice.IsClipSpaceYInverted;
-
 		private float perspectiveFov = MathUtil.Deg2Rad(45);
 		private float perspectiveNear = 0.01f;
 		private float perspectiveFar = 1000f;
 		private float orthoSize = 1f;
 		private float orthoFar = 1;
 		private float orthoNear = -1;
+		private float zoomLevel = 1f;
 		private ProjectionType projectionType;
+		#endregion
 
 		public void ResizeViewport(int width, int height)
 		{
@@ -114,7 +126,6 @@ namespace BootEngine.Renderer.Cameras
 			RecalculateProjection();
 		}
 
-		// TODO: implement perspective camera
 		protected virtual void RecalculateProjection()
 		{
 			if (ProjectionType == ProjectionType.Perspective)
@@ -149,6 +160,11 @@ namespace BootEngine.Renderer.Cameras
 					0, 0, 1, 0,
 					0, 0, 0, 1);
 			}
+		}
+
+		public void Dispose()
+		{
+			RenderTarget.Dispose();
 		}
 	}
 }

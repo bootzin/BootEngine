@@ -54,12 +54,12 @@ namespace BootEngine.Serializers
 
 					if (dataDict.Contains("SpriteComponent"))
 					{
-						ref var sc = ref entt.AddComponent<SpriteComponent>();
+						ref var sc = ref entt.AddComponent<SpriteRendererComponent>();
 						sc.Color = AsVec4(entity["SpriteComponent"]["Color"]);
 						if (((IDictionary)entity["SpriteComponent"]).Contains("Texture"))
 						{
 							var tex = entity["SpriteComponent"]["Texture"];
-							sc.Texture = AssetsManager.AssetManager.LoadTexture2D(tex[0], Enum.Parse<TextureUsage>(tex[1]));
+							//sc.Texture = AssetsManager.AssetManager.LoadTexture2D(tex[0], Enum.Parse<TextureUsage>(tex[1]));
 						}
 					}
 

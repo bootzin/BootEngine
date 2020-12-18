@@ -40,7 +40,6 @@ namespace BootEngine.ECS
 
 		public Entity CreateEntity(string name = null)
 		{
-			Logging.Logger.Assert(Systems.GetAllSystems().Count > 0, "A system must be added before creating entities!");
 			Entity e = new Entity(World.NewEntity());
 			e.AddComponent<TransformComponent>();
 			ref var tag = ref e.AddComponent<TagComponent>();
@@ -50,7 +49,6 @@ namespace BootEngine.ECS
 
 		public Entity CreateEntity(Entity entity, string name = null)
 		{
-			Logging.Logger.Assert(Systems.GetAllSystems().Count > 0, "A system must be added before creating entities!");
 			Entity e = new Entity(entity);
 			ref var tag = ref e.GetComponent<TagComponent>();
 			tag.Tag = string.IsNullOrEmpty(name) ? "Copy of " + nameof(entity) : name;
@@ -82,7 +80,7 @@ namespace BootEngine.ECS
 		{
 			Systems
 				.Add(new CameraSystem(), "Camera System")
-				.Add(new RenderSystem(), "Rendering System");
+				.Add(new Render2DSystem(), "Rendering System");
 			for (int i = 0; i < injects.Length; i++)
 			{
 				Systems.Inject(injects[i]);

@@ -42,7 +42,9 @@ namespace Sandbox.Layers
 				.Init();
 
 			var cam = ActiveScene.CreateEntity("Main Camera");
-			var camera = new OrthoCamera(1, -1, 1, Width, Height);
+			var camera = new Camera();
+			camera.SetOrthographic(1, -1, 1);
+			camera.ResizeViewport(Width, Height);
 			cam.AddComponent(new CameraComponent()
 			{
 				Camera = camera
@@ -50,7 +52,7 @@ namespace Sandbox.Layers
 			cam.AddComponent<VelocityComponent>();
 
 			var quad = ActiveScene.CreateEntity("Quad");
-			quad.AddComponent(new SpriteComponent()
+			quad.AddComponent(new SpriteRendererComponent()
 			{
 				Color = _quadData.SquareColor
 			});
@@ -68,16 +70,16 @@ namespace Sandbox.Layers
 			transform2.Translation = new Vector3(0, 0, .4f);
 			transform2.Scale = new Vector3(.25f, .25f, 1);
 			transform2.Rotation = Vector3.Zero;
-			ref var sprite = ref quad2.GetComponent<SpriteComponent>();
+			ref var sprite = ref quad2.GetComponent<SpriteRendererComponent>();
 			sprite.Color = ColorF.White;
-			sprite.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
+			//sprite.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
 
 			var quad3 = ActiveScene.CreateEntity(quad, "Quad2");
 			ref var transform3 = ref quad3.GetComponent<TransformComponent>();
 			transform3.Translation = new Vector3(1, 0, .5f);
 			transform3.Scale = Vector3.One;
 			transform3.Rotation = new Vector3(0, 0, 45f);
-			ref var sprite2 = ref quad3.GetComponent<SpriteComponent>();
+			ref var sprite2 = ref quad3.GetComponent<SpriteRendererComponent>();
 			sprite2.Color = ColorF.Cyan;
 
 			var quad4 = ActiveScene.CreateEntity(quad);
@@ -85,9 +87,9 @@ namespace Sandbox.Layers
 			transform4.Translation = new Vector3(1, 0, .5f);
 			transform4.Scale = Vector3.One * .1f;
 			transform4.Rotation = Vector3.Zero;
-			ref var sprite3 = ref quad4.GetComponent<SpriteComponent>();
+			ref var sprite3 = ref quad4.GetComponent<SpriteRendererComponent>();
 			sprite3.Color = _quadData.SquareColor;
-			sprite3.Texture = AssetManager.LoadTexture2D("assets/textures/sampleDog.png", TextureUsage.Sampled);
+			//sprite3.Texture = AssetManager.LoadTexture2D("assets/textures/sampleDog.png", TextureUsage.Sampled);
 
 			for (int i = 0; i < _quadData.QuadCount; i++)
 			{

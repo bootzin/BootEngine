@@ -182,23 +182,23 @@ namespace BootEngine.Serializers
 					e.Emit(new MappingEnd());
 				}
 
-				if (entity.HasComponent<SpriteComponent>())
+				if (entity.HasComponent<SpriteRendererComponent>())
 				{
 					e.Emit(new Scalar("SpriteComponent"));
 					e.Emit(new MappingStart());
 					{
-						ref var sc = ref entity.GetComponent<SpriteComponent>();
+						ref var sc = ref entity.GetComponent<SpriteRendererComponent>();
 						e.Emit(new Scalar("Color"));
 						Serialize(e, sc.Color.ToVector4());
 
-						if (sc.Texture != null)
-						{
-							e.Emit(new Scalar("Texture"));
-							e.Emit(new SequenceStart(null, null, false, SequenceStyle.Flow));
-							e.Emit(new Scalar(sc.Texture.Name));
-							e.Emit(new Scalar(sc.Texture.Usage.ToString()));
-							e.Emit(new SequenceEnd());
-						}
+						//if (sc.Texture != null)
+						//{
+						//	e.Emit(new Scalar("Texture"));
+						//	e.Emit(new SequenceStart(null, null, false, SequenceStyle.Flow));
+						//	e.Emit(new Scalar(sc.Texture.Name));
+						//	e.Emit(new Scalar(sc.Texture.Usage.ToString()));
+						//	e.Emit(new SequenceEnd());
+						//}
 					}
 					e.Emit(new MappingEnd());
 				}

@@ -33,7 +33,22 @@ namespace BootEngine.AssetsManager
 			return null;
 		}
 
-		public static void AddShader(Shader shader)
+		/// <summary>
+		/// Get vertex and fragment shader with given setName
+		/// </summary>
+		/// <param name="setName">Name of the set</param>
+		/// <returns>An array containing both shaders or null if not found</returns>
+		public static Shader[] GetShaderSet(string setName)
+		{
+#if DEBUG
+			using Profiler fullProfiler = new Profiler(typeof(ResourceCache));
+#endif
+			if (ShaderCache.TryGetValue(setName + "-Vertex", out Shader shader1) && ShaderCache.TryGetValue(setName + "-Fragment", out Shader shader2))
+				return new Shader[] { shader1, shader2 };
+			return null;
+		}
+
+		private static void AddShader(Shader shader)
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(typeof(ResourceCache));

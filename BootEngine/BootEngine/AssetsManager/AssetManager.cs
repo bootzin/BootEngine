@@ -108,11 +108,23 @@ namespace BootEngine.AssetsManager
 		/// <returns>An array containing both the vertex and the fragment shader compiled.</returns>
 		public static Shader[] GenerateShadersFromFile(string path)
 		{
+			return GenerateShadersFromFile(path, ExtractNameFromPath(path));
+		}
+
+		/// <summary>
+		/// Loads both the vertex and the fragment shader and generates necessary
+		/// files for other backends using Veldrid.SPIRV
+		/// </summary>
+		/// <param name="path">The path to the file in which the shaders are.</param>
+		/// <param name="setName">Name to be used in shader cache.</param>
+		/// <returns>An array containing both the vertex and the fragment shader compiled.</returns>
+		public static Shader[] GenerateShadersFromFile(string path, string setName)
+		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(typeof(AssetManager));
 #endif
 			(string vs, string fs) = ShaderHelper.LoadShaders(path);
-			return GenerateShaders(ExtractNameFromPath(path), vs, fs);
+			return GenerateShaders(setName, vs, fs);
 		}
 
 		/// <summary>
