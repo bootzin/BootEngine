@@ -1,14 +1,12 @@
-﻿using BootEngine.AssetsManager;
-using BootEngine.ECS.Components;
+﻿using BootEngine.ECS.Components;
 using BootEngine.ECS.Components.Events;
 using BootEngine.ECS.Systems;
 using BootEngine.Layers;
-using BootEngine.Layers.GUI;
 using BootEngine.Renderer;
-using BootEngine.Renderer.Cameras;
 using BootEngine.Serializers;
 using BootEngine.Utils;
 using BootEngine.Utils.ProfilingTools;
+using BootEngine.Window;
 using ImGuiNET;
 using Shoelace.Panels;
 using Shoelace.Services;
@@ -17,9 +15,6 @@ using System;
 using System.Linq;
 using System.Numerics;
 using Veldrid;
-using BootEngine.Window;
-using BootEngine.Input;
-using BootEngine.Events;
 
 namespace Shoelace.Layers
 {
@@ -30,8 +25,8 @@ namespace Shoelace.Layers
 		private bool dockspaceOpen = true;
 		private Vector2 lastSize = Vector2.Zero;
 		private readonly float[] _frametime = new float[100];
-		private SceneHierarchyPanel _sceneHierarchyPanel = new SceneHierarchyPanel();
-		private PropertiesPanel _propertiesPanel = new PropertiesPanel();
+		private SceneHierarchyPanel sceneHierarchyPanel = new SceneHierarchyPanel();
+		private PropertiesPanel propertiesPanel = new PropertiesPanel();
 		private bool runtimeActive;
 		private readonly GizmoSystem _guizmoSystem = new GizmoSystem();
 		private readonly FileDialog _fileDialog = new FileDialog();
@@ -60,7 +55,7 @@ namespace Shoelace.Layers
 			tc.Scale = new Vector3(.5f);
 			tc.Translation = new Vector3(-.5f);
 			var e2 = ActiveScene.CreateEntity("Red");
-			e2.AddComponent(new SpriteRendererComponent(ColorF.Red, new Material("Standard3D"), RenderData2D.QuadData));
+			e2.AddComponent(new SpriteRendererComponent(ColorF.Red, new Material("Standard2D"), RenderData2D.QuadData));
 		}
 
 		public override void OnUpdate(float deltaSeconds)
@@ -196,8 +191,8 @@ namespace Shoelace.Layers
 			ImGui.End(); // Stats
 			#endregion
 
-			_sceneHierarchyPanel.OnGuiRender();
-			_propertiesPanel.OnGuiRender();
+			sceneHierarchyPanel.OnGuiRender();
+			propertiesPanel.OnGuiRender();
 
 			#region Scene Viewport
 			ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
@@ -239,14 +234,14 @@ namespace Shoelace.Layers
 		private void LoadScene(string path = null)
 		{
 			ActiveScene = new BootEngine.ECS.Scene();
-			_sceneHierarchyPanel = new SceneHierarchyPanel();
-			_propertiesPanel = new PropertiesPanel();
+			sceneHierarchyPanel = new SceneHierarchyPanel();
+			propertiesPanel = new PropertiesPanel();
 			_guiService.SelectedEntity = default;
 			ActiveScene
 				.AddSystem(new GuiControlSystem(), "GUI Control System")
 				.AddSystem(new EditorCameraSystem(), "Editor Camera")
-				.AddSystem(_sceneHierarchyPanel)
-				.AddSystem(_propertiesPanel)
+				.AddSystem(sceneHierarchyPanel)
+				.AddSystem(propertiesPanel)
 				.AddSystem(_guizmoSystem)
 				.AddRuntimeSystem(new VelocitySystem(), "Velocity System")
 				.Inject(_guiService)

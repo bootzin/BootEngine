@@ -116,7 +116,7 @@ namespace BootEngine.Renderer
 		public void QueueQuad(Vector3 position, Vector3 scale, Vector3 rotation, Vector4 color, RenderData2D spriteData, Material material)
 		{
 			var info = new InstanceVertex2D(position, scale, rotation, color * material.Color);
-			int hash = spriteData.GetHashCode();
+			int hash = spriteData.GetHashCode() + material.ShaderSetName.GetHashCode();
 			if (!DataPerObject.ContainsKey(hash))
 			{
 				DataPerObject.Add(hash, new InstancingTextureData()
@@ -128,8 +128,8 @@ namespace BootEngine.Renderer
 						_gd.LinearSampler)),
 					Render2DData = spriteData,
 					InstancesVertex2DBuffer = _gd.ResourceFactory.CreateBuffer(new BufferDescription(InstanceVertex2D.SizeInBytes * MAX_QUADS, BufferUsage.VertexBuffer)),
+					ShaderSetName = material.ShaderSetName,
 					Count = 1,
-					IndexStart = DataPerObject.Count > 0 ? DataPerObject.Values.Max(data => data.LastInstanceIndex) : 0
 				});
 			}
 			else
@@ -138,7 +138,7 @@ namespace BootEngine.Renderer
 			}
 
 			InstanceCount++;
-			DataPerObject[hash].InstanceList.Insert((int)DataPerObject[hash].LastInstanceIndex - 1, info);
+			DataPerObject[hash].InstanceList.Insert((int)DataPerObject[hash].Count - 1, info);
 			DataPerObject[hash].ShouldFlush = true;
 		}
 		#endregion
@@ -160,7 +160,7 @@ namespace BootEngine.Renderer
 		}
 
 		#region Renderer
-		private void CheckPipelines(ShaderData shaderData)
+		private void CheckPipelines(string shaderName, ShaderData shaderData)
 		{
 			var pd = new GraphicsPipelineDescription();
 			pd.BlendState = activeCamera.BlendState;
@@ -172,23 +172,23 @@ namespace BootEngine.Renderer
 			pd.ShaderSet = new ShaderSetDescription(vertexLayoutDescriptions, shaderData.Shaders);
 			pd.Outputs = activeCamera.RenderTarget.OutputDescription;
 
-			PipelineList.TryAdd(pd.GetHashCode(), _gd.ResourceFactory.CreateGraphicsPipeline(pd));
+			if (PipelineList.TryAdd(pd.GetHashCode(), _gd.ResourceFactory.CreateGraphicsPipeline(ref pd)))
+			{
+				PipelineList[pd.GetHashCode()].Name = shaderName;
+			}
 		}
 
 		public void Render()
 		{
-			foreach (var shaderData in ShaderData.Values)
+			foreach (var shaderData in ShaderData)
 			{
-				CheckPipelines(shaderData);
+				CheckPipelines(shaderData.Key, shaderData.Value);
 			}
 
-			foreach (Pipeline pipeline in PipelineList.Values)
-			{
-				Render(_commandList, pipeline);
-			}
+			Render(_commandList, PipelineList);
 		}
 
-		protected override void BeginRender(CommandList cl, Pipeline pipeline)
+		protected override void BeginRender(CommandList cl)
 		{
 			cl.Begin();
 			cl.SetFramebuffer(activeCamera.RenderTarget);
@@ -198,30 +198,36 @@ namespace BootEngine.Renderer
 				cl.ClearColorTarget(0, Utils.ColorF.DarkGrey);
 				cl.ClearDepthStencil(1f);
 			}
-			cl.SetPipeline(pipeline);
 		}
 
-		protected override void InnerRender(CommandList cl)
+		protected override void InnerRender(CommandList cl, Pipeline pipeline)
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			uint instanceStart = 0;
-			foreach (var data in DataPerObject)
-			{
-				cl.SetIndexBuffer(data.Value.Render2DData.IndexBuffer, IndexFormat.UInt16);
-				cl.SetVertexBuffer(0, data.Value.Render2DData.VertexBuffer);
-				if (data.Value.ShouldFlush)
-					Flush(data.Value);
-				cl.SetVertexBuffer(1, data.Value.InstancesVertex2DBuffer);
+			string pipelineName = pipeline.Name;
+			var renderables = DataPerObject.Values.Where(data => data.ShaderSetName == pipelineName);
+			if (!renderables.Any())
+				return;
 
-				uint instancePerTexCount = data.Value.Count;
+			shouldClearBuffers = false;
+			cl.SetPipeline(pipeline);
+			uint instanceStart = 0;
+			foreach (InstancingTextureData data in renderables)
+			{
+				cl.SetIndexBuffer(data.Render2DData.IndexBuffer, IndexFormat.UInt16);
+				cl.SetVertexBuffer(0, data.Render2DData.VertexBuffer);
+				if (data.ShouldFlush)
+					Flush(data);
+				cl.SetVertexBuffer(1, data.InstancesVertex2DBuffer);
+
+				uint instancePerTexCount = data.Count;
 				if (instancePerTexCount > 0)
 				{
 					Stats.DrawCalls++;
-					cl.SetGraphicsResourceSet(0, data.Value.ResourceSet);
+					cl.SetGraphicsResourceSet(0, data.ResourceSet);
 					cl.DrawIndexed(
-						indexCount: (uint)data.Value.Render2DData.Indices.Length,
+						indexCount: (uint)data.Render2DData.Indices.Length,
 						instanceCount: instancePerTexCount,
 						indexStart: 0,
 						vertexOffset: 0,
@@ -316,10 +322,9 @@ namespace BootEngine.Renderer
 			public DeviceBuffer InstancesVertex2DBuffer { get; set; }
 			public List<InstanceVertex2D> InstanceList { get; set; } = new List<InstanceVertex2D>(MAX_QUADS);
 			public RenderData2D Render2DData { get; set; }
+			public string ShaderSetName { get; set; }
 			public bool ShouldFlush { get; set; }
 			public uint Count { get; set; }
-			public uint IndexStart { get; set; }
-			public uint LastInstanceIndex => IndexStart + Count;
 		}
 	}
 
