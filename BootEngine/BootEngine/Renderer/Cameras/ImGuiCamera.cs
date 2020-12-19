@@ -11,7 +11,7 @@ namespace BootEngine.Renderer.Cameras
 		private readonly float bottom;
 		private readonly float top;
 
-		public ImGuiCamera(float left, float right, float bottom, float top)
+		public ImGuiCamera(float left, float right, float bottom, float top) : base(false)
 		{
 			this.left = left;
 			this.right = right;

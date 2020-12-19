@@ -42,7 +42,7 @@ namespace Sandbox.Layers
 				.Init();
 
 			var cam = ActiveScene.CreateEntity("Main Camera");
-			var camera = new Camera();
+			var camera = new Camera(false);
 			camera.SetOrthographic(1, -1, 1);
 			camera.ResizeViewport(Width, Height);
 			cam.AddComponent(new CameraComponent()

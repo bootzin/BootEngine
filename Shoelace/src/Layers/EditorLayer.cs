@@ -59,7 +59,7 @@ namespace Shoelace.Layers
 			var e4 = ActiveScene.CreateEntity("Green");
 
 			var data = RenderData2D.QuadData;
-			data.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", BootEngine.Utils.TextureUsage.Sampled);
+			data.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", BootEngine.Utils.BootEngineTextureUsage.Sampled);
 
 			e.AddComponent(new SpriteRendererComponent(ColorF.White, new Material("Standard2D"), RenderData2D.QuadData));
 			e2.AddComponent(new SpriteRendererComponent(ColorF.Red, new Material("Standard2D"), data));

@@ -38,7 +38,7 @@ namespace Shoelace.Panels
 						{
 							CameraComponent cam = new CameraComponent()
 							{
-								Camera = new Camera()
+								Camera = new Camera(true)
 							};
 							_guiService.SelectedEntity.Replace(in cam);
 						}

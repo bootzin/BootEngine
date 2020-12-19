@@ -16,11 +16,10 @@ namespace Shoelace
 	{
 		internal readonly static Dictionary<string, ShaderData> StandardShaders = new Dictionary<string, ShaderData>();
 		private readonly static ResourceFactory resourceFactory = Application.App.Window.GraphicsDevice.ResourceFactory;
-		private static Texture fbTex, fbDepthTex;
 
 		public static IntPtr SetupEditorCamera(int width, int height, Scene scene)
 		{
-			var camera = new Camera();
+			var camera = new Camera(false);
 			camera.SetPerspective(MathUtil.Deg2Rad(70), .0001f, 1000f);
 			camera.ResizeViewport(width, height);
 
@@ -34,24 +33,29 @@ namespace Shoelace
 			camera.DepthStencilState = DepthStencilStateDescription.DepthOnlyLessEqual;
 			camera.RasterizerState = RasterizerStateDescription.CullNone;
 
-			fbTex = resourceFactory.CreateTexture(TextureDescription.Texture2D(
-				(uint)width, // Width
-				(uint)height, // Height
-				1,  // Miplevel
-				1,  // ArrayLayers
-				PixelFormat.R8_G8_B8_A8_UNorm,
-				Veldrid.TextureUsage.RenderTarget | Veldrid.TextureUsage.Sampled));
+			camera.ColorTargets = new Texture[]
+			{
+				resourceFactory.CreateTexture(TextureDescription.Texture2D(
+					(uint)width, // Width
+					(uint)height, // Height
+					1,  // Miplevel
+					1,  // ArrayLayers
+					PixelFormat.R8_G8_B8_A8_UNorm,
+					TextureUsage.RenderTarget | TextureUsage.Sampled))
+			};
 
-			fbDepthTex = resourceFactory.CreateTexture(TextureDescription.Texture2D(
+			camera.DepthTarget = resourceFactory.CreateTexture(TextureDescription.Texture2D(
 				(uint)width, // Width
 				(uint)height, // Height
 				1,  // Miplevel
 				1,  // ArrayLayers
 				PixelFormat.R16_UNorm,
-				Veldrid.TextureUsage.DepthStencil));
-			camera.RenderTarget = resourceFactory.CreateFramebuffer(new FramebufferDescription(fbDepthTex, fbTex));
+				TextureUsage.DepthStencil));
+
+			camera.RenderTarget = resourceFactory.CreateFramebuffer(new FramebufferDescription(camera.DepthTarget, camera.ColorTargets));
+
 			ImGuiLayer.ShouldClearBuffers = true;
-			return ImGuiLayer.GetOrCreateImGuiBinding(resourceFactory, fbTex);
+			return ImGuiLayer.GetOrCreateImGuiBinding(resourceFactory, camera.ColorTargets[0]);
 		}
 
 		public static void LoadStandardShaders()
@@ -74,8 +78,6 @@ namespace Shoelace
 
 		public static void FreeResources()
 		{
-			fbTex.Dispose();
-			fbDepthTex.Dispose();
 			foreach (var shaderData in StandardShaders)
 			{
 				foreach (var shader in shaderData.Value.Shaders)

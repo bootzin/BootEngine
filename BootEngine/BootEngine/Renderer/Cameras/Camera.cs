@@ -18,10 +18,12 @@ namespace BootEngine.Renderer.Cameras
 
 		public bool Active { get; set; } = true;
 		#region RenderingData
-		public BlendStateDescription BlendState { get; set; }
-		public DepthStencilStateDescription DepthStencilState { get; set; }
-		public RasterizerStateDescription RasterizerState { get; set; }
+		public BlendStateDescription BlendState { get; set; } = BlendStateDescription.SingleAlphaBlend;
+		public DepthStencilStateDescription DepthStencilState { get; set; } = DepthStencilStateDescription.DepthOnlyLessEqual;
+		public RasterizerStateDescription RasterizerState { get; set; } = RasterizerStateDescription.Default;
 		public Framebuffer RenderTarget { get; set; }
+		public Texture DepthTarget { get; set; }
+		public Texture[] ColorTargets { get; set; }
 		#endregion
 
 		#region Ortho/Perspective properties
@@ -102,6 +104,36 @@ namespace BootEngine.Renderer.Cameras
 		private ProjectionType projectionType;
 		#endregion
 
+		public Camera(bool generateRenderTarget)
+		{
+			if (generateRenderTarget)
+				GenerateDefaultRenderTarget();
+		}
+
+		private void GenerateDefaultRenderTarget()
+		{
+			ColorTargets = new Texture[]
+			{
+				_gd.ResourceFactory.CreateTexture(TextureDescription.Texture2D(
+					(uint)Application.App.Window.SdlWindow.Width, // Width
+					(uint)Application.App.Window.SdlWindow.Height, // Height
+					1,  // Miplevel
+					1,  // ArrayLayers
+					PixelFormat.R8_G8_B8_A8_UNorm,
+					TextureUsage.RenderTarget | TextureUsage.Sampled))
+			};
+
+			DepthTarget = _gd.ResourceFactory.CreateTexture(TextureDescription.Texture2D(
+				(uint)Application.App.Window.SdlWindow.Width, // Width
+				(uint)Application.App.Window.SdlWindow.Height, // Height
+				1,  // Miplevel
+				1,  // ArrayLayers
+				PixelFormat.R16_UNorm,
+				TextureUsage.DepthStencil));
+
+			RenderTarget = _gd.ResourceFactory.CreateFramebuffer(new FramebufferDescription(DepthTarget, ColorTargets));
+		}
+
 		public void ResizeViewport(int width, int height)
 		{
 			aspectRatio = (float)width / height;
@@ -164,6 +196,11 @@ namespace BootEngine.Renderer.Cameras
 
 		public void Dispose()
 		{
+			DepthTarget.Dispose();
+			foreach (var ct in ColorTargets)
+			{
+				ct.Dispose();
+			}
 			RenderTarget.Dispose();
 		}
 	}

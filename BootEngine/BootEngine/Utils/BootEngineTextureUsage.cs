@@ -4,7 +4,7 @@ using Veldrid;
 namespace BootEngine.Utils
 {
     [Flags]
-    public enum TextureUsage : byte
+    public enum BootEngineTextureUsage : byte
     {
         /// <summary>
         /// The Texture can be used as the target of a read-only <see cref="TextureView"/>, and can be accessed from a shader.

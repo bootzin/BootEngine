@@ -5,6 +5,7 @@ using Leopotam.Ecs;
 using System;
 using System.IO;
 using System.Numerics;
+using Veldrid;
 using YamlDotNet.Core;
 using YamlDotNet.Core.Events;
 using YamlDotNet.Serialization;
@@ -14,17 +15,20 @@ namespace BootEngine.Serializers
 {
 	public sealed class YamlSerializer
 	{
-		private readonly ISerializer _serializer;
+		private readonly IValueSerializer _valueSerializer;
 
 		public YamlSerializer()
 		{
-			_serializer = new SerializerBuilder()
+			_valueSerializer = new SerializerBuilder()
 				.WithNamingConvention(PascalCaseNamingConvention.Instance)
 				.WithMaximumRecursion(7)
 				.EnsureRoundtrip()
-				.JsonCompatible()
 				.IncludeNonPublicProperties()
-				.Build();
+				.WithTagMapping("!BlendStateDescription", typeof(BlendStateDescription))
+				.WithTagMapping("!DepthStencilStateDescription", typeof(DepthStencilStateDescription))
+				.WithTagMapping("!RasterizerStateDescription", typeof(RasterizerStateDescription))
+				.WithTagMapping("!FramebufferAttachment", typeof(FramebufferAttachment))
+				.BuildValueSerializer();
 		}
 
 		public void Serialize<T>(string filePath, T obj)
@@ -52,6 +56,15 @@ namespace BootEngine.Serializers
 				case Camera cam:
 					SerializeCamera(e, cam);
 					break;
+				case Texture tex:
+					SerializeTexture(e, tex);
+					break;
+				case FramebufferAttachment fb:
+					SerializeFramebufferAttachment(e, fb);
+					break;
+				case Vector2 vec2:
+					SerializeVector2(e, vec2);
+					break;
 				case Vector3 vec3:
 					SerializeVector3(e, vec3);
 					break;
@@ -59,9 +72,32 @@ namespace BootEngine.Serializers
 					SerializeVector4(e, vec4);
 					break;
 				default:
-					_serializer.Serialize(e, obj);
+					_valueSerializer.SerializeValue(e, obj, obj.GetType());
 					break;
 			}
+		}
+
+		private void SerializeFramebufferAttachment(Emitter e, FramebufferAttachment fb)
+		{
+			e.Emit("ArrayLayer"); e.Emit(fb.ArrayLayer.ToString());
+			e.Emit("MipLevel"); e.Emit(fb.MipLevel.ToString());
+			e.Emit("Texture");
+			e.Emit(new MappingStart());
+			Serialize(e, fb.Target);
+			e.Emit(new MappingEnd());
+		}
+
+		private void SerializeTexture(Emitter e, Texture tex)
+		{
+			e.Emit("Width"); e.Emit(tex.Width.ToString());
+			e.Emit("Height"); e.Emit(tex.Height.ToString());
+			e.Emit("Depth"); e.Emit(tex.Depth.ToString());
+			e.Emit("MipLevels"); e.Emit(tex.MipLevels.ToString());
+			e.Emit("ArrayLayers"); e.Emit(tex.ArrayLayers.ToString());
+			e.Emit("Format"); e.Emit(tex.Format.ToString());
+			e.Emit("Usage"); e.Emit(tex.Usage.ToString());
+			e.Emit("Type"); e.Emit(tex.Type.ToString());
+			e.Emit("SampleCount"); e.Emit(tex.SampleCount.ToString());
 		}
 
 		private void SerializeCamera(Emitter e, Camera cam)
@@ -77,8 +113,45 @@ namespace BootEngine.Serializers
 				e.Emit(new Scalar("OrthoNear")); e.Emit(new Scalar(cam.OrthoNear.ToString()));
 				e.Emit(new Scalar("OrthoFar")); e.Emit(new Scalar(cam.OrthoFar.ToString()));
 				e.Emit(new Scalar("ZoomLevel")); e.Emit(new Scalar(cam.ZoomLevel.ToString()));
+
+				e.Emit(new Scalar("BlendState")); Serialize(e, cam.BlendState);
+				e.Emit(new Scalar("DepthStencilState")); Serialize(e, cam.DepthStencilState);
+				e.Emit(new Scalar("RasterizerState")); Serialize(e, cam.RasterizerState);
+
+				e.Emit(new Scalar("RenderTarget"));
+				e.Emit(new MappingStart());
+				{
+					if (cam.RenderTarget.DepthTarget != null)
+					{
+						e.Emit("DepthTarget");
+						e.Emit(new MappingStart());
+						Serialize(e, cam.RenderTarget.DepthTarget);
+						e.Emit(new MappingEnd());
+					}
+
+					e.Emit("ColorTargets");
+					e.Emit(new SequenceStart(null, null, false, SequenceStyle.Block));
+					{
+						foreach (var colorTarget in cam.RenderTarget.ColorTargets)
+						{
+							e.Emit(new MappingStart());
+							Serialize(e, colorTarget);
+							e.Emit(new MappingEnd());
+						}
+					}
+					e.Emit(new SequenceEnd());
+				}
+				e.Emit(new MappingEnd());
 			}
 			e.Emit(new MappingEnd());
+		}
+
+		private void SerializeVector2(Emitter e, Vector2 vec2)
+		{
+			e.Emit(new SequenceStart(null, null, false, SequenceStyle.Flow));
+			e.Emit(new Scalar(vec2.X.ToString()));
+			e.Emit(new Scalar(vec2.Y.ToString()));
+			e.Emit(new SequenceEnd());
 		}
 
 		private void SerializeVector3(Emitter e, Vector3 vec3)
@@ -191,19 +264,97 @@ namespace BootEngine.Serializers
 						e.Emit(new Scalar("Color"));
 						Serialize(e, sc.Color.ToVector4());
 
-						//if (sc.Texture != null)
-						//{
-						//	e.Emit(new Scalar("Texture"));
-						//	e.Emit(new SequenceStart(null, null, false, SequenceStyle.Flow));
-						//	e.Emit(new Scalar(sc.Texture.Name));
-						//	e.Emit(new Scalar(sc.Texture.Usage.ToString()));
-						//	e.Emit(new SequenceEnd());
-						//}
+						e.Emit(new Scalar("SpriteData"));
+						e.Emit(new MappingStart());
+						{
+							e.Emit(new Scalar("Indices"));
+							e.Emit(new SequenceStart(null, null, false, SequenceStyle.Flow));
+							foreach (var index in sc.SpriteData.Indices)
+							{
+								e.Emit(new Scalar(index.ToString()));
+							}
+							e.Emit(new SequenceEnd());
+
+							e.Emit(new Scalar("Vertices"));
+							e.Emit(new SequenceStart(null, null, false, SequenceStyle.Block));
+							foreach (var vertex in sc.SpriteData.Vertices)
+							{
+								e.Emit(new MappingStart());
+								{
+									e.Emit(new Scalar("Position"));
+									Serialize(e, vertex.Position);
+
+									e.Emit(new Scalar("TexCoord"));
+									Serialize(e, vertex.TexCoord);
+								}
+								e.Emit(new MappingEnd());
+							}
+							e.Emit(new SequenceEnd());
+
+							if (sc.SpriteData.Texture != null)
+							{
+								e.Emit(new Scalar("Texture"));
+								e.Emit(new SequenceStart(null, null, false, SequenceStyle.Flow));
+								e.Emit(new Scalar(sc.SpriteData.Texture.Name));
+								e.Emit(new Scalar(sc.SpriteData.Texture.Usage.ToString()));
+								e.Emit(new SequenceEnd());
+							}
+						}
+						e.Emit(new MappingEnd());
+
+						e.Emit(new Scalar("Material"));
+						e.Emit(new MappingStart());
+						{
+							e.Emit(new Scalar("ShaderSetName"));
+							e.Emit(new Scalar(sc.Material.ShaderSetName));
+
+							e.Emit(new Scalar("Color"));
+							Serialize(e, sc.Material.Color.ToVector4());
+
+							if (sc.Material.Albedo != null)
+							{
+								e.Emit(new Scalar("Albedo"));
+								Serialize(e, sc.Material.Albedo);
+							}
+
+							if (sc.Material.NormalMap != null)
+							{
+								e.Emit(new Scalar("NormalMap"));
+								Serialize(e, sc.Material.NormalMap);
+							}
+
+							if (sc.Material.HeightMap != null)
+							{
+								e.Emit(new Scalar("HeightMap"));
+								Serialize(e, sc.Material.HeightMap);
+							}
+
+							if (sc.Material.Occlusion != null)
+							{
+								e.Emit(new Scalar("Occlusion"));
+								Serialize(e, sc.Material.Occlusion);
+							}
+
+							e.Emit(new Scalar("Offset"));
+							Serialize(e, sc.Material.Offset);
+
+							e.Emit(new Scalar("Tiling"));
+							Serialize(e, sc.Material.Tiling);
+						}
+						e.Emit(new MappingEnd());
 					}
 					e.Emit(new MappingEnd());
 				}
 			}
 			e.Emit(new MappingEnd());
+		}
+	}
+
+	internal static class EmitterExtensions
+	{
+		public static void Emit(this Emitter e, string scalar)
+		{
+			e.Emit(new Scalar(scalar));
 		}
 	}
 }

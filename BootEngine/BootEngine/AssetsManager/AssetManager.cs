@@ -20,9 +20,9 @@ namespace BootEngine.AssetsManager
 		/// Loads and updates a single 2D <see cref="Texture"/>
 		/// </summary>
 		/// <param name="texturePath">Path to the texture.</param>
-		/// <param name="usage">A collection of flags determining the <see cref="Utils.TextureUsage"/></param>
+		/// <param name="usage">A collection of flags determining the <see cref="Utils.BootEngineTextureUsage"/></param>
 		/// <returns>The update <see cref="Texture"/></returns>
-		public static Texture LoadTexture2D(string texturePath, Utils.TextureUsage usage, bool cached = true)
+		public static Texture LoadTexture2D(string texturePath, Utils.BootEngineTextureUsage usage, bool cached = true)
 		{
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(typeof(AssetManager));
