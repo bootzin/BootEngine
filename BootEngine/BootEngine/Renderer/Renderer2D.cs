@@ -210,9 +210,7 @@ namespace BootEngine.Renderer
 			if (!renderables.Any())
 				return;
 
-			shouldClearBuffers = false;
 			cl.SetPipeline(pipeline);
-			uint instanceStart = 0;
 			foreach (InstancingTextureData data in renderables)
 			{
 				cl.SetIndexBuffer(data.Render2DData.IndexBuffer, IndexFormat.UInt16);
@@ -231,8 +229,7 @@ namespace BootEngine.Renderer
 						instanceCount: instancePerTexCount,
 						indexStart: 0,
 						vertexOffset: 0,
-						instanceStart: instanceStart);
-					instanceStart += instancePerTexCount;
+						instanceStart: 0);
 				}
 			}
 		}
@@ -248,6 +245,7 @@ namespace BootEngine.Renderer
 				entry.Value.Count = 0u;
 				entry.Value.InstanceList = new List<InstanceVertex2D>(entry.Value.InstanceList.Count);
 			}
+			//DataPerObject.Clear();
 		}
 		#endregion
 

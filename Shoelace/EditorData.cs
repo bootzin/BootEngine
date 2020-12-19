@@ -29,7 +29,7 @@ namespace Shoelace
 			{
 				Camera = camera
 			});
-			editorCam.AddComponent(new TransformComponent() { Translation = new System.Numerics.Vector3(0, 0, 1) });
+			editorCam.AddComponent(new TransformComponent() { Translation = new System.Numerics.Vector3(1e-6f, 1e-6f, 1) });
 			camera.BlendState = BlendStateDescription.SingleAlphaBlend;
 			camera.DepthStencilState = DepthStencilStateDescription.DepthOnlyLessEqual;
 			camera.RasterizerState = RasterizerStateDescription.CullNone;

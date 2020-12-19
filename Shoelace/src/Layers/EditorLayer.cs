@@ -1,4 +1,5 @@
-﻿using BootEngine.ECS.Components;
+﻿using BootEngine.AssetsManager;
+using BootEngine.ECS.Components;
 using BootEngine.ECS.Components.Events;
 using BootEngine.ECS.Systems;
 using BootEngine.Layers;
@@ -49,13 +50,21 @@ namespace Shoelace.Layers
 			LoadScene();
 
 			var e = ActiveScene.CreateEntity("White");
-			e.AddComponent(new SpriteRendererComponent(ColorF.White, new Material("Standard2D"), RenderData2D.QuadData));
 			ref var tc = ref e.GetComponent<TransformComponent>();
 			tc.Rotation = new Vector3(.5f);
 			tc.Scale = new Vector3(.5f);
 			tc.Translation = new Vector3(-.5f);
 			var e2 = ActiveScene.CreateEntity("Red");
-			e2.AddComponent(new SpriteRendererComponent(ColorF.Red, new Material("Standard2D"), RenderData2D.QuadData));
+			var e3 = ActiveScene.CreateEntity("Blue");
+			var e4 = ActiveScene.CreateEntity("Green");
+
+			var data = RenderData2D.QuadData;
+			data.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", BootEngine.Utils.TextureUsage.Sampled);
+
+			e.AddComponent(new SpriteRendererComponent(ColorF.White, new Material("Standard2D"), RenderData2D.QuadData));
+			e2.AddComponent(new SpriteRendererComponent(ColorF.Red, new Material("Standard2D"), data));
+			e3.AddComponent(new SpriteRendererComponent(ColorF.Blue, new Material("Standard2D"), RenderData2D.QuadData));
+			e4.AddComponent(new SpriteRendererComponent(ColorF.Green, new Material("Standard2D"), data));
 		}
 
 		public override void OnUpdate(float deltaSeconds)
