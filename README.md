@@ -1,4 +1,6 @@
-<img align="left" src="images/logo.png" width="120px"/>
+<p align="center">
+<img src="images/logo.png"/>
+</p>
 
 # BootEngine
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-brightgreen)](https://opensource.org/licenses/Apache-2.0)
