@@ -8,26 +8,29 @@ using System.Numerics;
 
 namespace BootEngine.Window
 {
-	public sealed class FileDialog
+	public static class FileDialog
 	{
-		private int selectedFolderIndex;
-		private int selectedFileIndex;
-		private string curPath = Directory.GetCurrentDirectory();
-		private string curFile = "";
-		private string curFolder = "";
-		private bool sortAscending = true;
-		private SortType sortType;
+		private static int selectedFolderIndex;
+		private static int selectedFileIndex;
+		private static string curPath = Directory.GetCurrentDirectory();
+		private readonly static EnumerationOptions options = new EnumerationOptions() { IgnoreInaccessible = true };
+		private static string curFile = "";
+		private static string curFolder = "";
+		private static bool sortAscending = true;
+		private static SortType sortType;
 
-		private float initialSpacingCol0 = 230f;
-		private float initialSpacingCol1 = 80f;
-		private float initialSpacingCol2 = 80f;
+		private static float initialSpacingCol0 = 230f;
+		private static float initialSpacingCol1 = 80f;
+		private static float initialSpacingCol2 = 80f;
 
-		private string newFolderName = "";
-		private string newFolderError = "";
-		private string dialogError = "";
-		private bool doAction;
+		private static string newFolderName = "";
+		private static string newFolderError = "";
+		private static string dialogError = "";
+		private static bool doAction;
 
-		public bool ShowFileDialog(ref bool isOpen, out string path, DialogType type = DialogType.Open, string filter = "")
+		public static bool ShowFileDialog(ref bool isOpen, out string path, DialogType type = DialogType.Open, params string[] filters) => ShowFileDialog("Select a file", ref isOpen, out path, type, filters);
+
+		public static bool ShowFileDialog(string title, ref bool isOpen, out string path, DialogType type = DialogType.Open, params string[] filters)
 		{
 			path = null;
 			if (isOpen)
@@ -40,15 +43,15 @@ namespace BootEngine.Window
 				ImGui.SetNextWindowSize(windowSize, ImGuiCond.Appearing);
 				var mainViewport = ImGui.GetMainViewport();
 				ImGui.SetNextWindowPos(mainViewport.Pos + mainViewport.Size / 2f - windowSize / 2f, ImGuiCond.Appearing);
-				ImGui.Begin("Select a file", ref isOpen, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking);
+				ImGui.Begin(title, ref isOpen, ImGuiWindowFlags.NoCollapse | ImGuiWindowFlags.NoDocking);
 
 				var curDirInfo = new DirectoryInfo(curPath);
-				var directories = curDirInfo.GetDirectories();
+				var directories = curDirInfo.GetDirectories("*", options);
 				List<FileInfo> files;
-				if (!string.IsNullOrWhiteSpace(filter))
-					files = curDirInfo.GetFiles(filter).ToList();
+				if (filters.Length > 1)
+					files = curDirInfo.EnumerateFiles("*.*").Where(s => filters[1..].Contains(s.Extension.ToLower())).ToList();
 				else
-					files = curDirInfo.GetFiles().ToList();
+					files = curDirInfo.EnumerateFiles().ToList();
 
 				ImGui.Text(curPath);
 

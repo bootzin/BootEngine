@@ -30,7 +30,6 @@ namespace Shoelace.Layers
 		private PropertiesPanel propertiesPanel = new PropertiesPanel();
 		private bool runtimeActive;
 		private readonly GizmoSystem _guizmoSystem = new GizmoSystem();
-		private readonly FileDialog _fileDialog = new FileDialog();
 		private readonly GuiService _guiService = new GuiService();
 		#endregion
 
@@ -59,12 +58,15 @@ namespace Shoelace.Layers
 			var e4 = ActiveScene.CreateEntity("Green");
 
 			var data = RenderData2D.QuadData;
-			data.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", BootEngine.Utils.BootEngineTextureUsage.Sampled);
+			data.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", BootEngineTextureUsage.Sampled);
+
+			var data2 = RenderData2D.QuadData;
+			data2.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", BootEngineTextureUsage.Sampled);
 
 			e.AddComponent(new SpriteRendererComponent(ColorF.White, new Material("Standard2D"), RenderData2D.QuadData));
 			e2.AddComponent(new SpriteRendererComponent(ColorF.Red, new Material("Standard2D"), data));
 			e3.AddComponent(new SpriteRendererComponent(ColorF.Blue, new Material("Standard2D"), RenderData2D.QuadData));
-			e4.AddComponent(new SpriteRendererComponent(ColorF.Green, new Material("Standard2D"), data));
+			e4.AddComponent(new SpriteRendererComponent(ColorF.Green, new Material("Standard2D"), data2));
 		}
 
 		public override void OnUpdate(float deltaSeconds)
@@ -116,13 +118,13 @@ namespace Shoelace.Layers
 			#endregion
 
 			#region File Dialogs
-			if (_fileDialog.ShowFileDialog(ref _guiService.ShouldLoadScene, out string loadPath, FileDialog.DialogType.Open, "*.boot"))
+			if (FileDialog.ShowFileDialog(ref _guiService.ShouldLoadScene, out string loadPath, FileDialog.DialogType.Open, "Boot Scene", ".boot"))
 			{
 				LoadScene(loadPath);
 				_guiService.ShouldLoadScene = false;
 			}
 
-			if (_fileDialog.ShowFileDialog(ref _guiService.ShouldSaveScene, out string savePath, FileDialog.DialogType.Save))
+			if (FileDialog.ShowFileDialog(ref _guiService.ShouldSaveScene, out string savePath, FileDialog.DialogType.Save))
 			{
 				SaveScene(savePath);
 				_guiService.ShouldSaveScene = false;

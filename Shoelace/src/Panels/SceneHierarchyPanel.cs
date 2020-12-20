@@ -30,7 +30,7 @@ namespace Shoelace.Panels
 			if (ImGui.BeginPopupContextWindow("", ImGuiPopupFlags.MouseButtonRight | ImGuiPopupFlags.NoOpenOverItems))
 			{
 				if (ImGui.MenuItem("Create Entity"))
-					_scene.CreateEntity("New Entity");
+					_guiService.SelectedEntity = _scene.CreateEntity("New Entity").EntityHandle;
 
 				ImGui.EndPopup();
 			}

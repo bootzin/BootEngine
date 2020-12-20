@@ -7,6 +7,8 @@ namespace BootEngine.ECS
 	{
 		private EcsEntity entityHandle = EcsEntity.Null;
 
+		public EcsEntity EntityHandle => entityHandle;
+
 		public Entity(EcsEntity ecsEntity)
 		{
 			entityHandle = ecsEntity;

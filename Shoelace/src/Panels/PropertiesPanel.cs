@@ -1,7 +1,9 @@
-﻿using BootEngine.ECS.Components;
+﻿using BootEngine.AssetsManager;
+using BootEngine.ECS.Components;
 using BootEngine.Renderer;
 using BootEngine.Renderer.Cameras;
 using BootEngine.Utils;
+using BootEngine.Window;
 using ImGuiNET;
 using Leopotam.Ecs;
 using Shoelace.Services;
@@ -13,6 +15,8 @@ namespace Shoelace.Panels
 	internal sealed class PropertiesPanel : Panel
 	{
 		private readonly GuiService _guiService = default;
+		private bool loadTexture;
+		private SpriteRendererComponent spriteComponentToChange;
 
 		public override void OnGuiRender()
 		{
@@ -114,11 +118,60 @@ namespace Shoelace.Panels
 		private void DrawSpriteComponent(ref SpriteRendererComponent spriteComponent)
 		{
 			string texName = string.IsNullOrWhiteSpace(spriteComponent.SpriteData.Texture?.Name) ? "None" : spriteComponent.SpriteData.Texture?.Name;
-			ImGui.Text("Texture: " + texName);
+
+			ImGui.Text("Texture");
+			ImGui.SameLine();
+
+			ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(.08f, .08f, .08f, 1));
+			ImGui.PushStyleColor(ImGuiCol.ButtonActive, new Vector4(.08f, .08f, .08f, 1));
+			ImGui.PushStyleColor(ImGuiCol.ButtonHovered, new Vector4(.08f, .08f, .08f, 1));
+			ImGui.PushStyleVar(ImGuiStyleVar.ButtonTextAlign, new Vector2(0, .5f));
+			ImGui.Button(texName, new Vector2(ImGui.CalcItemWidth(), 20));
+			ImGui.PopStyleVar();
+
+			if(ImGui.BeginDragDropTarget())
+			{
+				ImGui.Text("TODO"); // Allow drag n' drop of textures
+			}
+			ImGui.EndDragDropTarget();
+
+			ImGui.PopStyleColor(3);
+
+			ImGui.SameLine();
+			if (ImGui.Button("..."))
+			{
+				loadTexture = true;
+				spriteComponentToChange = spriteComponent;
+			}
+
+			if (FileDialog.ShowFileDialog("Load a Texture", ref loadTexture, out string texPath, FileDialog.DialogType.Open, "Images", ".png", ".jpg", ".bmp"))
+			{
+				spriteComponentToChange.SpriteData.Texture = AssetManager.LoadTexture2D(texPath, BootEngineTextureUsage.Sampled);
+				spriteComponentToChange = default;
+				loadTexture = false;
+			}
 
 			Vector4 color = spriteComponent.Color;
 			if (ImGui.ColorEdit4("Color", ref color))
 				spriteComponent.Color = color;
+
+			ImGui.Text("Material");
+			ImGui.SameLine();
+
+			ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(.08f, .08f, .08f, 1));
+			ImGui.PushStyleColor(ImGuiCol.ButtonActive, new Vector4(.08f, .08f, .08f, 1));
+			ImGui.PushStyleColor(ImGuiCol.ButtonHovered, new Vector4(.08f, .08f, .08f, 1));
+			ImGui.PushStyleVar(ImGuiStyleVar.ButtonTextAlign, new Vector2(0, .5f));
+			ImGui.Button(spriteComponent.Material.Name, new Vector2(ImGui.CalcItemWidth(), 20));
+			ImGui.PopStyleVar();
+
+			if (ImGui.BeginDragDropTarget())
+			{
+				ImGui.Text("TODO"); // Allow drag n' drop of textures
+			}
+			ImGui.EndDragDropTarget();
+
+			ImGui.PopStyleColor(3);
 		}
 
 		private void DrawVelocityComponent(ref VelocityComponent velocityComponent)

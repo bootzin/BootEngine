@@ -11,7 +11,7 @@ namespace BootEngine.Renderer
 			ShaderSetName = shaderSetName;
 		}
 
-		public string Name { get; set; }
+		public string Name { get; set; } = "Default";
 		public MaterialRenderingMode RenderingMode { get; set; }
 		public string ShaderSetName { get; set; }
 		public ColorF Color { get; set; } = ColorF.White;

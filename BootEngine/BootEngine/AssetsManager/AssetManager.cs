@@ -50,7 +50,7 @@ namespace BootEngine.AssetsManager
 					1,  // Depth
 					0,  // Miplevel
 					0); // ArrayLayer
-				tex.Name = texturePath;
+				tex.Name = texturePath[(int)(MathF.Max(texturePath.LastIndexOf('\\'), texturePath.LastIndexOf('/')) + 1)..];
 				if (cached)
 					ResourceCache.AddTexture(tex, texturePath);
 			}
