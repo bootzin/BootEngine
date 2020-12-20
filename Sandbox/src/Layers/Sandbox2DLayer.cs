@@ -13,6 +13,7 @@ using Sandbox.Services;
 using Sandbox.Systems;
 using System.Linq;
 using System.Numerics;
+using Veldrid;
 
 namespace Sandbox.Layers
 {
@@ -41,20 +42,30 @@ namespace Sandbox.Layers
 				.Inject(_quadData)
 				.Init();
 
-			var cam = ActiveScene.CreateEntity("Main Camera");
+			LoadStandardShaders();
+
 			var camera = new Camera(false);
-			camera.SetOrthographic(1, -1, 1);
+			camera.SetPerspective(MathUtil.Deg2Rad(70), .0001f, 1000f);
 			camera.ResizeViewport(Width, Height);
-			cam.AddComponent(new CameraComponent()
+
+			var editorCam = ActiveScene.CreateEmptyEntity();
+			editorCam.AddComponent(new CameraComponent()
 			{
 				Camera = camera
 			});
-			cam.AddComponent<VelocityComponent>();
+			editorCam.AddComponent(new TransformComponent() { Translation = new Vector3(1e-6f, 1e-6f, 1) });
+			camera.BlendState = BlendStateDescription.SingleAlphaBlend;
+			camera.DepthStencilState = DepthStencilStateDescription.DepthOnlyLessEqual;
+			camera.RasterizerState = RasterizerStateDescription.CullNone;
+
+			camera.RenderTarget = GraphicsDevice.SwapchainFramebuffer;
 
 			var quad = ActiveScene.CreateEntity("Quad");
 			quad.AddComponent(new SpriteRendererComponent()
 			{
-				Color = _quadData.SquareColor
+				Color = _quadData.SquareColor,
+				Material = new Material("Standard2D"),
+				SpriteData = RenderData2D.QuadData
 			});
 			ref var transform = ref quad.GetComponent<TransformComponent>();
 			transform.Translation = new Vector3(-1, 0, .5f);
@@ -72,6 +83,8 @@ namespace Sandbox.Layers
 			transform2.Rotation = Vector3.Zero;
 			ref var sprite = ref quad2.GetComponent<SpriteRendererComponent>();
 			sprite.Color = ColorF.White;
+			sprite.Material = new Material("Standard2D");
+			sprite.SpriteData = RenderData2D.QuadData;
 			//sprite.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", TextureUsage.Sampled);
 
 			var quad3 = ActiveScene.CreateEntity(quad, "Quad2");
@@ -81,6 +94,8 @@ namespace Sandbox.Layers
 			transform3.Rotation = new Vector3(0, 0, 45f);
 			ref var sprite2 = ref quad3.GetComponent<SpriteRendererComponent>();
 			sprite2.Color = ColorF.Cyan;
+			sprite2.Material = new Material("Standard2D");
+			sprite2.SpriteData = RenderData2D.QuadData;
 
 			var quad4 = ActiveScene.CreateEntity(quad);
 			ref var transform4 = ref quad4.GetComponent<TransformComponent>();
@@ -89,6 +104,8 @@ namespace Sandbox.Layers
 			transform4.Rotation = Vector3.Zero;
 			ref var sprite3 = ref quad4.GetComponent<SpriteRendererComponent>();
 			sprite3.Color = _quadData.SquareColor;
+			sprite3.Material = new Material("Standard2D");
+			sprite3.SpriteData = RenderData2D.QuadData;
 			//sprite3.Texture = AssetManager.LoadTexture2D("assets/textures/sampleDog.png", TextureUsage.Sampled);
 
 			for (int i = 0; i < _quadData.QuadCount; i++)
@@ -145,6 +162,24 @@ namespace Sandbox.Layers
 				});
 			}
 		}
+		public void LoadStandardShaders()
+		{
+			#region Standard2D
+			var standard2DShaders = AssetManager.GenerateShadersFromFile("TexturedInstancing.glsl", "Standard2D");
+			var standard2DResourceLayout = ResourceFactory.CreateResourceLayout(
+									new ResourceLayoutDescription(
+										new ResourceLayoutElementDescription("ViewProjection", ResourceKind.UniformBuffer, ShaderStages.Vertex),
+										new ResourceLayoutElementDescription("Texture", ResourceKind.TextureReadOnly, ShaderStages.Fragment),
+										new ResourceLayoutElementDescription("Sampler", ResourceKind.Sampler, ShaderStages.Fragment)));
+
+			Renderer2D.Instance.AddShader("Standard2D", new ShaderData()
+			{
+				Shaders = standard2DShaders,
+				ResourceLayouts = new ResourceLayout[] { standard2DResourceLayout }
+			});
+			#endregion
+		}
+
 
 		public override void OnDetach()
 		{

@@ -1,6 +1,7 @@
 ﻿using BootEngine.AssetsManager;
 using BootEngine.ECS;
 using BootEngine.ECS.Components;
+using BootEngine.Renderer;
 using BootEngine.Utils;
 using Leopotam.Ecs;
 using Sandbox.Services;
@@ -53,6 +54,8 @@ namespace Sandbox.Systems
 				ent.AddComponent(new SpriteRendererComponent()
 				{
 					Color = _quadInfoService.SquareColor,
+					Material = new BootEngine.Renderer.Material("Standard2D"),
+					SpriteData = RenderData2D.QuadData
 				});
 				ref var transform = ref ent.GetComponent<TransformComponent>();
 				transform.Scale *= .1f;
