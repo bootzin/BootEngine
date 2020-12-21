@@ -16,7 +16,10 @@ namespace BootEngine.Renderer.Cameras
 		public readonly bool SwapYAxis = Application.App.Window.GraphicsDevice.IsClipSpaceYInverted;
 		public ref readonly Matrix4x4 ProjectionMatrix => ref projectionMatrix;
 
+		public int ViewportWidth { get; protected set; }
+		public int ViewportHeight { get; protected set; }
 		public bool Active { get; set; } = true;
+
 		#region RenderingData
 		public BlendStateDescription BlendState { get; set; } = BlendStateDescription.SingleAlphaBlend;
 		public DepthStencilStateDescription DepthStencilState { get; set; } = DepthStencilStateDescription.DepthOnlyLessEqual;
@@ -102,6 +105,7 @@ namespace BootEngine.Renderer.Cameras
 		private float orthoNear = -1;
 		private float zoomLevel = 1f;
 		private ProjectionType projectionType;
+		private bool disposed;
 		#endregion
 
 		public Camera(bool generateRenderTarget)
@@ -136,6 +140,8 @@ namespace BootEngine.Renderer.Cameras
 
 		public void ResizeViewport(int width, int height)
 		{
+			ViewportWidth = width;
+			ViewportHeight = height;
 			aspectRatio = (float)width / height;
 			RecalculateProjection();
 		}
@@ -196,12 +202,25 @@ namespace BootEngine.Renderer.Cameras
 
 		public void Dispose()
 		{
-			DepthTarget.Dispose();
-			foreach (var ct in ColorTargets)
+			Dispose(true);
+			GC.SuppressFinalize(this);
+		}
+
+		protected virtual void Dispose(bool disposing)
+		{
+			if (!disposed)
 			{
-				ct.Dispose();
+				if (disposing)
+				{
+					DepthTarget.Dispose();
+					foreach (var ct in ColorTargets)
+					{
+						ct.Dispose();
+					}
+					RenderTarget.Dispose();
+				}
+				disposed = true;
 			}
-			RenderTarget.Dispose();
 		}
 	}
 }

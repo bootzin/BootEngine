@@ -1,7 +1,7 @@
 ﻿using BootEngine.Utils;
 using ImGuiNET;
 
-namespace Shoelace
+namespace Shoelace.Styling
 {
 	internal static class Styles
 	{

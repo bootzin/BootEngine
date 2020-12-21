@@ -7,6 +7,7 @@ using BootEngine.Window;
 using ImGuiNET;
 using Leopotam.Ecs;
 using Shoelace.Services;
+using Shoelace.Styling;
 using System;
 using System.Numerics;
 
@@ -20,7 +21,7 @@ namespace Shoelace.Panels
 
 		public override void OnGuiRender()
 		{
-			ImGui.Begin("\uf1b3 Properties");
+			ImGui.Begin(FontAwesome5.Cubes + " Properties");
 			if (_guiService.SelectedEntity != default)
 			{
 				DrawComponents(_guiService.SelectedEntity);
@@ -138,7 +139,7 @@ namespace Shoelace.Panels
 			ImGui.PopStyleColor(3);
 
 			ImGui.SameLine();
-			if (ImGui.Button("..."))
+			if (ImGui.Button(FontAwesome5.FolderOpen))
 			{
 				loadTexture = true;
 				spriteComponentToChange = spriteComponent;

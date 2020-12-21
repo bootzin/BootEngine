@@ -11,6 +11,7 @@ using BootEngine.Window;
 using ImGuiNET;
 using Shoelace.Panels;
 using Shoelace.Services;
+using Shoelace.Styling;
 using Shoelace.Systems;
 using System;
 using System.Linq;
@@ -44,7 +45,7 @@ namespace Shoelace.Layers
 #endif
 			Styles.SetDarkTheme();
 
-			EditorData.LoadStandardShaders();
+			EditorSetup.LoadStandardShaders();
 
 			LoadScene();
 
@@ -141,26 +142,27 @@ namespace Shoelace.Layers
 			{
 				if (ImGui.BeginMenu("File"))
 				{
-					if (ImGui.MenuItem("New Scene", "Ctrl+N"))
+					if (ImGui.MenuItem(FontAwesome5.FileMedical + " New Scene", "Ctrl+N"))
 					{
 						LoadScene();
 					}
-					if (ImGui.MenuItem("Save Scene", "Ctrl+S"))
-					{
-						SaveScene($"assets/scenes/{ActiveScene.Title}.boot");
-					}
 
-					if (ImGui.MenuItem("Save Scene As...", "Ctrl+Shift+S"))
-					{
-						_guiService.ShouldSaveScene = true;
-					}
-
-					if (ImGui.MenuItem("Load Scene...", "Ctrl+O"))
+					if (ImGui.MenuItem(FontAwesome5.FolderOpen + " Open Scene...", "Ctrl+O"))
 					{
 						_guiService.ShouldLoadScene = true;
 					}
 
-					if (ImGui.MenuItem("Exit", "Ctrl+Q"))
+					if (ImGui.MenuItem(FontAwesome5.Save + " Save Scene", "Ctrl+S"))
+					{
+						SaveScene($"assets/scenes/{ActiveScene.Title}.boot");
+					}
+
+					if (ImGui.MenuItem(FontAwesome5.Save + " Save Scene As...", "Ctrl+Shift+S"))
+					{
+						_guiService.ShouldSaveScene = true;
+					}
+
+					if (ImGui.MenuItem(FontAwesome5.Times + " Exit", "Ctrl+Q"))
 					{
 						Close();
 					}
@@ -204,8 +206,6 @@ namespace Shoelace.Layers
 
 			sceneHierarchyPanel.OnGuiRender();
 			propertiesPanel.OnGuiRender();
-
-			ImGui.ShowDemoWindow();
 
 			#region Scene Viewport
 			ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
@@ -260,7 +260,7 @@ namespace Shoelace.Layers
 				.Inject(_guiService)
 				.Init();
 
-			renderTargetAddr = EditorData.SetupEditorCamera(Width, Height, ActiveScene);
+			renderTargetAddr = EditorSetup.CreateEditorCamera(Width, Height, ActiveScene);
 
 			if (path != null)
 				ActiveScene = new SceneDeserializer().Deserialize(path, ActiveScene);
@@ -280,7 +280,7 @@ namespace Shoelace.Layers
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
 			Renderer2D.Instance.Dispose();
-			EditorData.FreeResources();
+			EditorSetup.FreeResources();
 		}
 	}
 }

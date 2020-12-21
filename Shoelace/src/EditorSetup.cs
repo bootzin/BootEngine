@@ -6,18 +6,19 @@ using BootEngine.Layers.GUI;
 using BootEngine.Renderer;
 using BootEngine.Renderer.Cameras;
 using BootEngine.Utils;
+using Shoelace.Components;
 using System;
 using System.Collections.Generic;
 using Veldrid;
 
 namespace Shoelace
 {
-	internal static class EditorData
+	internal static class EditorSetup
 	{
 		internal readonly static Dictionary<string, ShaderData> StandardShaders = new Dictionary<string, ShaderData>();
 		private readonly static ResourceFactory resourceFactory = Application.App.Window.GraphicsDevice.ResourceFactory;
 
-		public static IntPtr SetupEditorCamera(int width, int height, Scene scene)
+		public static IntPtr CreateEditorCamera(int width, int height, Scene scene)
 		{
 			var camera = new Camera(false);
 			camera.SetPerspective(MathUtil.Deg2Rad(70), .0001f, 1000f);
@@ -29,6 +30,7 @@ namespace Shoelace
 				Camera = camera
 			});
 			editorCam.AddComponent(new TransformComponent() { Translation = new System.Numerics.Vector3(1e-6f, 1e-6f, 1) });
+			editorCam.AddComponent(new EditorCameraComponent() { Distance = 2f });
 			camera.BlendState = BlendStateDescription.SingleAlphaBlend;
 			camera.DepthStencilState = DepthStencilStateDescription.DepthOnlyLessEqual;
 			camera.RasterizerState = RasterizerStateDescription.CullNone;

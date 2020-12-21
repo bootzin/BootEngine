@@ -235,7 +235,7 @@ namespace BootEngine.Layers.GUI
 			fontTextureResourceSet = gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(textureLayout, fontTextureView));
 		}
 
-		public void LoadFonts(GraphicsDevice gd)
+		private void LoadFonts(GraphicsDevice gd)
 		{
 			unsafe
 			{

@@ -5,7 +5,9 @@ using BootEngine.Input;
 using BootEngine.Renderer.Cameras;
 using BootEngine.Utils;
 using Leopotam.Ecs;
+using Shoelace.Components;
 using Shoelace.Services;
+using System;
 using System.Numerics;
 
 namespace Shoelace.Systems
@@ -13,69 +15,86 @@ namespace Shoelace.Systems
 	public sealed class EditorCameraSystem : IEcsRunSystem
 	{
 		// auto injected fields
-		private readonly EcsFilter<TransformComponent, CameraComponent> _cameraTranslationFilter = default;
+		private readonly EcsFilter<TransformComponent, CameraComponent, EditorCameraComponent> _editorCameraFilter = default;
 		private readonly EcsFilter<EcsMouseScrolledEvent> _mouseScrollEvents = default;
 		private readonly GuiService _guiService = default;
 		private readonly TimeService _time = default;
 
-		private const float CAMERA_ROTATION_SPEED = 60f;
-		private const float CAMERA_MOVEMENT_SPEED = 2f;
-
 		public void Run()
 		{
-			foreach (var camera in _cameraTranslationFilter)
+			foreach (var camera in _editorCameraFilter)
 			{
-				ref var transform = ref _cameraTranslationFilter.Get1(camera);
-				var velocity = Vector3.Zero;
-				var rotationSpeed = Vector3.Zero;
-				if (_guiService.ViewportFocused && _guiService.ViewportHovered)
+				ref var transform = ref _editorCameraFilter.Get1(camera);
+				ref var camData = ref _editorCameraFilter.Get3(camera);
+				if (_guiService.ViewportHovered)
 				{
-					var cam = _cameraTranslationFilter.Get2(camera).Camera;
-					var zoomLevel = CalculateZoom(cam);
-					float xVeloc = 0;
-					if (InputManager.Instance.GetKeyDown(KeyCodes.A))
+					var cam = _editorCameraFilter.Get2(camera).Camera;
+					if (InputManager.Instance.GetKeyDown(KeyCodes.AltLeft))
 					{
-						xVeloc = -zoomLevel * CAMERA_MOVEMENT_SPEED * cam.OrthoSize;
-					}
-					else if (InputManager.Instance.GetKeyDown(KeyCodes.D))
-					{
-						xVeloc = zoomLevel * CAMERA_MOVEMENT_SPEED * cam.OrthoSize;
+						var mousePos = InputManager.Instance.GetMousePosition();
+						var delta = (mousePos - camData.LastMousePos) * 0.003f;
+						camData.LastMousePos = mousePos;
+
+						if (InputManager.Instance.GetMouseButtonDown(MouseButtonCodes.Middle))
+							MousePan(delta, cam, ref transform, ref camData);
+						if (InputManager.Instance.GetMouseButtonDown(MouseButtonCodes.Left))
+							MouseRotate(delta, ref transform, ref camData);
+						if (InputManager.Instance.GetMouseButtonDown(MouseButtonCodes.Right))
+							MouseZoom(delta.Y, ref transform, ref camData);
 					}
 
-					float yVeloc = 0;
-					if (InputManager.Instance.GetKeyDown(KeyCodes.S))
+					foreach (var mse in _mouseScrollEvents)
 					{
-						yVeloc = -zoomLevel * CAMERA_MOVEMENT_SPEED * cam.OrthoSize;
-					}
-					else if (InputManager.Instance.GetKeyDown(KeyCodes.W))
-					{
-						yVeloc = zoomLevel * CAMERA_MOVEMENT_SPEED * cam.OrthoSize;
-					}
-					velocity = new Vector3(xVeloc, yVeloc, 0);
-
-					rotationSpeed = Vector3.Zero;
-					if (InputManager.Instance.GetKeyDown(KeyCodes.Q))
-					{
-						rotationSpeed += Vector3.UnitZ * MathUtil.Deg2Rad(CAMERA_ROTATION_SPEED);
-					}
-					if (InputManager.Instance.GetKeyDown(KeyCodes.E))
-					{
-						rotationSpeed -= Vector3.UnitZ * MathUtil.Deg2Rad(CAMERA_ROTATION_SPEED);
+						var ev = _mouseScrollEvents.Get1(mse).Event;
+						camData.Distance -= ev.MouseDelta * camData.ZoomSpeed * .1f;
+						if (camData.Distance < 1)
+						{
+							camData.FocalPoint += GetForwardDirection(ref transform);
+							camData.Distance = 1;
+						}
 					}
 				}
-				transform.Translation += velocity * _time.DeltaSeconds;
-				transform.Rotation += rotationSpeed * _time.DeltaSeconds;
+				transform.Translation = camData.FocalPoint - GetForwardDirection(ref transform) * camData.Distance;
 			}
 		}
 
-		private float CalculateZoom(Camera cam)
+		private void MousePan(Vector2 delta, Camera cam, ref TransformComponent camTransform, ref EditorCameraComponent camData)
 		{
-			foreach (var mse in _mouseScrollEvents)
-			{
-				var ev = _mouseScrollEvents.Get1(mse).Event;
-				cam.ZoomLevel = System.MathF.Max(cam.ZoomLevel - (ev.MouseDelta * .25f), .25f);
-			}
-			return cam.ZoomLevel;
+			Vector2 panSpeed = GetPanSpeed(cam);
+			camData.FocalPoint -= GetRightDirection(ref camTransform) * delta.X * panSpeed.X * camData.Distance;
+			camData.FocalPoint += GetUpDirection(ref camTransform) * delta.Y * panSpeed.Y * camData.Distance;
 		}
+
+		private void MouseRotate(Vector2 delta, ref TransformComponent camTransform, ref EditorCameraComponent camData)
+		{
+			float yawSign = GetUpDirection(ref camTransform).Y < 0 ? -1 : 1;
+			camTransform.Rotation -= new Vector3(delta.Y * camData.RotationSpeed, yawSign * delta.X * camData.RotationSpeed, 0);
+		}
+
+		private void MouseZoom(float deltaY, ref TransformComponent camTransform, ref EditorCameraComponent camData)
+		{
+			camData.Distance -= deltaY * camData.ZoomSpeed;
+			if (camData.Distance < 1)
+			{
+				camData.FocalPoint += GetForwardDirection(ref camTransform);
+				camData.Distance = 1;
+			}
+		}
+
+		private Vector2 GetPanSpeed(Camera cam)
+		{
+			float x = MathF.Min(cam.ViewportWidth / 1000.0f, 2.4f); // max = 2.4f
+			float xFactor = 0.0366f * (x * x) - 0.1778f * x + 0.3021f;
+
+			float y = MathF.Min(cam.ViewportHeight / 1000.0f, 2.4f); // max = 2.4f
+			float yFactor = 0.0366f * (y * y) - 0.1778f * y + 0.3021f;
+			return new Vector2(xFactor, yFactor);
+		}
+
+		private static Vector3 GetRightDirection(ref TransformComponent camTransform) => Vector3.Transform(new Vector3(1, 0, 0), GetOrientation(ref camTransform));
+		private static Vector3 GetUpDirection(ref TransformComponent camTransform) => Vector3.Transform(new Vector3(0, 1, 0), GetOrientation(ref camTransform));
+		private static Vector3 GetForwardDirection(ref TransformComponent camTransform) => Vector3.Transform(new Vector3(0, 0, -1), GetOrientation(ref camTransform));
+
+		private static Quaternion GetOrientation(ref TransformComponent camTransform) => Quaternion.CreateFromYawPitchRoll(camTransform.Rotation.Y, camTransform.Rotation.X, camTransform.Rotation.Z);
 	}
 }
