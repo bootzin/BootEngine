@@ -205,6 +205,8 @@ namespace Shoelace.Layers
 			sceneHierarchyPanel.OnGuiRender();
 			propertiesPanel.OnGuiRender();
 
+			ImGui.ShowDemoWindow();
+
 			#region Scene Viewport
 			ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
 			ImGui.Begin("Viewport");

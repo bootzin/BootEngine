@@ -20,7 +20,7 @@ namespace Shoelace.Panels
 
 		public override void OnGuiRender()
 		{
-			ImGui.Begin("Properties");
+			ImGui.Begin("\uf1b3 Properties");
 			if (_guiService.SelectedEntity != default)
 			{
 				DrawComponents(_guiService.SelectedEntity);

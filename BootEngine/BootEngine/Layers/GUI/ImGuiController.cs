@@ -192,21 +192,8 @@ namespace BootEngine.Layers.GUI
 			vertexBuffer.Name = "ImGui.NET Vertex Buffer";
 			indexBuffer = gd.ResourceFactory.CreateBuffer(new BufferDescription(2000, BufferUsage.IndexBuffer | BufferUsage.Dynamic));
 			indexBuffer.Name = "ImGui.NET Index Buffer";
-			unsafe
-			{
-				var nativeConfig = ImGuiNative.ImFontConfig_ImFontConfig();
-				(*nativeConfig).OversampleH = 1;
-				(*nativeConfig).OversampleV = 1;
-				(*nativeConfig).RasterizerMultiply = 1f;
-				(*nativeConfig).GlyphExtraSpacing = Vector2.Zero;
-				(*nativeConfig).MergeMode = 0;
-				var io = ImGui.GetIO();
-				// TODO: Add icon fonts
-				io.Fonts.AddFontFromFileTTF(Path.Combine(AppContext.BaseDirectory, "assets/fonts/WorkSans/static/WorkSans-Regular.ttf"), 14f);
-				io.Fonts.AddFontFromFileTTF(Path.Combine(AppContext.BaseDirectory, "assets/fonts/WorkSans/static/WorkSans-SemiBold.ttf"), 14f);
-				ImGuiNative.ImFontConfig_destroy(nativeConfig);
-				RecreateFontDeviceTexture(gd);
-			}
+
+			LoadFonts(gd);
 
 			projMatrixBuffer = gd.ResourceFactory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
 			projMatrixBuffer.Name = "ImGui.NET Projection Buffer";
@@ -246,6 +233,41 @@ namespace BootEngine.Layers.GUI
 				gd.PointSampler));
 
 			fontTextureResourceSet = gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(textureLayout, fontTextureView));
+		}
+
+		public void LoadFonts(GraphicsDevice gd)
+		{
+			unsafe
+			{
+				ImFontConfigPtr iconConfig = ImGuiNative.ImFontConfig_ImFontConfig();
+				iconConfig.OversampleH = 3;
+				iconConfig.OversampleV = 3;
+				iconConfig.RasterizerMultiply = 1f;
+				iconConfig.GlyphExtraSpacing = Vector2.Zero;
+				iconConfig.MergeMode = true;
+				iconConfig.PixelSnapH = true;
+				ushort[] ranges = new ushort[] { 0xe005, 0xf8ff, 0 };
+				GCHandle rangeHandle = GCHandle.Alloc(ranges, GCHandleType.Pinned);
+				var io = ImGui.GetIO();
+				try
+				{
+					io.Fonts.AddFontFromFileTTF(Path.Combine(AppContext.BaseDirectory, "assets/fonts/WorkSans/static/WorkSans-Regular.ttf"), 14f);
+					io.Fonts.AddFontFromFileTTF(Path.Combine(AppContext.BaseDirectory, "assets/fonts/fontawesome-free-5.15.1-web/webfonts/fa-solid-900.ttf"), 16f, iconConfig, rangeHandle.AddrOfPinnedObject());
+					io.Fonts.AddFontFromFileTTF(Path.Combine(AppContext.BaseDirectory, "assets/fonts/fontawesome-free-5.15.1-web/webfonts/fa-regular-400.ttf"), 16f, iconConfig, rangeHandle.AddrOfPinnedObject());
+					io.Fonts.AddFontFromFileTTF(Path.Combine(AppContext.BaseDirectory, "assets/fonts/WorkSans/static/WorkSans-SemiBold.ttf"), 14f);
+				}
+				catch
+				{
+					io.Fonts.AddFontDefault();
+				}
+				finally
+				{
+					if (rangeHandle.IsAllocated)
+						rangeHandle.Free();
+					ImGuiNative.ImFontConfig_destroy(iconConfig);
+				}
+				RecreateFontDeviceTexture(gd);
+			}
 		}
 
 		private IntPtr GetNextImGuiBindingID()
@@ -335,25 +357,25 @@ namespace BootEngine.Layers.GUI
 			switch (factory.BackendType)
 			{
 				case GraphicsBackend.Direct3D11:
-				{
-					string resourceName = name + ".hlsl.bytes";
-					return GetEmbeddedResourceBytes(resourceName);
-				}
+					{
+						string resourceName = name + ".hlsl.bytes";
+						return GetEmbeddedResourceBytes(resourceName);
+					}
 				case GraphicsBackend.OpenGL:
-				{
-					string resourceName = name + ".glsl";
-					return GetEmbeddedResourceBytes(resourceName);
-				}
+					{
+						string resourceName = name + ".glsl";
+						return GetEmbeddedResourceBytes(resourceName);
+					}
 				case GraphicsBackend.Vulkan:
-				{
-					string resourceName = name + ".spv";
-					return GetEmbeddedResourceBytes(resourceName);
-				}
+					{
+						string resourceName = name + ".spv";
+						return GetEmbeddedResourceBytes(resourceName);
+					}
 				case GraphicsBackend.Metal:
-				{
-					string resourceName = name + ".metallib";
-					return GetEmbeddedResourceBytes(resourceName);
-				}
+					{
+						string resourceName = name + ".metallib";
+						return GetEmbeddedResourceBytes(resourceName);
+					}
 				default:
 					throw new BootEngineException($"{factory.BackendType} backend embedded resources not implemented");
 			}
