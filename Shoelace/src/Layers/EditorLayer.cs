@@ -1,4 +1,5 @@
 ﻿using BootEngine.AssetsManager;
+using BootEngine.Audio;
 using BootEngine.ECS.Components;
 using BootEngine.ECS.Components.Events;
 using BootEngine.ECS.Systems;
@@ -33,6 +34,7 @@ namespace Shoelace.Layers
 		private bool runtimeActive;
 		private readonly GizmoSystem _guizmoSystem = new GizmoSystem();
 		private readonly GuiService _guiService = new GuiService();
+		private Sound loadedSound;
 		#endregion
 
 		#region Constructor
@@ -44,6 +46,7 @@ namespace Shoelace.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
+			loadedSound = AssetManager.LoadSound("assets\\sounds\\loaded.mp3", false);
 			Styles.SetDarkTheme();
 
 			EditorSetup.LoadStandardShaders();
@@ -69,6 +72,7 @@ namespace Shoelace.Layers
 			e2.AddComponent(new SpriteRendererComponent(ColorF.Red, new Material("Standard2D"), data));
 			e3.AddComponent(new SpriteRendererComponent(ColorF.Blue, new Material("Standard2D"), RenderData2D.QuadData));
 			e4.AddComponent(new SpriteRendererComponent(ColorF.Green, new Material("Standard2D"), data2));
+			SoundEngine.Instance.PlaySound(loadedSound);
 		}
 
 		public override void OnUpdate(float deltaSeconds)

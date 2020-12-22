@@ -87,6 +87,11 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>assets\fonts\%(RecursiveDir)\%(FileName)%(Extension)</Link>
     </Content>
+
+    <Content Include="$(AssetsDir)\sounds\**">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Link>assets\sounds\%(RecursiveDir)\%(FileName)%(Extension)</Link>
+    </Content>
   </ItemGroup>
 
 </Project>

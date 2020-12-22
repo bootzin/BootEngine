@@ -1,5 +1,7 @@
-﻿using BootEngine.AssetsManager.Images;
+﻿using BootEngine.AssetsManager.Audio;
+using BootEngine.AssetsManager.Images;
 using BootEngine.AssetsManager.Shaders;
+using BootEngine.Audio;
 using BootEngine.Utils.ProfilingTools;
 using StbImageSharp;
 using System;
@@ -163,6 +165,13 @@ namespace BootEngine.AssetsManager
 			shaders[1].Name = setName + "-Fragment";
 			ResourceCache.AddShaders(shaders);
 			return shaders;
+		}
+		#endregion
+
+		#region Sounds
+		public static Sound LoadSound(string soundPath, bool loop)
+		{
+			return AudioHelper.LoadAudio(soundPath, loop);
 		}
 		#endregion
 

@@ -4,6 +4,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using BootEngine.Utils.Exceptions;
 using Veldrid;
+using BootEngine.Audio;
 
 namespace BootEngine.AssetsManager
 {
@@ -11,6 +12,7 @@ namespace BootEngine.AssetsManager
 	{
 		private static readonly Lazy<ConcurrentDictionary<string, Shader>> shaderCache = new Lazy<ConcurrentDictionary<string, Shader>>();
 		private static readonly Lazy<ConcurrentDictionary<string, Texture>> textureCache = new Lazy<ConcurrentDictionary<string, Texture>>();
+		private static readonly Lazy<ConcurrentDictionary<string, Sound>> soundCache = new Lazy<ConcurrentDictionary<string, Sound>>();
 
 		private static ConcurrentDictionary<string, Shader> ShaderCache
 		{
@@ -20,6 +22,11 @@ namespace BootEngine.AssetsManager
 		private static ConcurrentDictionary<string, Texture> TextureCache
 		{
 			get { return textureCache.Value; }
+		}
+
+		private static ConcurrentDictionary<string, Sound> SoundCache
+		{
+			get { return soundCache.Value; }
 		}
 
 		#region Shaders
@@ -84,6 +91,21 @@ namespace BootEngine.AssetsManager
 #endif
 			if (!TextureCache.TryAdd(texturePath, tex))
 				throw new BootEngineException($"A Texture with path {texturePath} has already been loaded!");
+		}
+		#endregion
+
+		#region Sounds
+		public static Sound GetSound(string soundPath)
+		{
+			if (SoundCache.TryGetValue(soundPath, out Sound sound))
+				return sound;
+			return null;
+		}
+
+		public static void AddSound(Sound sound, string soundPath)
+		{
+			if (!SoundCache.TryAdd(soundPath, sound))
+				throw new BootEngineException($"A Sound with path {soundPath} has already been loaded!");
 		}
 		#endregion
 
