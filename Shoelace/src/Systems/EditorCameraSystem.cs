@@ -36,10 +36,10 @@ namespace Shoelace.Systems
 
 						if (InputManager.Instance.GetMouseButtonDown(MouseButtonCodes.Middle))
 							MousePan(delta, cam, ref transform, ref camData);
-						if (InputManager.Instance.GetMouseButtonDown(MouseButtonCodes.Left))
+						else if (InputManager.Instance.GetMouseButtonDown(MouseButtonCodes.Left))
 							MouseRotate(delta, ref transform, ref camData);
-						if (InputManager.Instance.GetMouseButtonDown(MouseButtonCodes.Right))
-							MouseZoom(delta.Y, ref transform, ref camData);
+						else if (InputManager.Instance.GetMouseButtonDown(MouseButtonCodes.Right))
+							MouseZoom(delta.Y, ref camData);
 					}
 
 					foreach (var mse in _mouseScrollEvents)
@@ -47,13 +47,10 @@ namespace Shoelace.Systems
 						var ev = _mouseScrollEvents.Get1(mse).Event;
 						camData.Distance -= ev.MouseDelta * camData.ZoomSpeed * .1f;
 						if (camData.Distance < 1)
-						{
-							//camData.FocalPoint -= GetForwardDirection(ref transform);
 							camData.Distance = 1;
-						}
 					}
 				}
-				transform.Translation = camData.FocalPoint - GetForwardDirection(ref transform) * camData.Distance;
+				transform.Translation = camData.FocalPoint + (Vector3.UnitZ * camData.Distance); // GetForwardDirection() can be used instead of UnitZ for an FPS-like camera
 			}
 		}
 
@@ -67,33 +64,30 @@ namespace Shoelace.Systems
 		private void MouseRotate(Vector2 delta, ref TransformComponent camTransform, ref EditorCameraComponent camData)
 		{
 			float yawSign = GetUpDirection(ref camTransform).Y < 0 ? -1 : 1;
-			camTransform.Rotation += new Vector3(delta.Y * camData.RotationSpeed, yawSign * delta.X * camData.RotationSpeed, 0);
+			camTransform.Rotation -= new Vector3(delta.Y * camData.RotationSpeed, yawSign * delta.X * camData.RotationSpeed, 0);
 		}
 
-		private void MouseZoom(float deltaY, ref TransformComponent camTransform, ref EditorCameraComponent camData)
+		private void MouseZoom(float deltaY, ref EditorCameraComponent camData)
 		{
 			camData.Distance -= deltaY * camData.ZoomSpeed;
 			if (camData.Distance < 1)
-			{
-				camData.FocalPoint += GetForwardDirection(ref camTransform);
 				camData.Distance = 1;
-			}
 		}
 
+		// TODO: Adjust pan speed to my liking
 		private Vector2 GetPanSpeed(Camera cam)
 		{
 			float x = MathF.Min(cam.ViewportWidth / 1000.0f, 2.4f); // max = 2.4f
-			float xFactor = 0.0366f * (x * x) - 0.1778f * x + 0.3021f;
+			float xFactor = (0.0366f * (x * x)) - (0.1778f * x) + 0.3021f;
 
 			float y = MathF.Min(cam.ViewportHeight / 1000.0f, 2.4f); // max = 2.4f
-			float yFactor = 0.0366f * (y * y) - 0.1778f * y + 0.3021f;
+			float yFactor = (0.0366f * (y * y)) - (0.1778f * y) + 0.3021f;
 			return new Vector2(xFactor, yFactor);
 		}
 
 		private static Vector3 GetRightDirection(ref TransformComponent camTransform) => Vector3.Transform(new Vector3(1, 0, 0), GetOrientation(ref camTransform));
 		private static Vector3 GetUpDirection(ref TransformComponent camTransform) => Vector3.Transform(new Vector3(0, 1, 0), GetOrientation(ref camTransform));
 		private static Vector3 GetForwardDirection(ref TransformComponent camTransform) => Vector3.Transform(new Vector3(0, 0, -1), GetOrientation(ref camTransform));
-
-		private static Quaternion GetOrientation(ref TransformComponent camTransform) => Quaternion.CreateFromYawPitchRoll(-camTransform.Rotation.Y, -camTransform.Rotation.X, camTransform.Rotation.Z);
+		private static Quaternion GetOrientation(ref TransformComponent camTransform) => Quaternion.CreateFromYawPitchRoll(-camTransform.Rotation.Y, -camTransform.Rotation.X, 0);
 	}
 }
