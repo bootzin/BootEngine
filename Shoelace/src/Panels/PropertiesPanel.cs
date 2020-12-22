@@ -118,7 +118,7 @@ namespace Shoelace.Panels
 
 		private void DrawSpriteComponent(ref SpriteRendererComponent spriteComponent)
 		{
-			string texName = string.IsNullOrWhiteSpace(spriteComponent.SpriteData.Texture?.Name) ? "None" : spriteComponent.SpriteData.Texture?.Name;
+			string texName = string.IsNullOrWhiteSpace(spriteComponent.SpriteData.Texture?.Name) ? "None" : spriteComponent.SpriteData.Texture.Name[(int)(MathF.Max(spriteComponent.SpriteData.Texture.Name.LastIndexOf('\\'), spriteComponent.SpriteData.Texture.Name.LastIndexOf('/')) + 1)..];
 
 			ImGui.Text("Texture");
 			ImGui.SameLine();

@@ -21,7 +21,7 @@ namespace Shoelace
 		public static IntPtr CreateEditorCamera(int width, int height, Scene scene)
 		{
 			var camera = new Camera(false);
-			camera.SetPerspective(MathUtil.Deg2Rad(70), .0001f, 1000f);
+			camera.SetPerspective(MathUtil.Deg2Rad(45), .1f, 1000f);
 			camera.ResizeViewport(width, height);
 
 			var editorCam = scene.CreateEmptyEntity();
@@ -30,7 +30,10 @@ namespace Shoelace
 				Camera = camera
 			});
 			editorCam.AddComponent(new TransformComponent() { Translation = new System.Numerics.Vector3(1e-6f, 1e-6f, 1) });
-			editorCam.AddComponent(new EditorCameraComponent() { Distance = 2f });
+			editorCam.AddComponent(new EditorCameraComponent()
+			{
+				Distance = 10f
+			});
 			camera.BlendState = BlendStateDescription.SingleAlphaBlend;
 			camera.DepthStencilState = DepthStencilStateDescription.DepthOnlyLessEqual;
 			camera.RasterizerState = RasterizerStateDescription.CullNone;

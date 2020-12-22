@@ -10,6 +10,7 @@ using BootEngine.Utils.ProfilingTools;
 using BootEngine.Window;
 using ImGuiNET;
 using Shoelace.Panels;
+using Shoelace.Serializers;
 using Shoelace.Services;
 using Shoelace.Styling;
 using Shoelace.Systems;
@@ -241,7 +242,9 @@ namespace Shoelace.Layers
 
 		private void SaveScene(string savePath)
 		{
-			new YamlSerializer().Serialize(savePath, ActiveScene);
+			new YamlSerializer()
+				.WithCustomSerializer(new EditorCameraSerializer(ActiveScene))
+				.Serialize(savePath, ActiveScene);
 		}
 
 		private void LoadScene(string path = null)
@@ -263,7 +266,11 @@ namespace Shoelace.Layers
 			renderTargetAddr = EditorSetup.CreateEditorCamera(Width, Height, ActiveScene);
 
 			if (path != null)
-				ActiveScene = new SceneDeserializer().Deserialize(path, ActiveScene);
+			{
+				ActiveScene = new SceneDeserializer()
+					.WithCustomDeserializer(new EditorCameraDeserializer())
+					.Deserialize(path, ActiveScene);
+			}
 
 			ActiveScene.CreateEmptyEntity().AddComponent(new ViewportResizedEvent()
 			{

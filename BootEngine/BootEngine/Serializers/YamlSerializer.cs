@@ -3,6 +3,7 @@ using BootEngine.ECS.Components;
 using BootEngine.Renderer.Cameras;
 using Leopotam.Ecs;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Numerics;
 using Veldrid;
@@ -16,6 +17,7 @@ namespace BootEngine.Serializers
 	public sealed class YamlSerializer
 	{
 		private readonly IValueSerializer _valueSerializer;
+		private readonly List<ICustomSerializer> serializers = new List<ICustomSerializer>();
 
 		public YamlSerializer()
 		{
@@ -37,13 +39,19 @@ namespace BootEngine.Serializers
 			var e = new Emitter(tx, new EmitterSettings());
 			e.Emit(new StreamStart());
 			e.Emit(new DocumentStart());
+			e.Emit(new MappingStart());
 			Serialize(e, obj);
+			foreach (var serializer in serializers)
+			{
+				serializer.Serialize(e, this);
+			}
+			e.Emit(new MappingEnd());
 			e.Emit(new DocumentEnd(true));
 			e.Emit(new StreamEnd());
 			tx.Flush();
 		}
 
-		internal void Serialize<T>(Emitter e, T obj)
+		public void Serialize<T>(Emitter e, T obj)
 		{
 			switch (obj)
 			{
@@ -175,23 +183,19 @@ namespace BootEngine.Serializers
 
 		private void SerializeScene(Emitter e, Scene scene)
 		{
-			e.Emit(new MappingStart());
-			{
-				e.Emit(new Scalar("Scene"));
-				e.Emit(new Scalar(scene.Title));
+			e.Emit(new Scalar("Scene"));
+			e.Emit(new Scalar(scene.Title));
 
-				e.Emit(new Scalar("Entities"));
-				e.Emit(new SequenceStart(null, null, false, SequenceStyle.Block));
+			e.Emit(new Scalar("Entities"));
+			e.Emit(new SequenceStart(null, null, false, SequenceStyle.Block));
+			{
+				var taggedEntities = scene.GetFilter(typeof(EcsFilter<TagComponent>));
+				foreach (var entity in taggedEntities)
 				{
-					var taggedEntities = scene.GetFilter(typeof(EcsFilter<TagComponent>));
-					foreach (var entity in taggedEntities)
-					{
-						Serialize(e, new Entity(taggedEntities.GetEntity(entity)));
-					}
+					Serialize(e, new Entity(taggedEntities.GetEntity(entity)));
 				}
-				e.Emit(new SequenceEnd());
 			}
-			e.Emit(new MappingEnd());
+			e.Emit(new SequenceEnd());
 		}
 
 		private void SerializeEntity(Emitter e, Entity entity)
@@ -348,9 +352,15 @@ namespace BootEngine.Serializers
 			}
 			e.Emit(new MappingEnd());
 		}
+
+		public YamlSerializer WithCustomSerializer(ICustomSerializer customSerializer)
+		{
+			serializers.Add(customSerializer);
+			return this;
+		}
 	}
 
-	internal static class EmitterExtensions
+	public static class EmitterExtensions
 	{
 		public static void Emit(this Emitter e, string scalar)
 		{

@@ -8,16 +8,24 @@ using BootEngine.Utils;
 using System;
 using System.Collections;
 using System.IO;
-using System.Numerics;
+using static BootEngine.Serializers.SerializationHelpers;
 using Veldrid;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
+using System.Collections.Generic;
 
 namespace BootEngine.Serializers
 {
 	public sealed class SceneDeserializer
 	{
 		private static ResourceFactory resourceFactory = Application.App.Window.GraphicsDevice.ResourceFactory;
+		private List<ICustomDeserializer> deserializers = new List<ICustomDeserializer>();
+
+		public SceneDeserializer WithCustomDeserializer(ICustomDeserializer deserializer)
+		{
+			deserializers.Add(deserializer);
+			return this;
+		}
 
 		public Scene Deserialize(string filePath, Scene scene)
 		{
@@ -168,6 +176,10 @@ namespace BootEngine.Serializers
 					}
 				}
 			}
+			foreach (var deserializer in deserializers)
+			{
+				deserializer.Deserialize(scene, (IDictionary)data);
+			}
 			return scene;
 		}
 
@@ -194,30 +206,6 @@ namespace BootEngine.Serializers
 				array[i] = new Vertex2D(AsVec3(obj[i]["Position"]), AsVec2(obj[i]["TexCoord"]));
 			}
 			return array;
-		}
-
-		private Vector2 AsVec2(IList obj)
-		{
-			return new Vector2(
-				float.Parse(obj[0].ToString()),
-				float.Parse(obj[1].ToString()));
-		}
-
-		private Vector3 AsVec3(IList obj)
-		{
-			return new Vector3(
-				float.Parse(obj[0].ToString()),
-				float.Parse(obj[1].ToString()),
-				float.Parse(obj[2].ToString()));
-		}
-
-		private Vector4 AsVec4(IList obj)
-		{
-			return new Vector4(
-				float.Parse(obj[0].ToString()),
-				float.Parse(obj[1].ToString()),
-				float.Parse(obj[2].ToString()),
-				float.Parse(obj[3].ToString()));
 		}
 	}
 }

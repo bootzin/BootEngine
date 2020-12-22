@@ -18,7 +18,6 @@ namespace Shoelace.Systems
 		private readonly EcsFilter<TransformComponent, CameraComponent, EditorCameraComponent> _editorCameraFilter = default;
 		private readonly EcsFilter<EcsMouseScrolledEvent> _mouseScrollEvents = default;
 		private readonly GuiService _guiService = default;
-		private readonly TimeService _time = default;
 
 		public void Run()
 		{
@@ -26,7 +25,7 @@ namespace Shoelace.Systems
 			{
 				ref var transform = ref _editorCameraFilter.Get1(camera);
 				ref var camData = ref _editorCameraFilter.Get3(camera);
-				if (_guiService.ViewportHovered)
+				if (_guiService.ViewportHovered || _guiService.ViewportFocused)
 				{
 					var cam = _editorCameraFilter.Get2(camera).Camera;
 					if (InputManager.Instance.GetKeyDown(KeyCodes.AltLeft))
@@ -49,7 +48,7 @@ namespace Shoelace.Systems
 						camData.Distance -= ev.MouseDelta * camData.ZoomSpeed * .1f;
 						if (camData.Distance < 1)
 						{
-							camData.FocalPoint += GetForwardDirection(ref transform);
+							//camData.FocalPoint -= GetForwardDirection(ref transform);
 							camData.Distance = 1;
 						}
 					}
@@ -68,7 +67,7 @@ namespace Shoelace.Systems
 		private void MouseRotate(Vector2 delta, ref TransformComponent camTransform, ref EditorCameraComponent camData)
 		{
 			float yawSign = GetUpDirection(ref camTransform).Y < 0 ? -1 : 1;
-			camTransform.Rotation -= new Vector3(delta.Y * camData.RotationSpeed, yawSign * delta.X * camData.RotationSpeed, 0);
+			camTransform.Rotation += new Vector3(delta.Y * camData.RotationSpeed, yawSign * delta.X * camData.RotationSpeed, 0);
 		}
 
 		private void MouseZoom(float deltaY, ref TransformComponent camTransform, ref EditorCameraComponent camData)
@@ -95,6 +94,6 @@ namespace Shoelace.Systems
 		private static Vector3 GetUpDirection(ref TransformComponent camTransform) => Vector3.Transform(new Vector3(0, 1, 0), GetOrientation(ref camTransform));
 		private static Vector3 GetForwardDirection(ref TransformComponent camTransform) => Vector3.Transform(new Vector3(0, 0, -1), GetOrientation(ref camTransform));
 
-		private static Quaternion GetOrientation(ref TransformComponent camTransform) => Quaternion.CreateFromYawPitchRoll(camTransform.Rotation.Y, camTransform.Rotation.X, camTransform.Rotation.Z);
+		private static Quaternion GetOrientation(ref TransformComponent camTransform) => Quaternion.CreateFromYawPitchRoll(-camTransform.Rotation.Y, -camTransform.Rotation.X, camTransform.Rotation.Z);
 	}
 }
