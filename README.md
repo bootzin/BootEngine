@@ -36,5 +36,12 @@ Mobile support is not intended, but would be a welcome addition from the communi
 
 Regarding rendering APIs, I'm currently using [Veldrid](https://github.com/mellinoe/veldrid), which is an abstraction for `DirectX`, `Vulkan`, `Metal`, `OpenGL`, etc. Anything supported by Veldrid is, therefore, also supported by BootEngine.
 
+## Branches
+`master` is the most stable branch.
+
+`dev` is usually where I develop new features. I try to keep it as stable as possible, but it may sometimes have a few problems, which will soon be fixed.
+
+If I'm developing a big functionality, I usually create a dedicated branch for that, which will eventually be merged into dev/master
+
 ## Contributing
 Please read our [contributing](https://github.com/bootzin/BootEngine/blob/master/CONTRIBUTING.md) guidelines
