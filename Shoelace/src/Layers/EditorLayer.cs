@@ -5,6 +5,7 @@ using BootEngine.ECS.Components.Events;
 using BootEngine.ECS.Systems;
 using BootEngine.Layers;
 using BootEngine.Renderer;
+using BootEngine.Scripting;
 using BootEngine.Serializers;
 using BootEngine.Utils;
 using BootEngine.Utils.ProfilingTools;
@@ -71,6 +72,10 @@ namespace Shoelace.Layers
 			e2.AddComponent(new SpriteRendererComponent(ColorF.Red, new Material("Standard2D"), data));
 			e3.AddComponent(new SpriteRendererComponent(ColorF.Blue, new Material("Standard2D"), RenderData2D.QuadData));
 			e4.AddComponent(new SpriteRendererComponent(ColorF.Green, new Material("Standard2D"), data2));
+
+			ref var sc = ref e3.AddComponent<ScriptingComponent>();
+			sc.Script = new SampleScript(e3);
+
 			SoundEngine.Instance.PlaySound(loadedSound);
 		}
 
@@ -177,7 +182,10 @@ namespace Shoelace.Layers
 				// TODO: Implement a proper "play" button
 				if (ImGui.BeginMenu("Runtime"))
 				{
-					ImGui.Checkbox("", ref runtimeActive);
+					if (ImGui.Checkbox("", ref runtimeActive))
+					{
+						ActiveScene.EnableRuntimeSystems(runtimeActive);
+					}
 					ImGui.SameLine();
 					if (ImGui.MenuItem("Enabled"))
 					{
@@ -263,6 +271,7 @@ namespace Shoelace.Layers
 				.AddSystem(propertiesPanel)
 				.AddSystem(_guizmoSystem)
 				.AddRuntimeSystem(new VelocitySystem(), "Velocity System")
+				.AddRuntimeSystem(new ScriptingSystem(), "Scripting System")
 				.Inject(_guiService)
 				.Init();
 

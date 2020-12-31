@@ -19,9 +19,6 @@ namespace BootEngine.ECS.Components
 		{
 			get
 			{
-				//Matrix4x4 rotation = Matrix4x4.CreateRotationX(Rotation.X)
-				//	* Matrix4x4.CreateRotationY(Rotation.Y)
-				//	* Matrix4x4.CreateRotationZ(Rotation.Z);
 				Matrix4x4 rotation = Matrix4x4.CreateFromYawPitchRoll(Rotation.Y, Rotation.X, Rotation.Z);
 				return Matrix4x4.CreateTranslation(Translation) * rotation * Matrix4x4.CreateScale(Scale);
 			}

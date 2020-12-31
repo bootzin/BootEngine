@@ -8,7 +8,6 @@ using Shoelace.Components;
 using Shoelace.Services;
 using System;
 using System.Numerics;
-using Veldrid;
 
 namespace Shoelace.Systems
 {
