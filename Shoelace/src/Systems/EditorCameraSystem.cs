@@ -1,6 +1,5 @@
 ﻿using BootEngine.ECS.Components;
 using BootEngine.ECS.Components.Events.Ecs;
-using BootEngine.ECS.Services;
 using BootEngine.Input;
 using BootEngine.Renderer.Cameras;
 using BootEngine.Utils;
@@ -9,6 +8,7 @@ using Shoelace.Components;
 using Shoelace.Services;
 using System;
 using System.Numerics;
+using Veldrid;
 
 namespace Shoelace.Systems
 {
@@ -28,7 +28,7 @@ namespace Shoelace.Systems
 				if (_guiService.ViewportHovered || _guiService.ViewportFocused)
 				{
 					var cam = _editorCameraFilter.Get2(camera).Camera;
-					if (InputManager.Instance.GetKeyDown(KeyCodes.AltLeft))
+					if (InputManager.Instance.GetKeyDown(KeyCodes.AltLeft) && !ImGuiNET.ImGuizmo.IsOver())
 					{
 						var mousePos = InputManager.Instance.GetMousePosition();
 						var delta = (mousePos - camData.LastMousePos) * 0.003f;
@@ -50,15 +50,19 @@ namespace Shoelace.Systems
 							camData.Distance = 1;
 					}
 				}
-				transform.Translation = camData.FocalPoint + (Vector3.UnitZ * camData.Distance); // GetForwardDirection() can be used instead of UnitZ for an FPS-like camera
+				transform.Translation = camData.FocalPoint + (Vector3.UnitZ * camData.Distance); // -GetForwardDirection(ref transform) can be used instead of UnitZ for an FPS-like camera
 			}
 		}
 
 		private void MousePan(Vector2 delta, Camera cam, ref TransformComponent camTransform, ref EditorCameraComponent camData)
 		{
 			Vector2 panSpeed = GetPanSpeed(cam);
-			camData.FocalPoint -= GetRightDirection(ref camTransform) * delta.X * panSpeed.X * camData.Distance;
-			camData.FocalPoint += GetUpDirection(ref camTransform) * delta.Y * panSpeed.Y * camData.Distance;
+			Vector3 rightDir = GetRightDirection(ref camTransform);
+			int rightSign = rightDir.X > 0 ? -1 : 1;
+			Vector3 upDir = GetUpDirection(ref camTransform);
+			int upSign = upDir.Y < 0 ? -1 : 1;
+			camData.FocalPoint += rightSign * rightDir * delta.X * panSpeed.X * camData.Distance;
+			camData.FocalPoint += upSign * upDir * delta.Y * panSpeed.Y * camData.Distance;
 		}
 
 		private void MouseRotate(Vector2 delta, ref TransformComponent camTransform, ref EditorCameraComponent camData)

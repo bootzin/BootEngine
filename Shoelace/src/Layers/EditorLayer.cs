@@ -34,7 +34,6 @@ namespace Shoelace.Layers
 		private bool runtimeActive;
 		private readonly GizmoSystem _guizmoSystem = new GizmoSystem();
 		private readonly GuiService _guiService = new GuiService();
-		private Sound loadedSound;
 		#endregion
 
 		#region Constructor
@@ -46,7 +45,7 @@ namespace Shoelace.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
-			loadedSound = AssetManager.LoadSound("assets\\sounds\\loaded.mp3", false);
+			var loadedSound = AssetManager.LoadSound("assets\\sounds\\loaded.mp3", false);
 			Styles.SetDarkTheme();
 
 			EditorSetup.LoadStandardShaders();
@@ -291,6 +290,7 @@ namespace Shoelace.Layers
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
 			Renderer2D.Instance.Dispose();
+			SoundEngine.Instance.Dispose();
 			EditorSetup.FreeResources();
 		}
 	}

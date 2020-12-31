@@ -36,7 +36,7 @@ namespace Shoelace
 			});
 			camera.BlendState = BlendStateDescription.SingleAlphaBlend;
 			camera.DepthStencilState = DepthStencilStateDescription.DepthOnlyLessEqual;
-			camera.RasterizerState = RasterizerStateDescription.CullNone;
+			camera.RasterizerState = new RasterizerStateDescription(FaceCullMode.None, PolygonFillMode.Solid, FrontFace.Clockwise, true, false);
 
 			camera.ColorTargets = new Texture[]
 			{
