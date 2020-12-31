@@ -18,6 +18,8 @@ namespace Shoelace
 		internal readonly static Dictionary<string, ShaderData> StandardShaders = new Dictionary<string, ShaderData>();
 		private readonly static ResourceFactory resourceFactory = Application.App.Window.GraphicsDevice.ResourceFactory;
 
+		public static string AssetPath = "";
+
 		public static IntPtr CreateEditorCamera(int width, int height, Scene scene)
 		{
 			var camera = new Camera(false);

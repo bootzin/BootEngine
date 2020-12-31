@@ -19,11 +19,16 @@ namespace BootEngine.Scripting
 			}
 		}
 
+		public string FilePath { get; set; }
+		public string FileName { get; set; }
+
 		protected Entity Entity { get; set; }
 
-		protected Script(Entity entity)
+		protected Script(Entity entity, [System.Runtime.CompilerServices.CallerFilePath] string path = null)
 		{
 			Entity = entity;
+			FilePath = path;
+			FileName = path[(path.LastIndexOf('\\') + 1)..];
 		}
 
 		public virtual void OnUpdate() { }

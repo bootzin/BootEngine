@@ -9,6 +9,8 @@ using Leopotam.Ecs;
 using Shoelace.Services;
 using Shoelace.Styling;
 using System;
+using System.Diagnostics;
+using System.IO;
 using System.Numerics;
 
 namespace Shoelace.Panels
@@ -113,6 +115,43 @@ namespace Shoelace.Panels
 				}
 				if (removeComponent)
 					entity.Del<VelocityComponent>();
+			}
+
+			if (entity.Has<ScriptingComponent>())
+			{
+				ImGui.Separator();
+				bool open = DrawComponentBase("Script Component", out bool removeComponent);
+				if (open)
+				{
+					DrawScriptingComponent(ref entity.Get<ScriptingComponent>());
+					ImGui.TreePop();
+				}
+				if (removeComponent)
+					entity.Del<ScriptingComponent>();
+			}
+		}
+
+		private void DrawScriptingComponent(ref ScriptingComponent scriptingComponent)
+		{
+			string name = scriptingComponent.Script.FileName;
+			if (ImGui.InputText("##ScriptName", ref name, 512u, ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.EnterReturnsTrue))
+			{
+				if (!name.EndsWith(".cs"))
+					name += ".cs";
+				var newPath = scriptingComponent.Script.FilePath.Substring(0, scriptingComponent.Script.FilePath.IndexOf(scriptingComponent.Script.FileName)) + name;
+				File.Move(scriptingComponent.Script.FilePath, newPath, true);
+				scriptingComponent.Script.FileName = name;
+				scriptingComponent.Script.FilePath = newPath;
+			}
+
+			ImGui.SameLine();
+			if (ImGui.Button(FontAwesome5.Edit))
+			{
+				var projectPath = Path.GetDirectoryName(Path.GetDirectoryName(Directory.GetCurrentDirectory())); // TODO: Get proper path
+				ProcessStartInfo psi = new ProcessStartInfo("cmd", "/C start devenv "+ projectPath + " /Edit " + scriptingComponent.Script.FilePath);
+				psi.UseShellExecute = true;
+				psi.CreateNoWindow = true;
+				Process.Start(psi);
 			}
 		}
 

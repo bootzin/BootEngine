@@ -221,7 +221,7 @@ namespace Shoelace.Layers
 
 			#region Scene Viewport
 			ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
-			ImGui.Begin("Viewport");
+			ImGui.Begin(FontAwesome5.Gamepad + " Viewport");
 			_guiService.ViewportFocused = ImGui.IsWindowFocused();
 			_guiService.ViewportHovered = ImGui.IsWindowHovered();
 			_guiService.BlockEvents = !_guiService.ViewportFocused || !_guiService.ViewportHovered;
