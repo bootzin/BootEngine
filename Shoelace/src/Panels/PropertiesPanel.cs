@@ -32,15 +32,22 @@ namespace Shoelace.Panels
 					if (ImGui.BeginMenu("Add Component"))
 					{
 						if (!_guiService.SelectedEntity.Has<TransformComponent>() && ImGui.MenuItem("Transform"))
+						{
 							_guiService.SelectedEntity.Get<TransformComponent>();
+						}
+
 						if (!_guiService.SelectedEntity.Has<SpriteRendererComponent>() && ImGui.MenuItem("Sprite Renderer"))
 						{
 							ref var sc = ref _guiService.SelectedEntity.Get<SpriteRendererComponent>();
 							sc.Material = new Material("Standard2D");
 							sc.SpriteData = RenderData2D.QuadData;
 						}
+
 						if (!_guiService.SelectedEntity.Has<VelocityComponent>() && ImGui.MenuItem("Velocity"))
+						{
 							_guiService.SelectedEntity.Get<VelocityComponent>();
+						}
+
 						if (!_guiService.SelectedEntity.Has<CameraComponent>() && ImGui.MenuItem("Camera"))
 						{
 							CameraComponent cam = new CameraComponent()
@@ -49,6 +56,14 @@ namespace Shoelace.Panels
 							};
 							_guiService.SelectedEntity.Replace(in cam);
 						}
+
+#if false
+						// Script components currently can't be added from the Editor.
+						if (!_guiService.SelectedEntity.Has<ScriptingComponent>() && ImGui.MenuItem("Script"))
+						{
+							_guiService.SelectedEntity.Get<ScriptingComponent>();
+						}
+#endif
 						ImGui.EndMenu();
 					}
 
@@ -148,7 +163,7 @@ namespace Shoelace.Panels
 			if (ImGui.Button(FontAwesome5.Edit))
 			{
 				var projectPath = Path.GetDirectoryName(Path.GetDirectoryName(Directory.GetCurrentDirectory())); // TODO: Get proper path
-				ProcessStartInfo psi = new ProcessStartInfo("cmd", "/C start devenv "+ projectPath + " /Edit " + scriptingComponent.Script.FilePath);
+				ProcessStartInfo psi = new ProcessStartInfo("cmd", "/C start devenv " + projectPath + " /Edit " + scriptingComponent.Script.FilePath);
 				psi.UseShellExecute = true;
 				psi.CreateNoWindow = true;
 				Process.Start(psi);
@@ -169,7 +184,7 @@ namespace Shoelace.Panels
 			ImGui.Button(texName, new Vector2(ImGui.CalcItemWidth(), 20));
 			ImGui.PopStyleVar();
 
-			if(ImGui.BeginDragDropTarget())
+			if (ImGui.BeginDragDropTarget())
 			{
 				ImGui.Text("TODO"); // Allow drag n' drop of textures
 			}
