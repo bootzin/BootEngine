@@ -56,6 +56,7 @@ namespace Shoelace.Panels
 				{
 					if (_guiService.SelectedEntity == entt)
 						_guiService.SelectedEntity = default;
+					ReleaseEntityResources(ref entt);
 					entt.Destroy();
 				}
 				ImGui.EndPopup();
@@ -64,6 +65,22 @@ namespace Shoelace.Panels
 			if (open)
 			{
 				ImGui.TreePop();
+			}
+		}
+
+		private void ReleaseEntityResources(ref EcsEntity entt)
+		{
+			if (entt.Has<SpriteRendererComponent>())
+			{
+				ref var sc = ref entt.Get<SpriteRendererComponent>();
+				sc.Material.Dispose();
+				sc.SpriteData.Dispose();
+			}
+
+			if (entt.Has<CameraComponent>())
+			{
+				ref var cc = ref entt.Get<CameraComponent>();
+				cc.Camera.Dispose();
 			}
 		}
 	}

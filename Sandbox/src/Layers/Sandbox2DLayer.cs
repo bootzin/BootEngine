@@ -108,7 +108,7 @@ namespace Sandbox.Layers
 			sprite3.SpriteData = RenderData2D.QuadData;
 			//sprite3.Texture = AssetManager.LoadTexture2D("assets/textures/sampleDog.png", TextureUsage.Sampled);
 
-			for (int i = 0; i < _quadData.QuadCount; i++)
+			for (int i = 4; i < _quadData.QuadCount; i++)
 			{
 				var quad5 = ActiveScene.CreateEntity(quad4);
 				ref var transform5 = ref quad5.GetComponent<TransformComponent>();

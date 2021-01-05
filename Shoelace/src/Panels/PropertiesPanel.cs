@@ -90,7 +90,11 @@ namespace Shoelace.Panels
 					ImGui.TreePop();
 				}
 				if (removeComponent)
+				{
+					ref var cc = ref entity.Get<CameraComponent>();
+					cc.Camera.Dispose();
 					entity.Del<CameraComponent>();
+				}
 			}
 
 			if (entity.Has<TransformComponent>())
@@ -103,7 +107,9 @@ namespace Shoelace.Panels
 					ImGui.TreePop();
 				}
 				if (removeComponent)
+				{
 					entity.Del<TransformComponent>();
+				}
 			}
 
 			if (entity.Has<SpriteRendererComponent>())
@@ -116,7 +122,12 @@ namespace Shoelace.Panels
 					ImGui.TreePop();
 				}
 				if (removeComponent)
+				{
+					ref var sc = ref entity.Get<SpriteRendererComponent>();
+					sc.Material.Dispose();
+					sc.SpriteData.Dispose();
 					entity.Del<SpriteRendererComponent>();
+				}
 			}
 
 			if (entity.Has<VelocityComponent>())
@@ -129,7 +140,9 @@ namespace Shoelace.Panels
 					ImGui.TreePop();
 				}
 				if (removeComponent)
+				{
 					entity.Del<VelocityComponent>();
+				}
 			}
 
 			if (entity.Has<ScriptingComponent>())
@@ -142,7 +155,9 @@ namespace Shoelace.Panels
 					ImGui.TreePop();
 				}
 				if (removeComponent)
+				{
 					entity.Del<ScriptingComponent>();
+				}
 			}
 		}
 

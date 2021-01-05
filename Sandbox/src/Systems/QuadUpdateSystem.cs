@@ -1,8 +1,6 @@
-﻿using BootEngine.AssetsManager;
-using BootEngine.ECS;
+﻿using BootEngine.ECS;
 using BootEngine.ECS.Components;
 using BootEngine.Renderer;
-using BootEngine.Utils;
 using Leopotam.Ecs;
 using Sandbox.Services;
 using System.Numerics;
@@ -27,17 +25,20 @@ namespace Sandbox.Systems
 			{
 				if (item >= _quadInfoService.QuadCount)
 				{
+					ref var sc = ref _quads.Get3(item);
+					sc.SpriteData.Dispose();
+					sc.Material.Dispose();
 					_quads.GetEntity(item).Destroy();
 					instanceCount--;
 					continue;
 				}
 
-				ref var transform = ref _quads.Get1(item);
 				ref var sprite = ref _quads.Get3(item);
 				sprite.Color = _quadInfoService.SquareColor;
 
 				if (_quads.Get2(item).Tag == "Quad2")
 				{
+					ref var transform = ref _quads.Get1(item);
 					transform.Translation = new Vector3(_quadInfoService.SquareColor.X, _quadInfoService.SquareColor.Y, _quadInfoService.SquareColor.Z);
 				}
 			}

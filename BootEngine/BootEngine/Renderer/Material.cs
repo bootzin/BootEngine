@@ -1,10 +1,11 @@
 ﻿using BootEngine.Utils;
+using System;
 using System.Numerics;
 using Veldrid;
 
 namespace BootEngine.Renderer
 {
-	public sealed class Material
+	public sealed class Material : IDisposable
 	{
 		public Material(string shaderSetName)
 		{
@@ -21,6 +22,14 @@ namespace BootEngine.Renderer
 		public Texture Occlusion { get; set; }
 		public Vector2 Tiling { get; set; } = Vector2.One;
 		public Vector2 Offset { get; set; }
+
+		public void Dispose()
+		{
+			Albedo?.Dispose();
+			NormalMap?.Dispose();
+			HeightMap?.Dispose();
+			Occlusion?.Dispose();
+		}
 	}
 
 	public enum MaterialRenderingMode
