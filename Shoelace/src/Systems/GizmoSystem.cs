@@ -11,12 +11,10 @@ namespace Shoelace.Systems
 {
 	internal sealed class GizmoSystem : IEcsSystem
 	{
-		private readonly Scene _scene = default;
 		private readonly GuiService _guiService = default;
 		private readonly EcsFilter<CameraComponent, TransformComponent> _cameras = default;
 		private bool duplicated;
 
-		// TODO: Consider making my own gizmo library
 		public void ProcessGizmos()
 		{
 			var selected = _guiService.SelectedEntity;
@@ -93,7 +91,9 @@ namespace Shoelace.Systems
 								// copy current entity
 								_guiService.SelectedEntity =_guiService.SelectedEntity.Copy();
 								ref var tag = ref _guiService.SelectedEntity.Get<TagComponent>();
+#pragma warning disable S1643 // Strings should not be concatenated using '+' in a loop
 								tag.Tag += " (Copy)";
+#pragma warning restore S1643 // Strings should not be concatenated using '+' in a loop
 								duplicated = true;
 							}
 							float[] translation = new float[3];

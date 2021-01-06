@@ -32,6 +32,7 @@ namespace Shoelace.Layers
 		private readonly float[] _frametime = new float[100];
 		private SceneHierarchyPanel sceneHierarchyPanel = new SceneHierarchyPanel();
 		private PropertiesPanel propertiesPanel = new PropertiesPanel();
+		private AssetManagerPanel assetManagerPanel = new AssetManagerPanel();
 		private bool runtimeActive;
 		private readonly GizmoSystem _guizmoSystem = new GizmoSystem();
 		private readonly GuiService _guiService = new GuiService();
@@ -218,6 +219,7 @@ namespace Shoelace.Layers
 
 			sceneHierarchyPanel.OnGuiRender();
 			propertiesPanel.OnGuiRender();
+			assetManagerPanel.OnGuiRender();
 
 			#region Scene Viewport
 			ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
@@ -247,6 +249,9 @@ namespace Shoelace.Layers
 
 			ImGui.End(); //Viewport
 			ImGui.PopStyleVar();
+
+			#region Asset Manager
+			#endregion
 
 			ImGui.End(); // Dockspace
 		}
