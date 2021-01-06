@@ -4,7 +4,7 @@ namespace BootEngine.Scripting
 {
 	public abstract class Script
 	{
-		private bool enabled = true;
+		private bool enabled;
 
 		public bool Enabled
 		{
@@ -29,6 +29,7 @@ namespace BootEngine.Scripting
 			Entity = entity;
 			FilePath = path;
 			FileName = path[(path.LastIndexOf('\\') + 1)..];
+			Enabled = true;
 		}
 
 		public virtual void OnUpdate() { }
