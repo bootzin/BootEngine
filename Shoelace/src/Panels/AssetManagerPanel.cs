@@ -20,13 +20,15 @@ namespace Shoelace.Panels
 
 		private string activeFolder = "Assets";
 		private DirectoryInfo activeFolderInfo = new DirectoryInfo(EditorConfig.AssetDirectory);
+		private bool isFolderSelected;
+
+		private int selectedFile = -1;
+		private int maxItems = 3;
+		private int itemCount = 0;
+
 		private readonly List<string> _supportedImageExtensions = new List<string> { ".png", ".bmp", ".jpg", ".jpeg" };
 		private readonly DirectoryInfo _assetDirectoryInfo = new DirectoryInfo(EditorConfig.AssetDirectory);
 		private const int assetSize = 96;
-		private int selectedFile = -1;
-		private FileType selectedFileType = FileType.Unknown;
-		private int maxItems = 3;
-		private int itemCount = 0;
 
 		public override void OnGuiRender()
 		{
@@ -100,7 +102,7 @@ namespace Shoelace.Panels
 					selectedFile = currentIndex;
 					if (ImGui.IsMouseDoubleClicked(0))
 					{
-						if (selectedFileType == FileType.Folder)
+						if (isFolderSelected)
 						{
 							folderNameToChangeInto = file.FullName;
 						}
@@ -120,40 +122,27 @@ namespace Shoelace.Panels
 				ImGui.EndGroup();
 				ImGui.SameLine();
 
-				string imgPath = Path.Combine(EditorConfig.InternalAssetDirectory, "textures", "icons", "file - Designed by iconixar from Flaticon.png");
-				if (_supportedImageExtensions.Contains(file.Extension))
-				{
-					imgPath = file.FullName;
-					selectedFileType = FileType.Image;
-				}
-				else if ((file.Attributes & FileAttributes.Directory) != 0)
+				string fileExtIconsPath = Path.Combine(EditorConfig.InternalAssetDirectory, "textures", "icons", "fileExt - Designed by iconixar from Flaticon");
+				string imgPath;
+				if ((file.Attributes & FileAttributes.Directory) != 0)
 				{
 					imgPath = Path.Combine(EditorConfig.InternalAssetDirectory, "textures", "icons", "folder1 - Designed by DinosoftLabs from Flaticon.png");
-					selectedFileType = FileType.Folder;
+					isFolderSelected = true;
 				}
-				else if (file.Extension == ".txt")
+				else if (_supportedImageExtensions.Contains(file.Extension))
 				{
-					imgPath = Path.Combine(EditorConfig.InternalAssetDirectory, "textures", "icons", "fileText - Designed by Smashicons from Flaticon.png");
-					selectedFileType = FileType.Text;
-				}
-				else if (file.Extension == ".json")
-				{
-					imgPath = Path.Combine(EditorConfig.InternalAssetDirectory, "textures", "icons", "fileJson - Designed by Smashicons from Flaticon.png");
-					selectedFileType = FileType.Json;
-				}
-				else if (file.Extension == ".mp3")
-				{
-					imgPath = Path.Combine(EditorConfig.InternalAssetDirectory, "textures", "icons", "fileMp3 - Designed by Smashicons from Flaticon.png");
-					selectedFileType = FileType.Sound;
-				}
-				else if (file.Extension == ".zip")
-				{
-					imgPath = Path.Combine(EditorConfig.InternalAssetDirectory, "textures", "icons", "fileZip - Designed by Smashicons from Flaticon.png");
-					selectedFileType = FileType.Compressed;
+					imgPath = file.FullName;
 				}
 				else
 				{
-					selectedFileType = FileType.Unknown;
+					if (File.Exists(Path.Combine(fileExtIconsPath, file.Extension[1..] + ".png")))
+					{
+						imgPath = Path.Combine(fileExtIconsPath, file.Extension[1..] + ".png");
+					}
+					else
+					{
+						imgPath = Path.Combine(fileExtIconsPath, "unknown.png");
+					}
 				}
 
 				ImGui.BeginGroup();
@@ -170,7 +159,7 @@ namespace Shoelace.Panels
 				if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
 				{
 					// button double click
-					if (selectedFileType == FileType.Folder)
+					if (isFolderSelected)
 					{
 						folderNameToChangeInto = file.FullName;
 					}
@@ -238,6 +227,8 @@ namespace Shoelace.Panels
 			{
 				activeFolder = Path.GetRelativePath(EditorConfig.AssetDirectory, folderNameToChangeInto);
 				activeFolderInfo = new DirectoryInfo(folderNameToChangeInto);
+				selectedFile = -1;
+				isFolderSelected = false;
 			}
 		}
 
@@ -312,17 +303,6 @@ namespace Shoelace.Panels
 					}
 				}
 			}
-		}
-
-		private enum FileType
-		{
-			Unknown,
-			Image,
-			Text,
-			Json,
-			Sound,
-			Compressed,
-			Folder
 		}
 	}
 }
