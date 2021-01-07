@@ -12,6 +12,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Numerics;
+using System.Runtime.InteropServices;
 
 namespace Shoelace.Panels
 {
@@ -199,11 +200,14 @@ namespace Shoelace.Panels
 			ImGui.Button(texName, new Vector2(ImGui.CalcItemWidth(), 20));
 			ImGui.PopStyleVar();
 
-			if (ImGui.BeginDragDropTarget())
+			if (ImGui.BeginDragDropTarget() && !ImGui.IsMouseDown(ImGuiMouseButton.Left))
 			{
-				ImGui.Text("TODO"); // Allow drag n' drop of textures
+				//ImGui.Text("TODO"); // Allow drag n' drop of textures
+				string texData = Marshal.PtrToStringAuto(ImGui.GetDragDropPayload().Data);
+				spriteComponent.SpriteData.Texture = AssetManager.LoadTexture2D(texData, BootEngineTextureUsage.Sampled);
+
+				ImGui.EndDragDropTarget();
 			}
-			ImGui.EndDragDropTarget();
 
 			ImGui.PopStyleColor(3);
 
