@@ -20,12 +20,14 @@ namespace Shoelace.Panels
 
 		private string activeFolder = "Assets";
 		private DirectoryInfo activeFolderInfo = new DirectoryInfo(EditorConfig.AssetDirectory);
-		private bool isFolderSelected;
+		private bool selectedFolder;
+
+		private bool shouldDoAction;
+		private string actionPath;
 
 		private int selectedFile = -1;
 		private int maxItems = 3;
 		private int itemCount = 0;
-
 		private readonly List<string> _supportedImageExtensions = new List<string> { ".png", ".bmp", ".jpg", ".jpeg" };
 		private readonly DirectoryInfo _assetDirectoryInfo = new DirectoryInfo(EditorConfig.AssetDirectory);
 		private const int assetSize = 96;
@@ -78,10 +80,33 @@ namespace Shoelace.Panels
 			int currentIndex = 0;
 			var files = activeFolderInfo.GetFileSystemInfos();
 			itemCount = files.Length - 1;
-			string folderNameToChangeInto = "";
+
+			if (shouldDoAction)
+			{
+				if (selectedFolder)
+				{
+					activeFolder = Path.GetRelativePath(EditorConfig.AssetDirectory, actionPath);
+					activeFolderInfo = new DirectoryInfo(actionPath);
+					selectedFile = -1;
+					selectedFolder = false;
+				}
+				else
+				{
+					new Process()
+					{
+						StartInfo = new ProcessStartInfo(actionPath)
+						{
+							UseShellExecute = true,
+							CreateNoWindow = true
+						}
+					}.Start();
+				}
+				shouldDoAction = false;
+			}
 
 			foreach (var file in files)
 			{
+				bool isFolderSelected = false;
 				bool frame = false;
 				if (ImGui.IsMouseHoveringRect(ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(assetSize + 4)) || selectedFile == currentIndex)
 				{
@@ -90,37 +115,11 @@ namespace Shoelace.Panels
 					ImGui.PushStyleColor(ImGuiCol.ChildBg, new Vector4(.18f, .18f, .18f, 1));
 				}
 
-				if (ImGui.IsMouseClicked(0) && !ImGui.IsAnyItemHovered())
-					selectedFile = -1;
-
-				ImGui.BeginChild(file.FullName, new Vector2(assetSize + 4), frame, ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoBringToFrontOnFocus | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoNav);
-				ImGui.PushStyleColor(ImGuiCol.HeaderActive, Vector4.Zero);
-				ImGui.PushStyleColor(ImGuiCol.HeaderHovered, Vector4.Zero);
-				ImGui.BeginGroup();
-				if (ImGui.Selectable("##1" + file.Name, false, ImGuiSelectableFlags.AllowItemOverlap | ImGuiSelectableFlags.AllowDoubleClick, new Vector2(0, assetSize)))
+				if (ImGui.IsWindowFocused() && ImGui.IsMouseClicked(0) && !ImGui.IsAnyItemHovered())
 				{
-					selectedFile = currentIndex;
-					if (ImGui.IsMouseDoubleClicked(0))
-					{
-						if (isFolderSelected)
-						{
-							folderNameToChangeInto = file.FullName;
-						}
-						else
-						{
-							new Process()
-							{
-								StartInfo = new ProcessStartInfo(file.FullName)
-								{
-									UseShellExecute = true,
-									CreateNoWindow = true
-								}
-							}.Start();
-						}
-					}
+					selectedFile = -1;
+					isFolderSelected = false;
 				}
-				ImGui.EndGroup();
-				ImGui.SameLine();
 
 				string fileExtIconsPath = Path.Combine(EditorConfig.InternalAssetDirectory, "textures", "icons", "fileExt - Designed by iconixar from Flaticon");
 				string imgPath;
@@ -145,6 +144,23 @@ namespace Shoelace.Panels
 					}
 				}
 
+				ImGui.BeginChild(file.FullName, new Vector2(assetSize + 4), frame, ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoBringToFrontOnFocus | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoNav);
+				ImGui.PushStyleColor(ImGuiCol.HeaderActive, Vector4.Zero);
+				ImGui.PushStyleColor(ImGuiCol.HeaderHovered, Vector4.Zero);
+				ImGui.BeginGroup();
+				if (ImGui.Selectable("##1" + file.Name, false, ImGuiSelectableFlags.AllowItemOverlap | ImGuiSelectableFlags.AllowDoubleClick, new Vector2(0, assetSize)))
+				{
+					selectedFile = currentIndex;
+					actionPath = file.FullName;
+					selectedFolder = isFolderSelected;
+					if (ImGui.IsMouseDoubleClicked(0))
+					{
+						shouldDoAction = true;
+					}
+				}
+				ImGui.EndGroup();
+				ImGui.SameLine();
+
 				ImGui.BeginGroup();
 				ImGui.Indent(-6);
 				ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
@@ -155,25 +171,13 @@ namespace Shoelace.Panels
 					 && !ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
 				{
 					selectedFile = currentIndex;
+					actionPath = file.FullName;
+					selectedFolder = isFolderSelected;
 				}
 				if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
 				{
 					// button double click
-					if (isFolderSelected)
-					{
-						folderNameToChangeInto = file.FullName;
-					}
-					else
-					{
-						new Process()
-						{
-							StartInfo = new ProcessStartInfo(file.FullName)
-							{
-								UseShellExecute = true,
-								CreateNoWindow = true
-							}
-						}.Start();
-					}
+					shouldDoAction = true;
 				}
 
 				if (ImGui.BeginDragDropSource())
@@ -222,14 +226,6 @@ namespace Shoelace.Panels
 
 				currentIndex++;
 			}
-
-			if (folderNameToChangeInto.Length > 0)
-			{
-				activeFolder = Path.GetRelativePath(EditorConfig.AssetDirectory, folderNameToChangeInto);
-				activeFolderInfo = new DirectoryInfo(folderNameToChangeInto);
-				selectedFile = -1;
-				isFolderSelected = false;
-			}
 		}
 
 		private void DrawAssetsDir(DirectoryInfo curDirInfo)
@@ -268,38 +264,46 @@ namespace Shoelace.Panels
 
 		public void Run()
 		{
-			foreach (var kev in _keyPressedEvents)
+			if (selectedFile != -1)
 			{
-				var e = _keyPressedEvents.Get1(kev).Event;
-				if (!e.Handled)
+				foreach (var kev in _keyPressedEvents)
 				{
-					if (e.KeyCode == BootEngine.Utils.KeyCodes.Right && e is KeyPressedEvent)
+					var e = _keyPressedEvents.Get1(kev).Event;
+					if (!e.Handled)
 					{
-						selectedFile++;
-						if (selectedFile > itemCount)
-							selectedFile = itemCount;
-						break;
-					}
-					if (e.KeyCode == BootEngine.Utils.KeyCodes.Left && e is KeyPressedEvent)
-					{
-						selectedFile--;
-						if (selectedFile < 0)
-							selectedFile = 0;
-						break;
-					}
-					if (e.KeyCode == BootEngine.Utils.KeyCodes.Up && e is KeyPressedEvent)
-					{
-						selectedFile -= maxItems + 1;
-						if (selectedFile < 0)
-							selectedFile = 0;
-						break;
-					}
-					if (e.KeyCode == BootEngine.Utils.KeyCodes.Down && e is KeyPressedEvent)
-					{
-						selectedFile += maxItems + 1;
-						if (selectedFile > itemCount)
-							selectedFile = itemCount;
-						break;
+						if (e.KeyCode == BootEngine.Utils.KeyCodes.Right && e is KeyPressedEvent)
+						{
+							selectedFile++;
+							if (selectedFile > itemCount)
+								selectedFile = itemCount;
+							break;
+						}
+						if (e.KeyCode == BootEngine.Utils.KeyCodes.Left && e is KeyPressedEvent)
+						{
+							selectedFile--;
+							if (selectedFile < 0)
+								selectedFile = 0;
+							break;
+						}
+						if (e.KeyCode == BootEngine.Utils.KeyCodes.Up && e is KeyPressedEvent)
+						{
+							selectedFile -= maxItems + 1;
+							if (selectedFile < 0)
+								selectedFile = 0;
+							break;
+						}
+						if (e.KeyCode == BootEngine.Utils.KeyCodes.Down && e is KeyPressedEvent)
+						{
+							selectedFile += maxItems + 1;
+							if (selectedFile > itemCount)
+								selectedFile = itemCount;
+							break;
+						}
+
+						if ((e.KeyCode == BootEngine.Utils.KeyCodes.Enter || e.KeyCode == BootEngine.Utils.KeyCodes.KeypadEnter) && e is KeyPressedEvent) 
+						{
+							shouldDoAction = true;
+						}
 					}
 				}
 			}

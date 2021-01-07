@@ -250,9 +250,6 @@ namespace Shoelace.Layers
 			ImGui.End(); //Viewport
 			ImGui.PopStyleVar();
 
-			#region Asset Manager
-			#endregion
-
 			ImGui.End(); // Dockspace
 		}
 
