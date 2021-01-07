@@ -32,7 +32,7 @@ namespace Shoelace.Layers
 		private readonly float[] _frametime = new float[100];
 		private SceneHierarchyPanel sceneHierarchyPanel = new SceneHierarchyPanel();
 		private PropertiesPanel propertiesPanel = new PropertiesPanel();
-		private AssetManagerPanel assetManagerPanel = new AssetManagerPanel();
+		private AssetManagerPanel assetManagerPanel = null;
 		private bool runtimeActive;
 		private readonly GizmoSystem _guizmoSystem = new GizmoSystem();
 		private readonly GuiService _guiService = new GuiService();
@@ -268,13 +268,15 @@ namespace Shoelace.Layers
 			ActiveScene = new BootEngine.ECS.Scene();
 			sceneHierarchyPanel = new SceneHierarchyPanel();
 			propertiesPanel = new PropertiesPanel();
+			assetManagerPanel = new AssetManagerPanel();
 			_guiService.SelectedEntity = default;
 			ActiveScene
-				.AddSystem(new GuiControlSystem(), "GUI Control System")
-				.AddSystem(new EditorCameraSystem(), "Editor Camera")
+				.AddSystem(assetManagerPanel)
 				.AddSystem(sceneHierarchyPanel)
 				.AddSystem(propertiesPanel)
 				.AddSystem(_guizmoSystem)
+				.AddSystem(new GuiControlSystem(), "GUI Control System")
+				.AddSystem(new EditorCameraSystem(), "Editor Camera")
 				.AddRuntimeSystem(new VelocitySystem(), "Velocity System")
 				.AddRuntimeSystem(new ScriptingSystem(), "Scripting System")
 				.Inject(_guiService)

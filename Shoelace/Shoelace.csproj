@@ -9,6 +9,7 @@
     <Platforms>x64</Platforms>
     <Configurations>Debug;Release;Dist</Configurations>
     <AssetsDir>$(MSBuildThisFileDirectory)assets</AssetsDir>
+    <InternalAssetsDir>$(MSBuildThisFileDirectory)internalAssets</InternalAssetsDir>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -73,6 +74,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="$(InternalAssetsDir)\textures\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>internalAssets\textures\%(RecursiveDir)\%(FileName)%(Extension)</Link>
+    </Content>
+
     <Content Include="$(AssetsDir)\shaders\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>assets\shaders\%(RecursiveDir)\%(FileName)%(Extension)</Link>
@@ -92,6 +98,10 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Link>assets\sounds\%(RecursiveDir)\%(FileName)%(Extension)</Link>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="internalAssets\textures\" />
   </ItemGroup>
 
 </Project>

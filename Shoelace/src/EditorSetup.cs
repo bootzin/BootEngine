@@ -9,6 +9,7 @@ using BootEngine.Utils;
 using Shoelace.Components;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using Veldrid;
 
 namespace Shoelace
@@ -17,8 +18,6 @@ namespace Shoelace
 	{
 		internal readonly static Dictionary<string, ShaderData> StandardShaders = new Dictionary<string, ShaderData>();
 		private readonly static ResourceFactory resourceFactory = Application.App.Window.GraphicsDevice.ResourceFactory;
-
-		public static string AssetPath = "";
 
 		public static IntPtr CreateEditorCamera(int width, int height, Scene scene)
 		{
@@ -68,7 +67,7 @@ namespace Shoelace
 		public static void LoadStandardShaders()
 		{
 			#region Standard2D
-			var standard2DShaders = AssetManager.GenerateShadersFromFile("TexturedInstancing.glsl", "Standard2D");
+			var standard2DShaders = AssetManager.GenerateShadersFromFile(GetShaderPath("TexturedInstancing.glsl"), "Standard2D");
 			var standard2DResourceLayout = resourceFactory.CreateResourceLayout(
 									new ResourceLayoutDescription(
 										new ResourceLayoutElementDescription("ViewProjection", ResourceKind.UniformBuffer, ShaderStages.Vertex),
@@ -81,6 +80,11 @@ namespace Shoelace
 				ResourceLayouts = new ResourceLayout[] { standard2DResourceLayout }
 			});
 			#endregion
+		}
+
+		private static string GetShaderPath(string file)
+		{
+			return Path.Combine(EditorConfig.AssetDirectory, "shaders", file);
 		}
 
 		public static void FreeResources()

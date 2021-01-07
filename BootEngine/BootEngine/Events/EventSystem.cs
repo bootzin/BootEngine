@@ -42,8 +42,7 @@ namespace BootEngine.Events
 
 			foreach (var ev in _events)
 			{
-				var @event = _events.Get1(ev).Event;
-				ProcessEvent(@event);
+				ProcessEvent(_events.Get1(ev).Event);
 				_events.GetEntity(ev).Destroy();
 			}
 		}

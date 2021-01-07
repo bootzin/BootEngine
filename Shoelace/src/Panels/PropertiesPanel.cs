@@ -202,7 +202,6 @@ namespace Shoelace.Panels
 
 			if (ImGui.BeginDragDropTarget() && !ImGui.IsMouseDown(ImGuiMouseButton.Left))
 			{
-				//ImGui.Text("TODO"); // Allow drag n' drop of textures
 				string texData = Marshal.PtrToStringAuto(ImGui.GetDragDropPayload().Data);
 				spriteComponent.SpriteData.Texture = AssetManager.LoadTexture2D(texData, BootEngineTextureUsage.Sampled);
 

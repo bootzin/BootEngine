@@ -1,6 +1,5 @@
 ﻿using BootEngine.Logging;
 using System;
-using System.IO;
 using System.Text;
 using static BootEngine.AssetsManager.GeneralHelper;
 
@@ -12,7 +11,7 @@ namespace BootEngine.AssetsManager.Shaders
 
 		public static byte[] LoadShader(string path)
 		{
-			return ReadFile(Path.Combine("shaders", path));
+			return ReadFile(path);
 		}
 
 		public static (string vertexSource, string fragmentSource) LoadShaders(string path)
