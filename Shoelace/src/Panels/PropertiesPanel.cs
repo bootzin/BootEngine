@@ -178,8 +178,7 @@ namespace Shoelace.Panels
 			ImGui.SameLine();
 			if (ImGui.Button(FontAwesome5.Edit))
 			{
-				var projectPath = Path.GetDirectoryName(Path.GetDirectoryName(Directory.GetCurrentDirectory())); // TODO: Get proper path
-				ProcessStartInfo psi = new ProcessStartInfo("cmd", "/C start devenv " + projectPath + " /Edit " + scriptingComponent.Script.FilePath);
+				ProcessStartInfo psi = new ProcessStartInfo("cmd", "/C start devenv " + EditorConfig.ProjectPath + " /Edit " + scriptingComponent.Script.FilePath);
 				psi.UseShellExecute = true;
 				psi.CreateNoWindow = true;
 				Process.Start(psi);

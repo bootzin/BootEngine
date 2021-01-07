@@ -1,13 +1,12 @@
 ﻿using BootEngine;
 using BootEngine.AssetsManager;
-using BootEngine.ECS.Components;
 using BootEngine.ECS.Components.Events.Ecs;
 using BootEngine.Events;
-using BootEngine.Input;
 using BootEngine.Layers.GUI;
 using ImGuiNET;
 using Leopotam.Ecs;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -25,6 +24,7 @@ namespace Shoelace.Panels
 		private readonly DirectoryInfo _assetDirectoryInfo = new DirectoryInfo(EditorConfig.AssetDirectory);
 		private const int assetSize = 96;
 		private int selectedFile = -1;
+		private FileType selectedFileType = FileType.Unknown;
 		private int maxItems = 3;
 		private int itemCount = 0;
 
@@ -76,6 +76,8 @@ namespace Shoelace.Panels
 			int currentIndex = 0;
 			var files = activeFolderInfo.GetFileSystemInfos();
 			itemCount = files.Length - 1;
+			string folderNameToChangeInto = "";
+
 			foreach (var file in files)
 			{
 				bool frame = false;
@@ -96,18 +98,62 @@ namespace Shoelace.Panels
 				if (ImGui.Selectable("##1" + file.Name, false, ImGuiSelectableFlags.AllowItemOverlap | ImGuiSelectableFlags.AllowDoubleClick, new Vector2(0, assetSize)))
 				{
 					selectedFile = currentIndex;
+					if (ImGui.IsMouseDoubleClicked(0))
+					{
+						if (selectedFileType == FileType.Folder)
+						{
+							folderNameToChangeInto = file.FullName;
+						}
+						else
+						{
+							new Process()
+							{
+								StartInfo = new ProcessStartInfo(file.FullName)
+								{
+									UseShellExecute = true,
+									CreateNoWindow = true
+								}
+							}.Start();
+						}
+					}
 				}
 				ImGui.EndGroup();
 				ImGui.SameLine();
 
-				string imgPath = Path.Combine(EditorConfig.InternalAssetDirectory, "textures", "file - Designed by iconixar from Flaticon.png");
+				string imgPath = Path.Combine(EditorConfig.InternalAssetDirectory, "textures", "icons", "file - Designed by iconixar from Flaticon.png");
 				if (_supportedImageExtensions.Contains(file.Extension))
 				{
 					imgPath = file.FullName;
+					selectedFileType = FileType.Image;
 				}
-				if (file.Extension?.Length == 0)
+				else if ((file.Attributes & FileAttributes.Directory) != 0)
 				{
-					imgPath = Path.Combine(EditorConfig.InternalAssetDirectory, "textures", "folder1 - Designed by DinosoftLabs from Flaticon.png");
+					imgPath = Path.Combine(EditorConfig.InternalAssetDirectory, "textures", "icons", "folder1 - Designed by DinosoftLabs from Flaticon.png");
+					selectedFileType = FileType.Folder;
+				}
+				else if (file.Extension == ".txt")
+				{
+					imgPath = Path.Combine(EditorConfig.InternalAssetDirectory, "textures", "icons", "fileText - Designed by Smashicons from Flaticon.png");
+					selectedFileType = FileType.Text;
+				}
+				else if (file.Extension == ".json")
+				{
+					imgPath = Path.Combine(EditorConfig.InternalAssetDirectory, "textures", "icons", "fileJson - Designed by Smashicons from Flaticon.png");
+					selectedFileType = FileType.Json;
+				}
+				else if (file.Extension == ".mp3")
+				{
+					imgPath = Path.Combine(EditorConfig.InternalAssetDirectory, "textures", "icons", "fileMp3 - Designed by Smashicons from Flaticon.png");
+					selectedFileType = FileType.Sound;
+				}
+				else if (file.Extension == ".zip")
+				{
+					imgPath = Path.Combine(EditorConfig.InternalAssetDirectory, "textures", "icons", "fileZip - Designed by Smashicons from Flaticon.png");
+					selectedFileType = FileType.Compressed;
+				}
+				else
+				{
+					selectedFileType = FileType.Unknown;
 				}
 
 				ImGui.BeginGroup();
@@ -115,7 +161,8 @@ namespace Shoelace.Panels
 				ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
 				ImGui.PushStyleColor(ImGuiCol.ButtonActive, Vector4.Zero);
 				ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Vector4.Zero);
-				if (ImGui.ImageButton(ImGuiLayer.GetOrCreateImGuiBinding(Application.App.Window.GraphicsDevice.ResourceFactory, AssetManager.LoadTexture2D(imgPath, BootEngine.Utils.BootEngineTextureUsage.Sampled)), new Vector2(assetSize - 6, assetSize - (2 * ImGui.CalcTextSize(file.Name).Y)), new Vector2(0, 1), new Vector2(1, 0), 4)
+				var buttonTextureBinding = ImGuiLayer.GetOrCreateImGuiBinding(Application.App.Window.GraphicsDevice.ResourceFactory, AssetManager.LoadTexture2D(imgPath, BootEngine.Utils.BootEngineTextureUsage.Sampled));
+				if (ImGui.ImageButton(buttonTextureBinding, new Vector2(assetSize - 6, assetSize - (2 * ImGui.CalcTextSize(file.Name).Y)), new Vector2(0, 1), new Vector2(1, 0), 4)
 					 && !ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
 				{
 					selectedFile = currentIndex;
@@ -123,15 +170,28 @@ namespace Shoelace.Panels
 				if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
 				{
 					// button double click
+					if (selectedFileType == FileType.Folder)
+					{
+						folderNameToChangeInto = file.FullName;
+					}
+					else
+					{
+						new Process()
+						{
+							StartInfo = new ProcessStartInfo(file.FullName)
+							{
+								UseShellExecute = true,
+								CreateNoWindow = true
+							}
+						}.Start();
+					}
 				}
 
 				if (ImGui.BeginDragDropSource())
 				{
 					var strPtr = Marshal.StringToHGlobalUni(file.FullName);
-					ImGui.SetDragDropPayload("TEXTURE", strPtr, (uint)(sizeof(char) * file.FullName.Length) + 2);
-					ImGui.Image(ImGuiLayer.GetOrCreateImGuiBinding(Application.App.Window.GraphicsDevice.ResourceFactory, AssetManager.LoadTexture2D(imgPath, BootEngine.Utils.BootEngineTextureUsage.Sampled)), new Vector2(50, 50), new Vector2(0, 1), new Vector2(1, 0));
-					// Example of how to read drag n drop data
-					//string namae = Marshal.PtrToStringAuto(ImGui.GetDragDropPayload().Data);
+					ImGui.SetDragDropPayload("RESOURCE_PATH", strPtr, (uint)(sizeof(char) * file.FullName.Length) + 2);
+					ImGui.Image(buttonTextureBinding, new Vector2(50, 50), new Vector2(0, 1), new Vector2(1, 0));
 					ImGui.EndDragDropSource();
 				}
 				ImGui.PopStyleColor(5);
@@ -172,6 +232,12 @@ namespace Shoelace.Panels
 				}
 
 				currentIndex++;
+			}
+
+			if (folderNameToChangeInto.Length > 0)
+			{
+				activeFolder = Path.GetRelativePath(EditorConfig.AssetDirectory, folderNameToChangeInto);
+				activeFolderInfo = new DirectoryInfo(folderNameToChangeInto);
 			}
 		}
 
@@ -246,6 +312,17 @@ namespace Shoelace.Panels
 					}
 				}
 			}
+		}
+
+		private enum FileType
+		{
+			Unknown,
+			Image,
+			Text,
+			Json,
+			Sound,
+			Compressed,
+			Folder
 		}
 	}
 }
