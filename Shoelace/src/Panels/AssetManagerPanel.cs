@@ -12,6 +12,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Numerics;
 using System.Runtime.InteropServices;
+using Veldrid;
 
 namespace Shoelace.Panels
 {
@@ -33,15 +34,28 @@ namespace Shoelace.Panels
 
 		private int deleteFile = -1;
 		private bool promptDelete;
-
+		private bool renamingFile;
 		private readonly List<string> _supportedImageExtensions = new List<string> { ".png", ".bmp", ".jpg", ".jpeg" };
 		private readonly DirectoryInfo _assetDirectoryInfo = new DirectoryInfo(EditorConfig.AssetDirectory);
 		private const int assetSize = 96;
 
 		public override void OnGuiRender()
 		{
-			ImGui.Begin("Asset Manager");
-			ImGui.Button("Create");
+			ImGui.Begin("Asset Manager", ImGuiWindowFlags.MenuBar);
+			if (ImGui.Button("Create"))
+			{
+				ImGui.OpenPopup("Create");
+			}
+
+			if (ImGui.BeginPopup("Create"))
+			{
+				if (ImGui.MenuItem("Folder"))
+				{
+					
+				}
+				ImGui.EndPopup();
+			}
+
 			ImGui.Separator();
 
 			var width = ImGui.CalcItemWidth();
@@ -149,6 +163,11 @@ namespace Shoelace.Panels
 
 			foreach (var file in files)
 			{
+				if (selectedFile == currentIndex)
+				{
+					actionPath = file.FullName;
+					isFolderSelected = (file.Attributes & FileAttributes.Directory) != 0;
+				}
 				if (deleteFile != -1 && selectedFile == currentIndex && deleteFile == currentIndex)
 				{
 					if (promptDelete)
@@ -199,6 +218,7 @@ namespace Shoelace.Panels
 				{
 					selectedFile = -1;
 					isFolder = false;
+					renamingFile = false;
 				}
 
 				string fileExtIconsPath = Path.Combine(EditorConfig.InternalAssetDirectory, "textures", "icons", "fileExt - Designed by iconixar from Flaticon");
@@ -214,7 +234,7 @@ namespace Shoelace.Panels
 				}
 				else
 				{
-					if (File.Exists(Path.Combine(fileExtIconsPath, file.Extension[1..] + ".png")))
+					if (file.Extension.Length > 0 && File.Exists(Path.Combine(fileExtIconsPath, file.Extension[1..] + ".png")))
 					{
 						imgPath = Path.Combine(fileExtIconsPath, file.Extension[1..] + ".png");
 					}
@@ -231,7 +251,6 @@ namespace Shoelace.Panels
 				if (ImGui.Selectable("##1" + file.Name, false, ImGuiSelectableFlags.AllowItemOverlap | ImGuiSelectableFlags.AllowDoubleClick, new Vector2(0, assetSize)))
 				{
 					selectedFile = currentIndex;
-					actionPath = file.FullName;
 					isFolderSelected = isFolder;
 					if (ImGui.IsMouseDoubleClicked(0))
 					{
@@ -246,12 +265,22 @@ namespace Shoelace.Panels
 				ImGui.PushStyleColor(ImGuiCol.Button, Vector4.Zero);
 				ImGui.PushStyleColor(ImGuiCol.ButtonActive, Vector4.Zero);
 				ImGui.PushStyleColor(ImGuiCol.ButtonHovered, Vector4.Zero);
-				var buttonTextureBinding = ImGuiLayer.GetOrCreateImGuiBinding(Application.App.Window.GraphicsDevice.ResourceFactory, AssetManager.LoadTexture2D(imgPath, BootEngine.Utils.BootEngineTextureUsage.Sampled));
+
+				Texture tex;
+				try
+				{
+					tex = AssetManager.LoadTexture2D(imgPath, BootEngineTextureUsage.Sampled);
+				}
+				catch
+				{
+					tex = AssetManager.LoadTexture2D(Path.Combine(fileExtIconsPath, "unknown.png"), BootEngineTextureUsage.Sampled);
+				}
+				var buttonTextureBinding = ImGuiLayer.GetOrCreateImGuiBinding(Application.App.Window.GraphicsDevice.ResourceFactory, tex);
+
 				if (ImGui.ImageButton(buttonTextureBinding, new Vector2(assetSize - 6, assetSize - (2 * ImGui.CalcTextSize(file.Name).Y)), new Vector2(0, 1), new Vector2(1, 0), 4)
 					 && !ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
 				{
 					selectedFile = currentIndex;
-					actionPath = file.FullName;
 					isFolderSelected = isFolder;
 				}
 				if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
@@ -270,19 +299,37 @@ namespace Shoelace.Panels
 				ImGui.PopStyleColor(5);
 
 				string name;
-				if (file.Name.Length > 20)
+				if (renamingFile && selectedFile == currentIndex)
 				{
-					ImGui.Indent(8);
-					ImGui.PushTextWrapPos(assetSize - 12);
-					name = file.Name[..18] + "...";
-					ImGui.Text(name);
-					ImGui.PopTextWrapPos();
+					name = file.Name;
+					ImGui.SetCursorPos(new Vector2(ImGui.GetCursorPosX() + ((assetSize - ImGui.CalcTextSize(name).X) / 2) - 4, ImGui.GetCursorPosY() - 3));
+					ImGui.SetNextItemWidth(ImGui.CalcItemWidth());
+					if (ImGui.InputText("##RenameInput", ref name, 512, ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.EnterReturnsTrue))
+					{
+						if (file.Name != name)
+						{
+							File.Move(file.FullName, Path.Combine(Path.GetDirectoryName(file.FullName), name));
+
+						}
+					}
+					ImGui.SetKeyboardFocusHere();
 				}
 				else
 				{
-					name = file.Name;
-					ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ((assetSize - ImGui.CalcTextSize(name).X) / 2));
-					ImGui.Text(name);
+					if (file.Name.Length > 20)
+					{
+						ImGui.Indent(8);
+						ImGui.PushTextWrapPos(assetSize - 12);
+						name = file.Name[..18] + "...";
+						ImGui.Text(name);
+						ImGui.PopTextWrapPos();
+					}
+					else
+					{
+						name = file.Name;
+						ImGui.SetCursorPosX(ImGui.GetCursorPosX() + ((assetSize - ImGui.CalcTextSize(name).X) / 2));
+						ImGui.Text(name);
+					}
 				}
 
 				ImGui.EndGroup();
@@ -378,28 +425,28 @@ namespace Shoelace.Panels
 					var e = _keyPressedEvents.Get1(kev).Event;
 					if (!e.Handled && e is KeyPressedEvent)
 					{
-						if (e.KeyCode == KeyCodes.Right)
+						if (!renamingFile && e.KeyCode == KeyCodes.Right)
 						{
 							selectedFile++;
 							if (selectedFile > itemCount)
 								selectedFile = itemCount;
 							break;
 						}
-						if (e.KeyCode == KeyCodes.Left)
+						if (!renamingFile && e.KeyCode == KeyCodes.Left)
 						{
 							selectedFile--;
 							if (selectedFile < 0)
 								selectedFile = 0;
 							break;
 						}
-						if (e.KeyCode == KeyCodes.Up)
+						if (!renamingFile && e.KeyCode == KeyCodes.Up)
 						{
 							selectedFile -= maxItems + 1;
 							if (selectedFile < 0)
 								selectedFile = 0;
 							break;
 						}
-						if (e.KeyCode == KeyCodes.Down)
+						if (!renamingFile && e.KeyCode == KeyCodes.Down)
 						{
 							selectedFile += maxItems + 1;
 							if (selectedFile > itemCount)
@@ -407,9 +454,14 @@ namespace Shoelace.Panels
 							break;
 						}
 
-						if (e.KeyCode == KeyCodes.Enter || e.KeyCode == KeyCodes.KeypadEnter)
+						if ((e.KeyCode == KeyCodes.Enter || e.KeyCode == KeyCodes.KeypadEnter))
 						{
-							shouldOpen = true;
+							if (renamingFile)
+								renamingFile = false;
+							else if (promptDelete)
+								promptDelete = false;
+							else
+								shouldOpen = true;
 						}
 
 						if (e.KeyCode == KeyCodes.Delete)
@@ -418,6 +470,20 @@ namespace Shoelace.Panels
 							if (!InputManager.Instance.GetKeyDown(KeyCodes.ShiftLeft) && !InputManager.Instance.GetKeyDown(KeyCodes.ShiftRight))
 								promptDelete = true;
 							break;
+						}
+
+						if (e.KeyCode == KeyCodes.F2)
+						{
+							renamingFile = true;
+						}
+
+						if (e.KeyCode == KeyCodes.Esc)
+						{
+							if (!renamingFile && !promptDelete && deleteFile == -1)
+								selectedFile = -1;
+							renamingFile = false;
+							deleteFile = -1;
+							promptDelete = false;
 						}
 					}
 				}
