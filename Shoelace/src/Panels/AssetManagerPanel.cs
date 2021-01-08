@@ -4,9 +4,12 @@ using BootEngine.ECS.Components.Events.Ecs;
 using BootEngine.Events;
 using BootEngine.Input;
 using BootEngine.Layers.GUI;
+using BootEngine.Logging;
 using BootEngine.Utils;
 using ImGuiNET;
 using Leopotam.Ecs;
+using Shoelace.Styling;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -35,13 +38,16 @@ namespace Shoelace.Panels
 		private int deleteFile = -1;
 		private bool promptDelete;
 		private bool renamingFile;
+
+		private bool createFolder;
+
 		private readonly List<string> _supportedImageExtensions = new List<string> { ".png", ".bmp", ".jpg", ".jpeg" };
 		private readonly DirectoryInfo _assetDirectoryInfo = new DirectoryInfo(EditorConfig.AssetDirectory);
 		private const int assetSize = 96;
 
 		public override void OnGuiRender()
 		{
-			ImGui.Begin("Asset Manager", ImGuiWindowFlags.MenuBar);
+			ImGui.Begin("Asset Manager");
 			if (ImGui.Button("Create"))
 			{
 				ImGui.OpenPopup("Create");
@@ -49,10 +55,7 @@ namespace Shoelace.Panels
 
 			if (ImGui.BeginPopup("Create"))
 			{
-				if (ImGui.MenuItem("Folder"))
-				{
-					
-				}
+				DrawCreateMenu();
 				ImGui.EndPopup();
 			}
 
@@ -125,9 +128,43 @@ namespace Shoelace.Panels
 			ImGui.Separator();
 			DrawAssets();
 
+			if (ImGui.BeginPopupContextWindow("", ImGuiPopupFlags.NoOpenOverItems | ImGuiPopupFlags.MouseButtonRight))
+			{
+				if (ImGui.BeginMenu("Create"))
+				{
+					DrawCreateMenu();
+					ImGui.EndMenu();
+				}
+
+				ImGui.Separator();
+
+				if (ImGui.MenuItem("Open in Explorer"))
+				{
+					new Process()
+					{
+						StartInfo = new ProcessStartInfo(activeFolderInfo.FullName)
+						{
+							UseShellExecute = true,
+							CreateNoWindow = true
+						}
+					}.Start();
+				}
+
+				ImGui.EndPopup();
+			}
+
 			ImGui.EndChild();
 
 			ImGui.End();
+		}
+
+		private void DrawCreateMenu()
+		{
+			if (ImGui.MenuItem("Folder"))
+			{
+				createFolder = true;
+			}
+			ImGui.Separator();
 		}
 
 		private void DrawAssets()
@@ -135,8 +172,6 @@ namespace Shoelace.Panels
 			maxItems = (int)(ImGui.GetColumnWidth() / assetSize) - 1;
 			int i = 0;
 			int currentIndex = 0;
-			var files = activeFolderInfo.GetFileSystemInfos();
-			itemCount = files.Length - 1;
 
 			if (shouldOpen)
 			{
@@ -161,8 +196,22 @@ namespace Shoelace.Panels
 				shouldOpen = false;
 			}
 
+			if (createFolder)
+			{
+				activeFolderInfo.CreateSubdirectory("New Folder");
+			}
+
+			var files = activeFolderInfo.GetFileSystemInfos();
+			itemCount = files.Length - 1;
+
 			foreach (var file in files)
 			{
+				if (createFolder && file.Name == "New Folder")
+				{
+					createFolder = false;
+					selectedFile = currentIndex;
+					renamingFile = true;
+				}
 				if (selectedFile == currentIndex)
 				{
 					actionPath = file.FullName;
@@ -174,7 +223,7 @@ namespace Shoelace.Panels
 					{
 						ImGui.OpenPopup("DeleteFolderPopup");
 
-						Vector2 center = new Vector2(ImGui.GetMainViewport().Pos.X + ImGui.GetMainViewport().Size.X * 0.5f, ImGui.GetMainViewport().Pos.Y + ImGui.GetMainViewport().Size.Y * 0.5f);
+						Vector2 center = new Vector2(ImGui.GetMainViewport().Pos.X + (ImGui.GetMainViewport().Size.X * 0.5f), ImGui.GetMainViewport().Pos.Y + (ImGui.GetMainViewport().Size.Y * 0.5f));
 						ImGui.SetNextWindowPos(center, ImGuiCond.Appearing, new Vector2(.5f, .5f));
 						if (ImGui.BeginPopup("DeleteFolderPopup", ImGuiWindowFlags.Modal))
 						{
@@ -214,11 +263,14 @@ namespace Shoelace.Panels
 					ImGui.PushStyleColor(ImGuiCol.ChildBg, new Vector4(.18f, .18f, .18f, 1));
 				}
 
-				if (ImGui.IsWindowFocused() && ImGui.IsMouseClicked(0) && !ImGui.IsAnyItemHovered())
+				if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) || ImGui.IsMouseClicked(ImGuiMouseButton.Right))
 				{
-					selectedFile = -1;
-					isFolder = false;
 					renamingFile = false;
+					if (ImGui.IsWindowFocused() && !ImGui.IsAnyItemHovered())
+					{
+						selectedFile = -1;
+						isFolder = false;
+					}
 				}
 
 				string fileExtIconsPath = Path.Combine(EditorConfig.InternalAssetDirectory, "textures", "icons", "fileExt - Designed by iconixar from Flaticon");
@@ -257,6 +309,11 @@ namespace Shoelace.Panels
 						shouldOpen = true;
 					}
 				}
+				if (ImGui.IsMouseClicked(ImGuiMouseButton.Right) && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
+				{
+					selectedFile = currentIndex;
+				}
+
 				ImGui.EndGroup();
 				ImGui.SameLine();
 
@@ -283,7 +340,7 @@ namespace Shoelace.Panels
 					selectedFile = currentIndex;
 					isFolderSelected = isFolder;
 				}
-				if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+				if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left) && ImGui.IsItemHovered())
 				{
 					// button double click
 					shouldOpen = true;
@@ -302,14 +359,27 @@ namespace Shoelace.Panels
 				if (renamingFile && selectedFile == currentIndex)
 				{
 					name = file.Name;
-					ImGui.SetCursorPos(new Vector2(ImGui.GetCursorPosX() + ((assetSize - ImGui.CalcTextSize(name).X) / 2) - 4, ImGui.GetCursorPosY() - 3));
-					ImGui.SetNextItemWidth(ImGui.CalcItemWidth());
-					if (ImGui.InputText("##RenameInput", ref name, 512, ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.EnterReturnsTrue))
+					ImGui.SetCursorPos(new Vector2(ImGui.GetCursorPosX() + MathF.Max(((assetSize - ImGui.CalcTextSize(name).X) / 2) - 4, 0), ImGui.GetCursorPosY() - 3));
+					if (name.Length > 10)
 					{
-						if (file.Name != name)
+						ImGui.SetNextItemWidth(ImGui.CalcTextSize(name[..10]).X + 4);
+					}
+					else
+					{
+						ImGui.SetNextItemWidth(ImGui.CalcTextSize(name).X + 4);
+					}
+					if (ImGui.InputText("##RenameInput", ref name, 512, ImGuiInputTextFlags.AutoSelectAll | ImGuiInputTextFlags.EnterReturnsTrue) && file.Name != name)
+					{
+						try
 						{
-							File.Move(file.FullName, Path.Combine(Path.GetDirectoryName(file.FullName), name));
-
+							if ((file.Attributes & FileAttributes.Directory) != 0)
+								Directory.Move(file.FullName, Path.Combine(Path.GetDirectoryName(file.FullName), name));
+							else
+								File.Move(file.FullName, Path.Combine(Path.GetDirectoryName(file.FullName), name));
+						}
+						catch (Exception ex)
+						{
+							Logger.CoreError("Failed to rename file!", ex);
 						}
 					}
 					ImGui.SetKeyboardFocusHere();
@@ -333,6 +403,54 @@ namespace Shoelace.Panels
 				}
 
 				ImGui.EndGroup();
+
+				if (frame)
+				{
+					ImGui.PopStyleVar();
+					ImGui.PopStyleColor();
+				}
+
+				if (ImGui.BeginPopupContextWindow(file.Name))
+				{
+					if (ImGui.BeginMenu("Create"))
+					{
+						DrawCreateMenu();
+						ImGui.EndMenu();
+					}
+
+					ImGui.Separator();
+
+					if (ImGui.MenuItem("Show in Explorer"))
+					{
+						new Process()
+						{
+							StartInfo = new ProcessStartInfo(activeFolderInfo.FullName)
+							{
+								UseShellExecute = true,
+								CreateNoWindow = true
+							}
+						}.Start();
+					}
+
+					if (ImGui.MenuItem("Open"))
+					{
+						shouldOpen = true;
+					}
+
+					if (ImGui.MenuItem("Rename"))
+					{
+						renamingFile = true;
+					}
+
+					if (ImGui.MenuItem("Delete"))
+					{
+						deleteFile = selectedFile;
+						promptDelete = true;
+					}
+
+					ImGui.EndPopup();
+				}
+
 				ImGui.EndChild();
 
 				if (maxItems > 0 && i / maxItems == 0)
@@ -343,12 +461,6 @@ namespace Shoelace.Panels
 				else
 				{
 					i = 0;
-				}
-
-				if (frame)
-				{
-					ImGui.PopStyleVar();
-					ImGui.PopStyleColor();
 				}
 
 				currentIndex++;
