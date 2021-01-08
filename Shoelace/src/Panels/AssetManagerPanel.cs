@@ -2,7 +2,9 @@
 using BootEngine.AssetsManager;
 using BootEngine.ECS.Components.Events.Ecs;
 using BootEngine.Events;
+using BootEngine.Input;
 using BootEngine.Layers.GUI;
+using BootEngine.Utils;
 using ImGuiNET;
 using Leopotam.Ecs;
 using System.Collections.Generic;
@@ -28,6 +30,10 @@ namespace Shoelace.Panels
 		private int selectedFile = -1;
 		private int maxItems = 3;
 		private int itemCount = 0;
+
+		private int deleteFile = -1;
+		private bool promptDelete;
+
 		private readonly List<string> _supportedImageExtensions = new List<string> { ".png", ".bmp", ".jpg", ".jpeg" };
 		private readonly DirectoryInfo _assetDirectoryInfo = new DirectoryInfo(EditorConfig.AssetDirectory);
 		private const int assetSize = 96;
@@ -143,6 +149,43 @@ namespace Shoelace.Panels
 
 			foreach (var file in files)
 			{
+				if (deleteFile != -1 && selectedFile == currentIndex && deleteFile == currentIndex)
+				{
+					if (promptDelete)
+					{
+						ImGui.OpenPopup("DeleteFolderPopup");
+
+						Vector2 center = new Vector2(ImGui.GetMainViewport().Pos.X + ImGui.GetMainViewport().Size.X * 0.5f, ImGui.GetMainViewport().Pos.Y + ImGui.GetMainViewport().Size.Y * 0.5f);
+						ImGui.SetNextWindowPos(center, ImGuiCond.Appearing, new Vector2(.5f, .5f));
+						if (ImGui.BeginPopup("DeleteFolderPopup", ImGuiWindowFlags.Modal))
+						{
+							ImGui.TextColored(ColorF.Red, "Are you sure you want to delete this item?");
+							ImGui.SetCursorPosY(ImGui.GetCursorPosY() + 6);
+							ImGui.TextUnformatted(file.Name);
+							ImGui.SetCursorPosY(ImGui.GetCursorPosY() + 6);
+							if (ImGui.Button("Yes"))
+							{
+								promptDelete = false;
+								ImGui.CloseCurrentPopup();
+							}
+							ImGui.SameLine();
+							if (ImGui.Button("No"))
+							{
+								promptDelete = false;
+								deleteFile = -1;
+								ImGui.CloseCurrentPopup();
+							}
+							ImGui.EndPopup();
+						}
+					}
+					else
+					{
+						file.Delete();
+						deleteFile = -1;
+						continue;
+					}
+				}
+
 				bool isFolder = false;
 				bool frame = false;
 				if (ImGui.IsMouseHoveringRect(ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(assetSize + 4)) || selectedFile == currentIndex)
@@ -272,6 +315,19 @@ namespace Shoelace.Panels
 				if (child.GetDirectories("*", SearchOption.TopDirectoryOnly).Length > 0)
 				{
 					bool open = ImGui.TreeNodeEx(child.Name, ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.OpenOnDoubleClick);
+
+					if (ImGui.BeginDragDropTarget())
+					{
+						if (!ImGui.IsMouseDown(0))
+						{
+							string resourcePath = Marshal.PtrToStringAuto(ImGui.GetDragDropPayload().Data);
+							var info = new DirectoryInfo(resourcePath);
+							File.Move(info.FullName, Path.Combine(child.FullName, info.Name));
+						}
+
+						ImGui.EndDragDropTarget();
+					}
+
 					if (ImGui.IsItemClicked())
 					{
 						activeFolder = Path.GetRelativePath(EditorConfig.AssetDirectory, child.FullName);
@@ -286,6 +342,20 @@ namespace Shoelace.Panels
 				else
 				{
 					bool open = ImGui.TreeNodeEx(child.Name, ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.Leaf);
+
+					if (ImGui.BeginDragDropTarget())
+					{
+						if (!ImGui.IsMouseDown(0))
+						{
+							string resourcePath = Marshal.PtrToStringAuto(ImGui.GetDragDropPayload().Data);
+							var info = new DirectoryInfo(resourcePath);
+							if (File.Exists(info.FullName) && !File.Exists(Path.Combine(child.FullName, info.Name)))
+								File.Move(info.FullName, Path.Combine(child.FullName, info.Name));
+						}
+
+						ImGui.EndDragDropTarget();
+					}
+
 					if (ImGui.IsItemClicked())
 					{
 						activeFolder = Path.GetRelativePath(EditorConfig.AssetDirectory, child.FullName);
@@ -306,30 +376,30 @@ namespace Shoelace.Panels
 				foreach (var kev in _keyPressedEvents)
 				{
 					var e = _keyPressedEvents.Get1(kev).Event;
-					if (!e.Handled)
+					if (!e.Handled && e is KeyPressedEvent)
 					{
-						if (e.KeyCode == BootEngine.Utils.KeyCodes.Right && e is KeyPressedEvent)
+						if (e.KeyCode == KeyCodes.Right)
 						{
 							selectedFile++;
 							if (selectedFile > itemCount)
 								selectedFile = itemCount;
 							break;
 						}
-						if (e.KeyCode == BootEngine.Utils.KeyCodes.Left && e is KeyPressedEvent)
+						if (e.KeyCode == KeyCodes.Left)
 						{
 							selectedFile--;
 							if (selectedFile < 0)
 								selectedFile = 0;
 							break;
 						}
-						if (e.KeyCode == BootEngine.Utils.KeyCodes.Up && e is KeyPressedEvent)
+						if (e.KeyCode == KeyCodes.Up)
 						{
 							selectedFile -= maxItems + 1;
 							if (selectedFile < 0)
 								selectedFile = 0;
 							break;
 						}
-						if (e.KeyCode == BootEngine.Utils.KeyCodes.Down && e is KeyPressedEvent)
+						if (e.KeyCode == KeyCodes.Down)
 						{
 							selectedFile += maxItems + 1;
 							if (selectedFile > itemCount)
@@ -337,9 +407,17 @@ namespace Shoelace.Panels
 							break;
 						}
 
-						if ((e.KeyCode == BootEngine.Utils.KeyCodes.Enter || e.KeyCode == BootEngine.Utils.KeyCodes.KeypadEnter) && e is KeyPressedEvent) 
+						if (e.KeyCode == KeyCodes.Enter || e.KeyCode == KeyCodes.KeypadEnter)
 						{
 							shouldOpen = true;
+						}
+
+						if (e.KeyCode == KeyCodes.Delete)
+						{
+							deleteFile = selectedFile;
+							if (!InputManager.Instance.GetKeyDown(KeyCodes.ShiftLeft) && !InputManager.Instance.GetKeyDown(KeyCodes.ShiftRight))
+								promptDelete = true;
+							break;
 						}
 					}
 				}
