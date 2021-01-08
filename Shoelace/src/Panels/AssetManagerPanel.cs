@@ -96,6 +96,8 @@ namespace Shoelace.Panels
 					activeFolderInfo = _assetDirectoryInfo;
 				}
 
+				DragAndDropTargetFolder(_assetDirectoryInfo);
+
 				ImGui.SameLine();
 				ImGui.Text(" > ");
 				ImGui.SameLine();
@@ -105,6 +107,8 @@ namespace Shoelace.Panels
 					activeFolder = splitPath[0];
 					activeFolderInfo = new DirectoryInfo(string.Join('\\', _assetDirectoryInfo.FullName, activeFolder));
 				}
+
+				DragAndDropTargetFolder(new DirectoryInfo(string.Join('\\', _assetDirectoryInfo.FullName, splitPath[0])));
 			}
 			else
 			{
@@ -122,6 +126,8 @@ namespace Shoelace.Panels
 					activeFolder = string.Join('\\', splitPath[..(i + 2)]);
 					activeFolderInfo = new DirectoryInfo(string.Join('\\', _assetDirectoryInfo.FullName, activeFolder));
 				}
+
+				DragAndDropTargetFolder(new DirectoryInfo(string.Join('\\', _assetDirectoryInfo.FullName, string.Join('\\', splitPath[..(i + 2)]))));
 			}
 			#endregion
 
@@ -299,7 +305,9 @@ namespace Shoelace.Panels
 				ImGui.BeginChild(file.FullName, new Vector2(assetSize + 4), frame, ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoFocusOnAppearing | ImGuiWindowFlags.NoBringToFrontOnFocus | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse | ImGuiWindowFlags.NoNav);
 				ImGui.PushStyleColor(ImGuiCol.HeaderActive, Vector4.Zero);
 				ImGui.PushStyleColor(ImGuiCol.HeaderHovered, Vector4.Zero);
+
 				ImGui.BeginGroup();
+
 				if (ImGui.Selectable("##1" + file.Name, false, ImGuiSelectableFlags.AllowItemOverlap | ImGuiSelectableFlags.AllowDoubleClick, new Vector2(0, assetSize)))
 				{
 					selectedFile = currentIndex;
@@ -313,6 +321,10 @@ namespace Shoelace.Panels
 				{
 					selectedFile = currentIndex;
 				}
+
+
+				if (isFolder)
+					DragAndDropTargetFolder((DirectoryInfo)file);
 
 				ImGui.EndGroup();
 				ImGui.SameLine();
@@ -474,18 +486,7 @@ namespace Shoelace.Panels
 				if (child.GetDirectories("*", SearchOption.TopDirectoryOnly).Length > 0)
 				{
 					bool open = ImGui.TreeNodeEx(child.Name, ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.OpenOnArrow | ImGuiTreeNodeFlags.OpenOnDoubleClick);
-
-					if (ImGui.BeginDragDropTarget())
-					{
-						if (!ImGui.IsMouseDown(0))
-						{
-							string resourcePath = Marshal.PtrToStringAuto(ImGui.GetDragDropPayload().Data);
-							var info = new DirectoryInfo(resourcePath);
-							File.Move(info.FullName, Path.Combine(child.FullName, info.Name));
-						}
-
-						ImGui.EndDragDropTarget();
-					}
+					DragAndDropTargetFolder(child);
 
 					if (ImGui.IsItemClicked())
 					{
@@ -502,18 +503,7 @@ namespace Shoelace.Panels
 				{
 					bool open = ImGui.TreeNodeEx(child.Name, ImGuiTreeNodeFlags.SpanFullWidth | ImGuiTreeNodeFlags.Leaf);
 
-					if (ImGui.BeginDragDropTarget())
-					{
-						if (!ImGui.IsMouseDown(0))
-						{
-							string resourcePath = Marshal.PtrToStringAuto(ImGui.GetDragDropPayload().Data);
-							var info = new DirectoryInfo(resourcePath);
-							if (File.Exists(info.FullName) && !File.Exists(Path.Combine(child.FullName, info.Name)))
-								File.Move(info.FullName, Path.Combine(child.FullName, info.Name));
-						}
-
-						ImGui.EndDragDropTarget();
-					}
+					DragAndDropTargetFolder(child);
 
 					if (ImGui.IsItemClicked())
 					{
@@ -525,6 +515,43 @@ namespace Shoelace.Panels
 						ImGui.TreePop();
 					}
 				}
+			}
+		}
+
+		private void DragAndDropTargetFolder(DirectoryInfo targetFolder)
+		{
+			if (ImGui.BeginDragDropTarget())
+			{
+				if (!ImGui.IsMouseDown(0))
+				{
+					string resourcePath = Marshal.PtrToStringAuto(ImGui.GetDragDropPayload().Data);
+					var info = new DirectoryInfo(resourcePath);
+					try
+					{
+						if ((info.Attributes & FileAttributes.Directory) != 0)
+						{
+							if (Directory.Exists(info.FullName) && !Directory.Exists(Path.Combine(targetFolder.FullName, info.Name)))
+							{
+								Directory.Move(info.FullName, Path.Combine(targetFolder.FullName, info.Name));
+								selectedFile = -1;
+							}
+						}
+						else
+						{
+							if (File.Exists(info.FullName) && !File.Exists(Path.Combine(targetFolder.FullName, info.Name)))
+							{
+								File.Move(info.FullName, Path.Combine(targetFolder.FullName, info.Name));
+								selectedFile = -1;
+							}
+						}
+					}
+					catch (Exception ex)
+					{
+						Logger.CoreError("Failed to rename file!", ex);
+					}
+				}
+
+				ImGui.EndDragDropTarget();
 			}
 		}
 
