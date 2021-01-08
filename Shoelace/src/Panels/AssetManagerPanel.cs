@@ -18,11 +18,11 @@ namespace Shoelace.Panels
 	{
 		private readonly EcsFilter<EcsKeyEvent> _keyPressedEvents = default;
 
-		private string activeFolder = "Assets";
+		private string activeFolder = "";
 		private DirectoryInfo activeFolderInfo = new DirectoryInfo(EditorConfig.AssetDirectory);
-		private bool selectedFolder;
+		private bool isFolderSelected;
 
-		private bool shouldDoAction;
+		private bool shouldOpen;
 		private string actionPath;
 
 		private int selectedFile = -1;
@@ -48,7 +48,7 @@ namespace Shoelace.Panels
 			{
 				if (ImGui.IsItemClicked())
 				{
-					activeFolder = "Assets";
+					activeFolder = "";
 					activeFolderInfo = _assetDirectoryInfo;
 				}
 				DrawAssetsDir(_assetDirectoryInfo);
@@ -63,10 +63,47 @@ namespace Shoelace.Panels
 
 			ImGui.BeginChild("ContentBrowser##1", new Vector2(0, ImGui.GetWindowHeight() * .71f));
 
-			ImGui.Text(activeFolder);
+			#region Breadcrumb Trail
+			string[] splitPath = activeFolder.Split('\\');
+			if (splitPath[0].Length > 0)
+			{
+				if (ImGui.Selectable("Assets", false, ImGuiSelectableFlags.AllowItemOverlap, ImGui.CalcTextSize("Assets")))
+				{
+					activeFolder = "";
+					activeFolderInfo = _assetDirectoryInfo;
+				}
+
+				ImGui.SameLine();
+				ImGui.Text(" > ");
+				ImGui.SameLine();
+
+				if (ImGui.Selectable(splitPath[0], false, ImGuiSelectableFlags.AllowItemOverlap, ImGui.CalcTextSize(splitPath[0])))
+				{
+					activeFolder = splitPath[0];
+					activeFolderInfo = new DirectoryInfo(string.Join('\\', _assetDirectoryInfo.FullName, activeFolder));
+				}
+			}
+			else
+			{
+				ImGui.Text("Assets");
+			}
+
+			for (int i = 0; i < splitPath[1..].Length; i++)
+			{
+				string path = splitPath[1..][i];
+				ImGui.SameLine();
+				ImGui.Text("> ");
+				ImGui.SameLine();
+				if (ImGui.Selectable(path, false, ImGuiSelectableFlags.AllowItemOverlap, ImGui.CalcTextSize(path)))
+				{
+					activeFolder = string.Join('\\', splitPath[..(i + 2)]);
+					activeFolderInfo = new DirectoryInfo(string.Join('\\', _assetDirectoryInfo.FullName, activeFolder));
+				}
+			}
+			#endregion
+
 			ImGui.Separator();
 			DrawAssets();
-
 
 			ImGui.EndChild();
 
@@ -81,14 +118,14 @@ namespace Shoelace.Panels
 			var files = activeFolderInfo.GetFileSystemInfos();
 			itemCount = files.Length - 1;
 
-			if (shouldDoAction)
+			if (shouldOpen)
 			{
-				if (selectedFolder)
+				if (isFolderSelected)
 				{
 					activeFolder = Path.GetRelativePath(EditorConfig.AssetDirectory, actionPath);
 					activeFolderInfo = new DirectoryInfo(actionPath);
 					selectedFile = -1;
-					selectedFolder = false;
+					isFolderSelected = false;
 				}
 				else
 				{
@@ -101,12 +138,12 @@ namespace Shoelace.Panels
 						}
 					}.Start();
 				}
-				shouldDoAction = false;
+				shouldOpen = false;
 			}
 
 			foreach (var file in files)
 			{
-				bool isFolderSelected = false;
+				bool isFolder = false;
 				bool frame = false;
 				if (ImGui.IsMouseHoveringRect(ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(assetSize + 4)) || selectedFile == currentIndex)
 				{
@@ -118,7 +155,7 @@ namespace Shoelace.Panels
 				if (ImGui.IsWindowFocused() && ImGui.IsMouseClicked(0) && !ImGui.IsAnyItemHovered())
 				{
 					selectedFile = -1;
-					isFolderSelected = false;
+					isFolder = false;
 				}
 
 				string fileExtIconsPath = Path.Combine(EditorConfig.InternalAssetDirectory, "textures", "icons", "fileExt - Designed by iconixar from Flaticon");
@@ -126,7 +163,7 @@ namespace Shoelace.Panels
 				if ((file.Attributes & FileAttributes.Directory) != 0)
 				{
 					imgPath = Path.Combine(EditorConfig.InternalAssetDirectory, "textures", "icons", "folder1 - Designed by DinosoftLabs from Flaticon.png");
-					isFolderSelected = true;
+					isFolder = true;
 				}
 				else if (_supportedImageExtensions.Contains(file.Extension))
 				{
@@ -152,10 +189,10 @@ namespace Shoelace.Panels
 				{
 					selectedFile = currentIndex;
 					actionPath = file.FullName;
-					selectedFolder = isFolderSelected;
+					isFolderSelected = isFolder;
 					if (ImGui.IsMouseDoubleClicked(0))
 					{
-						shouldDoAction = true;
+						shouldOpen = true;
 					}
 				}
 				ImGui.EndGroup();
@@ -172,12 +209,12 @@ namespace Shoelace.Panels
 				{
 					selectedFile = currentIndex;
 					actionPath = file.FullName;
-					selectedFolder = isFolderSelected;
+					isFolderSelected = isFolder;
 				}
 				if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
 				{
 					// button double click
-					shouldDoAction = true;
+					shouldOpen = true;
 				}
 
 				if (ImGui.BeginDragDropSource())
@@ -302,7 +339,7 @@ namespace Shoelace.Panels
 
 						if ((e.KeyCode == BootEngine.Utils.KeyCodes.Enter || e.KeyCode == BootEngine.Utils.KeyCodes.KeypadEnter) && e is KeyPressedEvent) 
 						{
-							shouldDoAction = true;
+							shouldOpen = true;
 						}
 					}
 				}
