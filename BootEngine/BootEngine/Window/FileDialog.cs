@@ -195,7 +195,7 @@ namespace BootEngine.Window
 				ImGui.EndChild(); // Files
 
 				string selectedFilePath = curPath + (curPath[^1] == '\\' ? "" : "\\") + (curFolder.Length > 0 ? curFolder : curFile);
-				ImGui.PushItemWidth(.95f * ImGui.GetWindowWidth());
+				ImGui.PushItemWidth(.95f * ImGui.GetWindowWidth() - ImGui.CalcTextSize(string.Join(',', filters)).X - 6);
 
 				if (ImGui.InputText("", ref selectedFilePath, 500, ImGuiInputTextFlags.EnterReturnsTrue))
 				{
@@ -208,6 +208,14 @@ namespace BootEngine.Window
 						curFolder = selectedFilePath.Substring(selectedFilePath.LastIndexOf('\\'));
 					}
 					doAction = true;
+				}
+
+				if (filters.Length > 0)
+				{
+					ImGui.SameLine();
+					string joinedFilters = string.Join(' ', filters);
+					ImGui.PushItemWidth(ImGui.CalcTextSize(string.Join(' ', filters)).X + 4);
+					ImGui.InputText("##Filters", ref joinedFilters, 256, ImGuiInputTextFlags.ReadOnly);
 				}
 
 				ImGui.SetCursorPosY(ImGui.GetCursorPosY() + 6);
