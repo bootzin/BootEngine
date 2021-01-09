@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using Veldrid;
@@ -24,6 +25,9 @@ namespace Shoelace.Panels
 	{
 		private readonly EcsFilter<EcsKeyEvent> _keyPressedEvents = default;
 
+		private bool setColumnWidth = true;
+		private string searchPattern = "";
+		private bool shouldClear;
 		private string activeFolder = "";
 		private DirectoryInfo activeFolderInfo = new DirectoryInfo(EditorConfig.AssetDirectory);
 		private bool isFolderSelected;
@@ -40,7 +44,7 @@ namespace Shoelace.Panels
 		private bool renamingFile;
 
 		private bool createFolder;
-
+		private bool isSearching;
 		private readonly List<string> _supportedImageExtensions = new List<string> { ".png", ".bmp", ".jpg", ".jpeg" };
 		private readonly DirectoryInfo _assetDirectoryInfo = new DirectoryInfo(EditorConfig.AssetDirectory);
 		private const int assetSize = 96;
@@ -53,6 +57,32 @@ namespace Shoelace.Panels
 				ImGui.OpenPopup("Create");
 			}
 
+			var width = ImGui.CalcItemWidth();
+			ImGui.SameLine();
+
+			ImGui.SetNextItemWidth(ImGui.CalcItemWidth());
+			ImGui.SetCursorPosX((width * .35f) + 8);
+			string tmp = searchPattern;
+			bool updateSearchPattern = ImGui.InputTextWithHint("##Search", FontAwesome5.Search + " Search", ref tmp, 512, ImGuiInputTextFlags.AutoSelectAll);
+
+			if (ImGui.IsItemClicked(0))
+			{
+				isSearching = true;
+			}
+
+			ImGui.SameLine();
+
+			ImGui.SetCursorPosX(ImGui.GetCursorPosX() - 8);
+			if (ImGui.Button(FontAwesome5.Times))
+			{
+				searchPattern = "";
+			}
+
+			if (updateSearchPattern)
+			{
+				searchPattern = tmp;
+			}
+
 			if (ImGui.BeginPopup("Create"))
 			{
 				DrawCreateMenu();
@@ -61,9 +91,12 @@ namespace Shoelace.Panels
 
 			ImGui.Separator();
 
-			var width = ImGui.CalcItemWidth();
 			ImGui.Columns(2, "##AssetColumns", true);
-			ImGui.SetColumnWidth(0, width * .35f);
+			if (setColumnWidth)
+			{
+				ImGui.SetColumnWidth(0, width * .35f);
+				setColumnWidth = false;
+			}
 
 			ImGui.BeginChild("FileBrowser##1", new Vector2(0, ImGui.GetWindowHeight() * .71f));
 
@@ -73,6 +106,7 @@ namespace Shoelace.Panels
 				{
 					activeFolder = "";
 					activeFolderInfo = _assetDirectoryInfo;
+					isSearching = false;
 				}
 				DrawAssetsDir(_assetDirectoryInfo);
 				ImGui.TreePop();
@@ -82,7 +116,10 @@ namespace Shoelace.Panels
 			ImGui.NextColumn();
 
 			if (ImGui.IsItemClicked(0))
+			{
 				selectedFile = -1;
+				isSearching = false;
+			}
 
 			ImGui.BeginChild("ContentBrowser##1", new Vector2(0, ImGui.GetWindowHeight() * .71f));
 
@@ -205,9 +242,13 @@ namespace Shoelace.Panels
 			if (createFolder)
 			{
 				activeFolderInfo.CreateSubdirectory("New Folder");
+				searchPattern = "";
 			}
-
-			var files = activeFolderInfo.GetFileSystemInfos();
+			FileSystemInfo[] files;
+			if (searchPattern.Length > 0)
+				files = activeFolderInfo.GetFileSystemInfos("*" + searchPattern + "*", new EnumerationOptions() { IgnoreInaccessible = true, RecurseSubdirectories = true });
+			else
+				files = activeFolderInfo.GetFileSystemInfos();
 			itemCount = files.Length - 1;
 
 			foreach (var file in files)
@@ -254,7 +295,10 @@ namespace Shoelace.Panels
 					}
 					else
 					{
-						file.Delete();
+						if (file is DirectoryInfo di)
+							di.Delete(true);
+						else
+							file.Delete();
 						deleteFile = -1;
 						continue;
 					}
@@ -272,6 +316,7 @@ namespace Shoelace.Panels
 				if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) || ImGui.IsMouseClicked(ImGuiMouseButton.Right))
 				{
 					renamingFile = false;
+					isSearching = false;
 					if (ImGui.IsWindowFocused() && !ImGui.IsAnyItemHovered())
 					{
 						selectedFile = -1;
@@ -320,6 +365,7 @@ namespace Shoelace.Panels
 				if (ImGui.IsMouseClicked(ImGuiMouseButton.Right) && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenBlockedByPopup))
 				{
 					selectedFile = currentIndex;
+					isSearching = false;
 				}
 
 
@@ -351,6 +397,7 @@ namespace Shoelace.Panels
 				{
 					selectedFile = currentIndex;
 					isFolderSelected = isFolder;
+					isSearching = false;
 				}
 				if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left) && ImGui.IsItemHovered())
 				{
@@ -492,6 +539,7 @@ namespace Shoelace.Panels
 					{
 						activeFolder = Path.GetRelativePath(EditorConfig.AssetDirectory, child.FullName);
 						activeFolderInfo = child;
+						isSearching = false;
 					}
 					if (open)
 					{
@@ -509,6 +557,7 @@ namespace Shoelace.Panels
 					{
 						activeFolder = Path.GetRelativePath(EditorConfig.AssetDirectory, child.FullName);
 						activeFolderInfo = child;
+						isSearching = false;
 					}
 					if (open)
 					{
@@ -599,12 +648,16 @@ namespace Shoelace.Panels
 								renamingFile = false;
 							else if (promptDelete)
 								promptDelete = false;
+							else if (isSearching)
+								isSearching = false;
 							else
 								shouldOpen = true;
 						}
 
 						if (e.KeyCode == KeyCodes.Delete)
 						{
+							if (ImGui.GetIO().WantCaptureKeyboard)
+								break;
 							deleteFile = selectedFile;
 							if (!InputManager.Instance.GetKeyDown(KeyCodes.ShiftLeft) && !InputManager.Instance.GetKeyDown(KeyCodes.ShiftRight))
 								promptDelete = true;
