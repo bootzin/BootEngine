@@ -30,10 +30,8 @@ namespace BootEngine.Layers
 		public virtual void OnUpdate(float deltaSeconds) { }
 		internal void OnGenericEvent(EventBase @event)
 		{
-			ActiveScene.CreateEmptyEntity().AddComponent(new EcsGenericEvent()
-			{
-				Event = @event
-			});
+			ref var ev = ref ActiveScene.CreateEmptyEntity().AddComponent<EcsGenericEvent>();
+			ev.Event = @event;
 			OnEvent(@event);
 		}
 		public virtual void OnEvent(EventBase @event) { }
