@@ -193,7 +193,7 @@ namespace BootEngine.Layers.GUI
 			indexBuffer = gd.ResourceFactory.CreateBuffer(new BufferDescription(2000, BufferUsage.IndexBuffer | BufferUsage.Dynamic));
 			indexBuffer.Name = "ImGui.NET Index Buffer";
 
-			LoadFonts(gd);
+			RecreateFontDeviceTexture(gd);
 
 			projMatrixBuffer = gd.ResourceFactory.CreateBuffer(new BufferDescription(64, BufferUsage.UniformBuffer | BufferUsage.Dynamic));
 			projMatrixBuffer.Name = "ImGui.NET Projection Buffer";
@@ -235,7 +235,7 @@ namespace BootEngine.Layers.GUI
 			fontTextureResourceSet = gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(textureLayout, fontTextureView));
 		}
 
-		private void LoadFonts(GraphicsDevice gd)
+		public void LoadFonts(GraphicsDevice gd, params ImGuiFontInfo[] fontInfos)
 		{
 			unsafe
 			{
@@ -244,17 +244,32 @@ namespace BootEngine.Layers.GUI
 				iconConfig.OversampleV = 3;
 				iconConfig.RasterizerMultiply = 1f;
 				iconConfig.GlyphExtraSpacing = Vector2.Zero;
-				iconConfig.MergeMode = true;
 				iconConfig.PixelSnapH = true;
-				ushort[] ranges = new ushort[] { 0xe005, 0xf8ff, 0 };
-				GCHandle rangeHandle = GCHandle.Alloc(ranges, GCHandleType.Pinned);
 				var io = ImGui.GetIO();
 				try
 				{
-					io.Fonts.AddFontFromFileTTF(Path.Combine(AppContext.BaseDirectory, "internalAssets/fonts/WorkSans/static/WorkSans-Regular.ttf"), 14f);
-					io.Fonts.AddFontFromFileTTF(Path.Combine(AppContext.BaseDirectory, "internalAssets/fonts/fontawesome-free-5.15.1-web/webfonts/fa-solid-900.ttf"), 14f, iconConfig, rangeHandle.AddrOfPinnedObject());
-					io.Fonts.AddFontFromFileTTF(Path.Combine(AppContext.BaseDirectory, "internalAssets/fonts/fontawesome-free-5.15.1-web/webfonts/fa-regular-400.ttf"), 14f, iconConfig, rangeHandle.AddrOfPinnedObject());
-					io.Fonts.AddFontFromFileTTF(Path.Combine(AppContext.BaseDirectory, "internalAssets/fonts/WorkSans/static/WorkSans-SemiBold.ttf"), 14f);
+					io.Fonts.Clear();
+					foreach (var fontInfo in fontInfos)
+					{
+						iconConfig.MergeMode = fontInfo.MergeMode;
+						if (fontInfo.IsIconFont)
+						{
+							GCHandle rangeHandle = GCHandle.Alloc(fontInfo.Ranges, GCHandleType.Pinned);
+							try
+							{
+								io.Fonts.AddFontFromFileTTF(fontInfo.Path, fontInfo.Size, iconConfig, rangeHandle.AddrOfPinnedObject());
+							}
+							finally
+							{
+								if (rangeHandle.IsAllocated)
+									rangeHandle.Free();
+							}
+						}
+						else
+						{
+							io.Fonts.AddFontFromFileTTF(fontInfo.Path, fontInfo.Size);
+						}
+					}
 				}
 				catch
 				{
@@ -262,12 +277,11 @@ namespace BootEngine.Layers.GUI
 				}
 				finally
 				{
-					if (rangeHandle.IsAllocated)
-						rangeHandle.Free();
 					ImGuiNative.ImFontConfig_destroy(iconConfig);
 				}
 				RecreateFontDeviceTexture(gd);
 			}
+			fontTextureResourceSet = gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(textureLayout, fontTextureView));
 		}
 
 		private IntPtr GetNextImGuiBindingID()

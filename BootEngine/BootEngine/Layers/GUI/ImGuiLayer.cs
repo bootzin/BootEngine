@@ -73,6 +73,7 @@ namespace BootEngine.Layers.GUI
 		}
 
 		public static System.IntPtr GetOrCreateImGuiBinding(ResourceFactory factory, Texture texture) => Controller.GetOrCreateImGuiBinding(factory, texture);
+		public static void LoadFonts(ImGuiFontInfo[] infos) => Controller.LoadFonts(Application.App.Window.GraphicsDevice, infos);
 		#endregion
 	}
 }

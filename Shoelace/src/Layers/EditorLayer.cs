@@ -4,6 +4,7 @@ using BootEngine.ECS.Components;
 using BootEngine.ECS.Components.Events;
 using BootEngine.ECS.Systems;
 using BootEngine.Layers;
+using BootEngine.Layers.GUI;
 using BootEngine.Renderer;
 using BootEngine.Scripting;
 using BootEngine.Serializers;
@@ -17,6 +18,7 @@ using Shoelace.Services;
 using Shoelace.Styling;
 using Shoelace.Systems;
 using System;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using Veldrid;
@@ -47,6 +49,41 @@ namespace Shoelace.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
+			ImGuiFontInfo[] fonts = new ImGuiFontInfo[]
+			{
+				new ImGuiFontInfo()
+				{
+					IsIconFont = false,
+					MergeMode = false,
+					Path = Path.Combine(AppContext.BaseDirectory, "internalAssets/fonts/WorkSans/static/WorkSans-Regular.ttf"),
+					Size = 14f
+				},
+				new ImGuiFontInfo()
+				{
+					IsIconFont = true,
+					MergeMode = true,
+					Path = Path.Combine(AppContext.BaseDirectory, "internalAssets/fonts/fontawesome-free-5.15.1-web/webfonts/fa-solid-900.ttf"),
+					Size = 14f,
+					Ranges = new ushort[] { 0xe005, 0xf8ff, 0 }
+				},
+				new ImGuiFontInfo()
+				{
+					IsIconFont = true,
+					MergeMode = true,
+					Path = Path.Combine(AppContext.BaseDirectory, "internalAssets/fonts/fontawesome-free-5.15.1-web/webfonts/fa-regular-400.ttf"),
+					Size = 14f,
+					Ranges = new ushort[] { 0xe005, 0xf8ff, 0 }
+				},
+				new ImGuiFontInfo()
+				{
+					IsIconFont = false,
+					MergeMode = false,
+					Path = Path.Combine(AppContext.BaseDirectory, "internalAssets/fonts/WorkSans/static/WorkSans-SemiBold.ttf"),
+					Size = 14f
+				}
+			};
+			ImGuiLayer.LoadFonts(fonts);
+
 			var loadedSound = AssetManager.LoadSound("assets\\sounds\\loaded.mp3", false);
 			Styles.SetDarkTheme();
 
