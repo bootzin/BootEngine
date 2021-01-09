@@ -235,7 +235,13 @@ namespace BootEngine.Layers.GUI
 			fontTextureResourceSet = gd.ResourceFactory.CreateResourceSet(new ResourceSetDescription(textureLayout, fontTextureView));
 		}
 
-		public void LoadFonts(GraphicsDevice gd, params ImGuiFontInfo[] fontInfos)
+		/// <summary>
+		/// Method responsible for loading custom fonts.
+		/// The order in which fonts are provided matters!
+		/// </summary>
+		/// <param name="gd"> Main graphics device </param>
+		/// <param name="fontInfos">Information on the specifics of each font to be loaded</param>
+		public void LoadFonts(GraphicsDevice gd, bool replaceExistingFonts, ImGuiFontInfo[] fontInfos)
 		{
 			unsafe
 			{
@@ -248,7 +254,8 @@ namespace BootEngine.Layers.GUI
 				var io = ImGui.GetIO();
 				try
 				{
-					io.Fonts.Clear();
+					if (replaceExistingFonts)
+						io.Fonts.Clear();
 					foreach (var fontInfo in fontInfos)
 					{
 						iconConfig.MergeMode = fontInfo.MergeMode;

@@ -49,6 +49,43 @@ namespace Shoelace.Layers
 #if DEBUG
 			using Profiler fullProfiler = new Profiler(GetType());
 #endif
+			LoadFonts();
+
+			var loadedSound = AssetManager.LoadSound("assets\\sounds\\loaded.mp3", false);
+			Styles.SetDarkTheme();
+
+			EditorHelper.LoadStandardShaders();
+
+			LoadScene();
+
+			var e = ActiveScene.CreateEntity("White");
+			ref var tc = ref e.GetComponent<TransformComponent>();
+			tc.Rotation = new Vector3(.5f);
+			tc.Scale = new Vector3(.5f);
+			tc.Translation = new Vector3(-.5f);
+			var e2 = ActiveScene.CreateEntity("Red");
+			var e3 = ActiveScene.CreateEntity("Blue");
+			var e4 = ActiveScene.CreateEntity("Green");
+
+			var data = RenderData2D.QuadData;
+			data.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", BootEngineTextureUsage.Sampled);
+
+			var data2 = RenderData2D.QuadData;
+			data2.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", BootEngineTextureUsage.Sampled);
+
+			e.AddComponent(new SpriteRendererComponent(ColorF.White, new Material("Standard2D"), RenderData2D.QuadData));
+			e2.AddComponent(new SpriteRendererComponent(ColorF.Red, new Material("Standard2D"), data));
+			e3.AddComponent(new SpriteRendererComponent(ColorF.Blue, new Material("Standard2D"), RenderData2D.QuadData));
+			e4.AddComponent(new SpriteRendererComponent(ColorF.Green, new Material("Standard2D"), data2));
+
+			ref var sc = ref e3.AddComponent<ScriptingComponent>();
+			sc.Script = new SampleScript(e3);
+
+			SoundEngine.Instance.PlaySound(loadedSound);
+		}
+
+		private static void LoadFonts()
+		{
 			ImGuiFontInfo[] fonts = new ImGuiFontInfo[]
 			{
 				new ImGuiFontInfo()
@@ -83,38 +120,6 @@ namespace Shoelace.Layers
 				}
 			};
 			ImGuiLayer.LoadFonts(fonts);
-
-			var loadedSound = AssetManager.LoadSound("assets\\sounds\\loaded.mp3", false);
-			Styles.SetDarkTheme();
-
-			EditorHelper.LoadStandardShaders();
-
-			LoadScene();
-
-			var e = ActiveScene.CreateEntity("White");
-			ref var tc = ref e.GetComponent<TransformComponent>();
-			tc.Rotation = new Vector3(.5f);
-			tc.Scale = new Vector3(.5f);
-			tc.Translation = new Vector3(-.5f);
-			var e2 = ActiveScene.CreateEntity("Red");
-			var e3 = ActiveScene.CreateEntity("Blue");
-			var e4 = ActiveScene.CreateEntity("Green");
-
-			var data = RenderData2D.QuadData;
-			data.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", BootEngineTextureUsage.Sampled);
-
-			var data2 = RenderData2D.QuadData;
-			data2.Texture = AssetManager.LoadTexture2D("assets/textures/sampleFly.png", BootEngineTextureUsage.Sampled);
-
-			e.AddComponent(new SpriteRendererComponent(ColorF.White, new Material("Standard2D"), RenderData2D.QuadData));
-			e2.AddComponent(new SpriteRendererComponent(ColorF.Red, new Material("Standard2D"), data));
-			e3.AddComponent(new SpriteRendererComponent(ColorF.Blue, new Material("Standard2D"), RenderData2D.QuadData));
-			e4.AddComponent(new SpriteRendererComponent(ColorF.Green, new Material("Standard2D"), data2));
-
-			ref var sc = ref e3.AddComponent<ScriptingComponent>();
-			sc.Script = new SampleScript(e3);
-
-			SoundEngine.Instance.PlaySound(loadedSound);
 		}
 
 		public override void OnUpdate(float deltaSeconds)
