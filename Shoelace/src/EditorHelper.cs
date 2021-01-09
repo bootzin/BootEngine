@@ -14,7 +14,7 @@ using Veldrid;
 
 namespace Shoelace
 {
-	internal static class EditorSetup
+	internal static class EditorHelper
 	{
 		internal readonly static Dictionary<string, ShaderData> StandardShaders = new Dictionary<string, ShaderData>();
 		private readonly static ResourceFactory resourceFactory = Application.App.Window.GraphicsDevice.ResourceFactory;
@@ -81,6 +81,33 @@ namespace Shoelace
 			});
 			#endregion
 		}
+
+		#region Templates
+		#region Script
+		public const string ScriptTemplate =
+@"using BootEngine.ECS;
+using BootEngine.Scripting;
+
+public class SCRIPT_NAME : Script
+{
+	public SCRIPT_NAME(Entity entity) : base(entity) { }
+
+	public override void OnUpdate()
+	{
+		
+	}
+}";
+		#endregion
+
+		#region Shader
+		public const string ShaderTemplate =
+@"#type vertex
+#version 430 core
+
+#type fragment
+#version 430 core";
+		#endregion
+		#endregion
 
 		private static string GetShaderPath(string file)
 		{

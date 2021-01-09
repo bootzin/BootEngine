@@ -6,6 +6,7 @@ using BootEngine.Input;
 using BootEngine.Layers.GUI;
 using BootEngine.Logging;
 using BootEngine.Utils;
+using BootEngine.Window;
 using ImGuiNET;
 using Leopotam.Ecs;
 using Shoelace.Styling;
@@ -13,7 +14,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using Veldrid;
@@ -27,7 +27,7 @@ namespace Shoelace.Panels
 
 		private bool setColumnWidth = true;
 		private string searchPattern = "";
-		private bool shouldClear;
+
 		private string activeFolder = "";
 		private DirectoryInfo activeFolderInfo = new DirectoryInfo(EditorConfig.AssetDirectory);
 		private bool isFolderSelected;
@@ -43,20 +43,27 @@ namespace Shoelace.Panels
 		private bool promptDelete;
 		private bool renamingFile;
 
-		private bool createFolder;
 		private bool isSearching;
+
+		private bool createFolder;
+		private bool createFile;
+		private string createFileName = "";
+		private FileType createFileType;
+		private bool importingAsset;
 		private readonly List<string> _supportedImageExtensions = new List<string> { ".png", ".bmp", ".jpg", ".jpeg" };
 		private readonly DirectoryInfo _assetDirectoryInfo = new DirectoryInfo(EditorConfig.AssetDirectory);
 		private const int assetSize = 96;
 
 		public override void OnGuiRender()
 		{
-			ImGui.Begin("Asset Manager");
+			bool open = true;
+			ImGui.Begin("Asset Manager", ref open, ImGuiWindowFlags.NoNav);
 			if (ImGui.Button("Create"))
 			{
 				ImGui.OpenPopup("Create");
 			}
 
+			#region Search bar
 			var width = ImGui.CalcItemWidth();
 			ImGui.SameLine();
 
@@ -82,6 +89,7 @@ namespace Shoelace.Panels
 			{
 				searchPattern = tmp;
 			}
+			#endregion
 
 			if (ImGui.BeginPopup("Create"))
 			{
@@ -121,7 +129,7 @@ namespace Shoelace.Panels
 				isSearching = false;
 			}
 
-			ImGui.BeginChild("ContentBrowser##1", new Vector2(0, ImGui.GetWindowHeight() * .71f));
+			ImGui.BeginChild("ContentBrowser##1", new Vector2(0, ImGui.GetWindowHeight() * .71f), false, ImGuiWindowFlags.NoNav);
 
 			#region Breadcrumb Trail
 			string[] splitPath = activeFolder.Split('\\');
@@ -179,6 +187,11 @@ namespace Shoelace.Panels
 					ImGui.EndMenu();
 				}
 
+				if (ImGui.MenuItem("Import new asset..."))
+				{
+					importingAsset = true;
+				}
+
 				ImGui.Separator();
 
 				if (ImGui.MenuItem("Open in Explorer"))
@@ -199,6 +212,13 @@ namespace Shoelace.Panels
 			ImGui.EndChild();
 
 			ImGui.End();
+
+			if (FileDialog.ShowFileDialog(ref importingAsset, out string importPath))
+			{
+				importingAsset = false;
+				if (File.Exists(importPath))
+					File.Copy(importPath, activeFolderInfo.FullName + importPath[importPath.LastIndexOf('\\')..]);
+			}
 		}
 
 		private void DrawCreateMenu()
@@ -208,6 +228,19 @@ namespace Shoelace.Panels
 				createFolder = true;
 			}
 			ImGui.Separator();
+			if (ImGui.MenuItem("Script"))
+			{
+				createFile = true;
+				createFileName = "NewScript.cs";
+				createFileType = FileType.Script;
+			}
+
+			if (ImGui.MenuItem("Shader"))
+			{
+				createFile = true;
+				createFileName = "NewShader.glsl";
+				createFileType = FileType.Shader;
+			}
 		}
 
 		private void DrawAssets()
@@ -244,6 +277,12 @@ namespace Shoelace.Panels
 				activeFolderInfo.CreateSubdirectory("New Folder");
 				searchPattern = "";
 			}
+			if (createFile)
+			{
+				File.Create(Path.Combine(activeFolderInfo.FullName, createFileName)).Dispose();
+				searchPattern = "";
+			}
+
 			FileSystemInfo[] files;
 			if (searchPattern.Length > 0)
 				files = activeFolderInfo.GetFileSystemInfos("*" + searchPattern + "*", new EnumerationOptions() { IgnoreInaccessible = true, RecurseSubdirectories = true });
@@ -253,9 +292,9 @@ namespace Shoelace.Panels
 
 			foreach (var file in files)
 			{
-				if (createFolder && file.Name == "New Folder")
+				if ((createFolder && file.Name == "New Folder") || (createFile && file.Name == createFileName))
 				{
-					createFolder = false;
+					createFolder = createFile = false;
 					selectedFile = currentIndex;
 					renamingFile = true;
 				}
@@ -315,6 +354,10 @@ namespace Shoelace.Panels
 
 				if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) || ImGui.IsMouseClicked(ImGuiMouseButton.Right))
 				{
+					if (renamingFile && createFileName.Length > 0)
+					{
+						UpdateFileContent();
+					}
 					renamingFile = false;
 					isSearching = false;
 					if (ImGui.IsWindowFocused() && !ImGui.IsAnyItemHovered())
@@ -432,9 +475,15 @@ namespace Shoelace.Panels
 						try
 						{
 							if ((file.Attributes & FileAttributes.Directory) != 0)
+							{
 								Directory.Move(file.FullName, Path.Combine(Path.GetDirectoryName(file.FullName), name));
+							}
 							else
+							{
+								if (createFileName.Length > 0)
+									createFileName = name;
 								File.Move(file.FullName, Path.Combine(Path.GetDirectoryName(file.FullName), name));
+							}
 						}
 						catch (Exception ex)
 						{
@@ -524,6 +573,38 @@ namespace Shoelace.Panels
 
 				currentIndex++;
 			}
+		}
+
+		private void UpdateFileContent()
+		{
+			Logger.Assert(File.Exists(Path.Combine(activeFolderInfo.FullName, createFileName)), "File does not exist!");
+			switch (createFileType)
+			{
+				case FileType.Unknown:
+				case FileType.Shader:
+					if (!createFileName.EndsWith(".glsl"))
+					{
+						File.Move(Path.Combine(activeFolderInfo.FullName, createFileName), Path.Combine(activeFolderInfo.FullName, createFileName + ".glsl"));
+						createFileName += ".glsl";
+					}
+					using (StreamWriter sw = File.CreateText(Path.Combine(activeFolderInfo.FullName, createFileName)))
+					{
+						sw.Write(EditorHelper.ShaderTemplate);
+					}
+					break;
+				case FileType.Script:
+					if (!createFileName.EndsWith(".cs"))
+					{
+						File.Move(Path.Combine(activeFolderInfo.FullName, createFileName), Path.Combine(activeFolderInfo.FullName, createFileName + ".cs"));
+						createFileName += ".cs";
+					}
+					using (StreamWriter sw = File.CreateText(Path.Combine(activeFolderInfo.FullName, createFileName)))
+					{
+						sw.Write(EditorHelper.ScriptTemplate.Replace("SCRIPT_NAME", createFileName.Replace(' ', '_')[..createFileName.LastIndexOf('.')]));
+					}
+					break;
+			}
+			createFileName = "";
 		}
 
 		private void DrawAssetsDir(DirectoryInfo curDirInfo)
@@ -645,13 +726,23 @@ namespace Shoelace.Panels
 						if ((e.KeyCode == KeyCodes.Enter || e.KeyCode == KeyCodes.KeypadEnter))
 						{
 							if (renamingFile)
+							{
 								renamingFile = false;
+								if (createFileName.Length > 0)
+									UpdateFileContent();
+							}
 							else if (promptDelete)
+							{
 								promptDelete = false;
+							}
 							else if (isSearching)
+							{
 								isSearching = false;
+							}
 							else
+							{
 								shouldOpen = true;
+							}
 						}
 
 						if (e.KeyCode == KeyCodes.Delete)
@@ -673,6 +764,8 @@ namespace Shoelace.Panels
 						{
 							if (!renamingFile && !promptDelete && deleteFile == -1)
 								selectedFile = -1;
+							if (renamingFile && createFileName.Length > 0)
+								UpdateFileContent();
 							renamingFile = false;
 							deleteFile = -1;
 							promptDelete = false;
@@ -680,6 +773,13 @@ namespace Shoelace.Panels
 					}
 				}
 			}
+		}
+
+		private enum FileType
+		{
+			Unknown,
+			Shader,
+			Script
 		}
 	}
 }

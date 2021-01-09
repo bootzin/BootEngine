@@ -50,7 +50,7 @@ namespace Shoelace.Layers
 			var loadedSound = AssetManager.LoadSound("assets\\sounds\\loaded.mp3", false);
 			Styles.SetDarkTheme();
 
-			EditorSetup.LoadStandardShaders();
+			EditorHelper.LoadStandardShaders();
 
 			LoadScene();
 
@@ -279,7 +279,7 @@ namespace Shoelace.Layers
 				.Inject(_guiService)
 				.Init();
 
-			renderTargetAddr = EditorSetup.CreateEditorCamera(Width, Height, ActiveScene);
+			renderTargetAddr = EditorHelper.CreateEditorCamera(Width, Height, ActiveScene);
 
 			if (path != null)
 			{
@@ -304,7 +304,7 @@ namespace Shoelace.Layers
 #endif
 			Renderer2D.Instance.Dispose();
 			SoundEngine.Instance.Dispose();
-			EditorSetup.FreeResources();
+			EditorHelper.FreeResources();
 		}
 	}
 }
