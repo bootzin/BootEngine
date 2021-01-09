@@ -79,6 +79,11 @@
       <Link>internalAssets\textures\%(RecursiveDir)\%(FileName)%(Extension)</Link>
     </Content>
 
+    <Content Include="$(InternalAssetsDir)\fonts\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Link>internalAssets\fonts\%(RecursiveDir)\%(FileName)%(Extension)</Link>
+    </Content>
+
     <Content Include="$(AssetsDir)\shaders\**">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Link>assets\shaders\%(RecursiveDir)\%(FileName)%(Extension)</Link>
@@ -99,9 +104,4 @@
       <Link>assets\sounds\%(RecursiveDir)\%(FileName)%(Extension)</Link>
     </Content>
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="internalAssets\textures\" />
-  </ItemGroup>
-
 </Project>

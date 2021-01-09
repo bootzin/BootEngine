@@ -251,10 +251,10 @@ namespace BootEngine.Layers.GUI
 				var io = ImGui.GetIO();
 				try
 				{
-					io.Fonts.AddFontFromFileTTF(Path.Combine(AppContext.BaseDirectory, "assets/fonts/WorkSans/static/WorkSans-Regular.ttf"), 14f);
-					io.Fonts.AddFontFromFileTTF(Path.Combine(AppContext.BaseDirectory, "assets/fonts/fontawesome-free-5.15.1-web/webfonts/fa-solid-900.ttf"), 14f, iconConfig, rangeHandle.AddrOfPinnedObject());
-					io.Fonts.AddFontFromFileTTF(Path.Combine(AppContext.BaseDirectory, "assets/fonts/fontawesome-free-5.15.1-web/webfonts/fa-regular-400.ttf"), 14f, iconConfig, rangeHandle.AddrOfPinnedObject());
-					io.Fonts.AddFontFromFileTTF(Path.Combine(AppContext.BaseDirectory, "assets/fonts/WorkSans/static/WorkSans-SemiBold.ttf"), 14f);
+					io.Fonts.AddFontFromFileTTF(Path.Combine(AppContext.BaseDirectory, "internalAssets/fonts/WorkSans/static/WorkSans-Regular.ttf"), 14f);
+					io.Fonts.AddFontFromFileTTF(Path.Combine(AppContext.BaseDirectory, "internalAssets/fonts/fontawesome-free-5.15.1-web/webfonts/fa-solid-900.ttf"), 14f, iconConfig, rangeHandle.AddrOfPinnedObject());
+					io.Fonts.AddFontFromFileTTF(Path.Combine(AppContext.BaseDirectory, "internalAssets/fonts/fontawesome-free-5.15.1-web/webfonts/fa-regular-400.ttf"), 14f, iconConfig, rangeHandle.AddrOfPinnedObject());
+					io.Fonts.AddFontFromFileTTF(Path.Combine(AppContext.BaseDirectory, "internalAssets/fonts/WorkSans/static/WorkSans-SemiBold.ttf"), 14f);
 				}
 				catch
 				{
