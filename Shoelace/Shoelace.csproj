@@ -103,5 +103,14 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <Link>assets\sounds\%(RecursiveDir)\%(FileName)%(Extension)</Link>
     </Content>
+
+    <Content Include="$(AssetsDir)\scenes\**">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <Link>assets\scenes\%(RecursiveDir)\%(FileName)%(Extension)</Link>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="assets\scenes\" />
   </ItemGroup>
 </Project>
