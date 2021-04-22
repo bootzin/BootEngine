@@ -88,44 +88,6 @@ namespace Shoelace.Layers
 			}
 		}
 
-		private static void LoadFonts()
-		{
-			ImGuiFontInfo[] fonts = new ImGuiFontInfo[]
-			{
-				new ImGuiFontInfo()
-				{
-					IsIconFont = false,
-					MergeMode = false,
-					Path = Path.Combine(AppContext.BaseDirectory, "internalAssets/fonts/WorkSans/static/WorkSans-Regular.ttf"),
-					Size = 14f
-				},
-				new ImGuiFontInfo()
-				{
-					IsIconFont = true,
-					MergeMode = true,
-					Path = Path.Combine(AppContext.BaseDirectory, "internalAssets/fonts/fontawesome-free-5.15.1-web/webfonts/fa-solid-900.ttf"),
-					Size = 14f,
-					Ranges = new ushort[] { 0xe005, 0xf8ff, 0 }
-				},
-				new ImGuiFontInfo()
-				{
-					IsIconFont = true,
-					MergeMode = true,
-					Path = Path.Combine(AppContext.BaseDirectory, "internalAssets/fonts/fontawesome-free-5.15.1-web/webfonts/fa-regular-400.ttf"),
-					Size = 14f,
-					Ranges = new ushort[] { 0xe005, 0xf8ff, 0 }
-				},
-				new ImGuiFontInfo()
-				{
-					IsIconFont = false,
-					MergeMode = false,
-					Path = Path.Combine(AppContext.BaseDirectory, "internalAssets/fonts/WorkSans/static/WorkSans-SemiBold.ttf"),
-					Size = 14f
-				}
-			};
-			ImGuiLayer.LoadFonts(fonts);
-		}
-
 		public override void OnUpdate(float deltaSeconds)
 		{
 #if DEBUG
@@ -341,6 +303,44 @@ namespace Shoelace.Layers
 			});
 
 			_guiService.NewScene = false;
+		}
+
+		private static void LoadFonts()
+		{
+			ImGuiFontInfo[] fonts = new ImGuiFontInfo[]
+			{
+				new ImGuiFontInfo()
+				{
+					IsIconFont = false,
+					MergeMode = false,
+					Path = Path.Combine(AppContext.BaseDirectory, "internalAssets/fonts/WorkSans/static/WorkSans-Regular.ttf"),
+					Size = 14f
+				},
+				new ImGuiFontInfo()
+				{
+					IsIconFont = true,
+					MergeMode = true,
+					Path = Path.Combine(AppContext.BaseDirectory, "internalAssets/fonts/fontawesome-free-5.15.1-web/webfonts/fa-solid-900.ttf"),
+					Size = 14f,
+					Ranges = new ushort[] { 0xe005, 0xf8ff, 0 }
+				},
+				new ImGuiFontInfo()
+				{
+					IsIconFont = true,
+					MergeMode = true,
+					Path = Path.Combine(AppContext.BaseDirectory, "internalAssets/fonts/fontawesome-free-5.15.1-web/webfonts/fa-regular-400.ttf"),
+					Size = 14f,
+					Ranges = new ushort[] { 0xe005, 0xf8ff, 0 }
+				},
+				new ImGuiFontInfo()
+				{
+					IsIconFont = false,
+					MergeMode = false,
+					Path = Path.Combine(AppContext.BaseDirectory, "internalAssets/fonts/WorkSans/static/WorkSans-SemiBold.ttf"),
+					Size = 14f
+				}
+			};
+			ImGuiLayer.LoadFonts(fonts);
 		}
 
 		public override void OnDetach()

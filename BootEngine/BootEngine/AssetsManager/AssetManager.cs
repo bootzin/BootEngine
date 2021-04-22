@@ -171,7 +171,9 @@ namespace BootEngine.AssetsManager
 		#region Sounds
 		public static Sound LoadSound(string soundPath, bool loop)
 		{
-			return AudioHelper.LoadAudio(soundPath, loop);
+			var sound = AudioHelper.LoadAudio(soundPath, loop);
+			ResourceCache.AddSound(sound, soundPath);
+			return sound;
 		}
 		#endregion
 
