@@ -60,7 +60,7 @@ namespace Shoelace.Layers
 
 			LoadScene();
 
-			LoadDemoScene();
+			//LoadDemoScene();
 
 			SoundEngine.Instance.PlaySound(loadedSound);
 		}

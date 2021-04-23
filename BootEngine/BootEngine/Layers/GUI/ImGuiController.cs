@@ -1,8 +1,13 @@
 ﻿using BootEngine.Input;
 using BootEngine.Renderer.Cameras;
+using BootEngine.Utils;
+using BootEngine.Utils.Exceptions;
 using BootEngine.Utils.ProfilingTools;
+using BootEngine.Utils.Unsafe;
 using BootEngine.Window;
 using ImGuiNET;
+using ImGuizmoNET;
+using ImPlotNET;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,9 +15,6 @@ using System.Numerics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using BootEngine.Utils;
-using BootEngine.Utils.Exceptions;
-using BootEngine.Utils.Unsafe;
 using Veldrid;
 using Veldrid.Sdl2;
 using Veldrid.Vk;
@@ -50,8 +52,8 @@ namespace BootEngine.Layers.GUI
 		private delegate void Platform_CreateWindow(ImGuiViewportPtr viewport);
 		private delegate void Platform_DestroyWindow(ImGuiViewportPtr viewport);
 		private delegate void Platform_ShowWindow(ImGuiViewportPtr viewport);
-		private delegate void Platform_GetWindowPosition(Vector2 pos, ImGuiViewportPtr viewport);
-		private delegate void Platform_GetWindowSize(Vector2 size, ImGuiViewportPtr viewport);
+		private unsafe delegate void Platform_GetWindowPosition(ImGuiViewportPtr vp, Vector2* outPos);
+		private unsafe delegate void Platform_GetWindowSize(ImGuiViewportPtr vp, Vector2* outSize);
 		private delegate void Platform_SetWindowPosition(ImGuiViewportPtr viewport, Vector2 pos);
 		private delegate void Platform_SetWindowSize(ImGuiViewportPtr viewport, Vector2 size);
 		private delegate void Platform_SetWindowTitle(ImGuiViewportPtr viewport, string title);
@@ -149,13 +151,13 @@ namespace BootEngine.Layers.GUI
 
 			ImPlot.CreateContext();
 
-			ImNodes.Initialize();
-
 			IntPtr imguiCtx = ImGui.CreateContext();
+			ImNodes.SetImGuiContext(imguiCtx);
 			ImGui.SetCurrentContext(imguiCtx);
 			ImPlot.SetImGuiContext(imguiCtx);
-			ImNodes.SetImGuiContext(imguiCtx);
 			ImGuizmo.SetImGuiContext(imguiCtx);
+
+			ImNodes.Initialize();
 
 			ImGui.StyleColorsDark();
 
@@ -555,8 +557,8 @@ namespace BootEngine.Layers.GUI
 
 			ImGuiPlatformIOPtr plIo = ImGui.GetPlatformIO();
 			Sdl2Window mainSdlWindow = mainWindow.SdlWindow;
-			plIo.MainViewport.Pos = new Vector2(mainSdlWindow.X, mainSdlWindow.Y);
-			plIo.MainViewport.Size = new Vector2(mainSdlWindow.Width, mainSdlWindow.Height);
+			plIo.Viewports[0].Pos = new Vector2(mainSdlWindow.X, mainSdlWindow.Y);
+			plIo.Viewports[0].Size = new Vector2(mainSdlWindow.Width, mainSdlWindow.Height);
 		}
 
 		private void UpdateImGuiInput()
@@ -573,8 +575,8 @@ namespace BootEngine.Layers.GUI
 				for (int i = 0; i < viewports.Size; i++)
 				{
 					WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewports[i].PlatformUserData).Target;
-					bool atualizarSnapshot = window.SdlWindow.Focused;
-					window.OnUpdate(atualizarSnapshot);
+					bool updateSnapshot = window.SdlWindow.Focused;
+					window.OnUpdate(updateSnapshot);
 				}
 			}
 			else
@@ -898,23 +900,24 @@ namespace BootEngine.Layers.GUI
 			createVulkanSurface = PlatformCreateVkSurface;
 
 			ImGuiPlatformIOPtr plIo = ImGui.GetPlatformIO();
-			plIo.NativePtr->Platform_CreateWindow = Marshal.GetFunctionPointerForDelegate(createWindow);
-			plIo.NativePtr->Platform_DestroyWindow = Marshal.GetFunctionPointerForDelegate(destroyWindow);
-			plIo.NativePtr->Platform_ShowWindow = Marshal.GetFunctionPointerForDelegate(showWindow);
-			plIo.NativePtr->Platform_GetWindowPos = Marshal.GetFunctionPointerForDelegate(getWindowPosition);
-			plIo.NativePtr->Platform_SetWindowPos = Marshal.GetFunctionPointerForDelegate(setWindowPosition);
-			plIo.NativePtr->Platform_GetWindowSize = Marshal.GetFunctionPointerForDelegate(getWindowSize);
-			plIo.NativePtr->Platform_SetWindowSize = Marshal.GetFunctionPointerForDelegate(setWindowSize);
-			plIo.NativePtr->Platform_SetWindowTitle = Marshal.GetFunctionPointerForDelegate(setWindowTitle);
-			plIo.NativePtr->Platform_GetWindowMinimized = Marshal.GetFunctionPointerForDelegate(getWindowMinimized);
-			plIo.NativePtr->Platform_GetWindowFocus = Marshal.GetFunctionPointerForDelegate(getWindowFocus);
-			plIo.NativePtr->Platform_SetWindowFocus = Marshal.GetFunctionPointerForDelegate(setWindowFocus);
-			plIo.NativePtr->Platform_SetWindowAlpha = Marshal.GetFunctionPointerForDelegate(setWindowAlpha);
-			plIo.NativePtr->Platform_CreateVkSurface = Marshal.GetFunctionPointerForDelegate(createVulkanSurface);
+			plIo.Platform_CreateWindow = Marshal.GetFunctionPointerForDelegate(createWindow);
+			plIo.Platform_DestroyWindow = Marshal.GetFunctionPointerForDelegate(destroyWindow);
+			plIo.Platform_ShowWindow = Marshal.GetFunctionPointerForDelegate(showWindow);
+			plIo.Platform_SetWindowPos = Marshal.GetFunctionPointerForDelegate(setWindowPosition);
+			plIo.Platform_SetWindowSize = Marshal.GetFunctionPointerForDelegate(setWindowSize);
+			plIo.Platform_SetWindowTitle = Marshal.GetFunctionPointerForDelegate(setWindowTitle);
+			plIo.Platform_GetWindowMinimized = Marshal.GetFunctionPointerForDelegate(getWindowMinimized);
+			plIo.Platform_GetWindowFocus = Marshal.GetFunctionPointerForDelegate(getWindowFocus);
+			plIo.Platform_SetWindowFocus = Marshal.GetFunctionPointerForDelegate(setWindowFocus);
+			plIo.Platform_SetWindowAlpha = Marshal.GetFunctionPointerForDelegate(setWindowAlpha);
+			plIo.Platform_CreateVkSurface = Marshal.GetFunctionPointerForDelegate(createVulkanSurface);
+
+			ImGuiNative.ImGuiPlatformIO_Set_Platform_GetWindowPos(plIo.NativePtr, Marshal.GetFunctionPointerForDelegate(getWindowPosition));
+			ImGuiNative.ImGuiPlatformIO_Set_Platform_GetWindowSize(plIo.NativePtr, Marshal.GetFunctionPointerForDelegate(getWindowSize));
 
 			UpdateMonitors();
 
-			ImGuiViewportPtr mainViewport = plIo.MainViewport;
+			ImGuiViewportPtr mainViewport = plIo.Viewports[0];
 			mainViewport.PlatformHandle = sdlWindow.Handle;
 			mainViewport.PlatformUserData = (IntPtr)mainWindow.GcHandle;
 		}
@@ -1015,21 +1018,18 @@ namespace BootEngine.Layers.GUI
 			Sdl2Native.SDL_SetWindowSize(window.SdlWindow.SdlWindowHandle, (int)size.X, (int)size.Y);
 		}
 
-		private void PlatformGetWindowSize(Vector2 size, ImGuiViewportPtr viewport)
+		private unsafe void PlatformGetWindowSize(ImGuiViewportPtr vp, Vector2* outSize)
 		{
 			//Seems to work
-			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
+			WindowBase window = (WindowBase)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
 			Rectangle bounds = window.SdlWindow.Bounds;
-			size.X = bounds.Width;
-			size.Y = bounds.Height;
+			*outSize = new Vector2(bounds.Width, bounds.Height);
 		}
 
-		private void PlatformGetWindowPosition(Vector2 pos, ImGuiViewportPtr viewport)
+		private unsafe void PlatformGetWindowPosition(ImGuiViewportPtr vp, Vector2* outPos)
 		{
-			WindowBase window = (WindowBase)GCHandle.FromIntPtr(viewport.PlatformUserData).Target;
-			Rectangle bounds = window.SdlWindow.Bounds;
-			pos.X = bounds.X;
-			pos.Y = bounds.Y;
+			WindowBase window = (WindowBase)GCHandle.FromIntPtr(vp.PlatformUserData).Target;
+            *outPos = new Vector2(window.SdlWindow.Bounds.X, window.SdlWindow.Bounds.Y);
 		}
 
 		private unsafe void PlatformCreateWindow(ImGuiViewportPtr viewport)
@@ -1059,7 +1059,7 @@ namespace BootEngine.Layers.GUI
 			WindowBase newWindow = WindowBase.CreateSubWindow(graphicsDevice, sdlWindow, mainWindow.GetType());
 
 			viewport.PlatformUserData = (IntPtr)newWindow.GcHandle;
-			viewport.PlatformHandle = newWindow.SdlWindow.Handle;
+			//viewport.PlatformHandle = newWindow.SdlWindow.Handle; TODO: necessary?
 		}
 
 		private void PlatformDestroyWindow(ImGuiViewportPtr viewport)

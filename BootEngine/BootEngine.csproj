@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <ApplicationIcon />
     <IsWindows Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::Windows)))' == 'true'">true</IsWindows>
     <IsOSX Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::IsOSPlatform($([System.Runtime.InteropServices.OSPlatform]::OSX)))' == 'true'">true</IsOSX>
@@ -85,7 +85,7 @@
     <PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
     <PackageReference Include="Veldrid" Version="4.8.0" />
     <PackageReference Include="Veldrid.Sdl2" Version="4.8.0" />
-    <PackageReference Include="Veldrid.SPIRV" Version="1.0.13" />
+    <PackageReference Include="Veldrid.SPIRV" Version="1.0.14" />
     <PackageReference Include="YamlDotNet" Version="9.1.0" />
   </ItemGroup>
 

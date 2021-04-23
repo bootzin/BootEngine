@@ -1,9 +1,9 @@
 ﻿using BootEngine.ECS;
 using BootEngine.ECS.Components.Events.Ecs;
-using BootEngine.Events;
 using BootEngine.Input;
 using BootEngine.Serializers;
 using BootEngine.Utils;
+using ImGuizmoNET;
 using Leopotam.Ecs;
 using Shoelace.Services;
 
@@ -60,13 +60,13 @@ namespace Shoelace.Systems
 						_guiService.GizmoType = null;
 					break;
 				case KeyCodes.W:
-					_guiService.GizmoType = ImGuiNET.OPERATION.TRANSLATE;
+					_guiService.GizmoType = OPERATION.TRANSLATE;
 					break;
 				case KeyCodes.E:
-					_guiService.GizmoType = ImGuiNET.OPERATION.SCALE;
+					_guiService.GizmoType = OPERATION.SCALE;
 					break;
 				case KeyCodes.R:
-					_guiService.GizmoType = ImGuiNET.OPERATION.ROTATE;
+					_guiService.GizmoType = OPERATION.ROTATE;
 					break;
 			}
 		}

@@ -27,7 +27,7 @@ namespace Shoelace.Systems
 				if (_guiService.ViewportHovered || _guiService.ViewportFocused)
 				{
 					var cam = _editorCameraFilter.Get2(camera).Camera;
-					if (InputManager.Instance.GetKeyDown(KeyCodes.AltLeft) && !ImGuiNET.ImGuizmo.IsOver())
+					if (InputManager.Instance.GetKeyDown(KeyCodes.AltLeft) && !ImGuizmoNET.ImGuizmo.IsOver())
 					{
 						var mousePos = InputManager.Instance.GetMousePosition();
 						var delta = (mousePos - camData.LastMousePos) * 0.003f;
