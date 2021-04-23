@@ -1,6 +1,5 @@
 ﻿using BootEngine.AssetsManager;
 using BootEngine.Audio;
-using BootEngine.ECS.Components;
 using BootEngine.ECS.Components.Events;
 using BootEngine.ECS.Systems;
 using BootEngine.Layers;
@@ -8,12 +7,9 @@ using BootEngine.Layers.GUI;
 using BootEngine.Renderer;
 using BootEngine.Scripting;
 using BootEngine.Serializers;
-using BootEngine.Utils;
 using BootEngine.Utils.ProfilingTools;
 using BootEngine.Window;
 using ImGuiNET;
-using Leopotam.Ecs;
-using Shoelace.assets.scripts;
 using Shoelace.Panels;
 using Shoelace.Serializers;
 using Shoelace.Services;
@@ -60,32 +56,7 @@ namespace Shoelace.Layers
 
 			LoadScene();
 
-			//LoadDemoScene();
-
 			SoundEngine.Instance.PlaySound(loadedSound);
-		}
-
-		private void LoadDemoScene()
-		{
-			LoadScene(Path.Combine(EditorConfig.AssetDirectory, "scenes\\VerySimpleMemoryGame.boot"));
-
-			var filter = ActiveScene.GetFilter(typeof(EcsFilter<TransformComponent, SpriteRendererComponent>));
-			int i = 0;
-			System.Collections.Generic.List<RevealOnClick> scriptList = new System.Collections.Generic.List<RevealOnClick>();
-			foreach (var card in filter)
-			{
-				EcsEntity entt = filter.GetEntity(card);
-				ref var script = ref entt.Get<ScriptingComponent>();
-				script.Script = new RevealOnClick(new BootEngine.ECS.Entity(entt), KeyCodes.Number1 + i);
-				scriptList.Add((RevealOnClick)script.Script);
-				i++;
-			}
-			foreach (var card in filter)
-			{
-				EcsEntity entt = filter.GetEntity(card);
-				ref var script = ref entt.Get<ScriptingComponent>();
-				((RevealOnClick)script.Script).Entities = scriptList;
-			}
 		}
 
 		public override void OnUpdate(float deltaSeconds)

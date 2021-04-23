@@ -79,10 +79,7 @@ namespace Platforms.Windows
 			// Called twice possibly because of 2 events being fired: Resize and SizeChanged (and Maximized)
 			// #TODO treat it here or hope for Veldrid to be updated with this (Maybe clone and alter source code myself)
 			// currently deduplicated in the application
-			window.Resized += () =>
-			{
-				EventCallback(new WindowResizeEvent(window.Width, window.Height));
-			};
+			window.Resized += () => EventCallback(new WindowResizeEvent(window.Width, window.Height));
 
 			window.Closed += () => EventCallback(new WindowCloseEvent());
 

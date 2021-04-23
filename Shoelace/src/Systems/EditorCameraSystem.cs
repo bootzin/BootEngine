@@ -53,7 +53,7 @@ namespace Shoelace.Systems
 			}
 		}
 
-		private void MousePan(Vector2 delta, Camera cam, ref TransformComponent camTransform, ref EditorCameraComponent camData)
+		private static void MousePan(Vector2 delta, Camera cam, ref TransformComponent camTransform, ref EditorCameraComponent camData)
 		{
 			Vector2 panSpeed = GetPanSpeed(cam);
 			Vector3 rightDir = GetRightDirection(ref camTransform);
@@ -64,13 +64,13 @@ namespace Shoelace.Systems
 			camData.FocalPoint += upSign * upDir * delta.Y * panSpeed.Y * camData.Distance;
 		}
 
-		private void MouseRotate(Vector2 delta, ref TransformComponent camTransform, ref EditorCameraComponent camData)
+		private static void MouseRotate(Vector2 delta, ref TransformComponent camTransform, ref EditorCameraComponent camData)
 		{
 			float yawSign = GetUpDirection(ref camTransform).Y < 0 ? -1 : 1;
 			camTransform.Rotation -= new Vector3(delta.Y * camData.RotationSpeed, yawSign * delta.X * camData.RotationSpeed, 0);
 		}
 
-		private void MouseZoom(float deltaY, ref EditorCameraComponent camData)
+		private static void MouseZoom(float deltaY, ref EditorCameraComponent camData)
 		{
 			camData.Distance -= deltaY * camData.ZoomSpeed;
 			if (camData.Distance < 1)
@@ -78,7 +78,7 @@ namespace Shoelace.Systems
 		}
 
 		// TODO: Adjust pan speed to my liking
-		private Vector2 GetPanSpeed(Camera cam)
+		private static Vector2 GetPanSpeed(Camera cam)
 		{
 			float x = MathF.Min(cam.ViewportWidth / 1000.0f, 2.4f); // max = 2.4f
 			float xFactor = (0.0366f * (x * x)) - (0.1778f * x) + 0.3021f;
